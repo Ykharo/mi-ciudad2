@@ -3,6 +3,38 @@
 Este documento propone cómo reorganizar el proyecto para que pueda seguir creciendo (ropa, personajes, lugares)
 sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún archivo existente.
 
+## Dónde quedamos (27-09-2026)
+
+- El proyecto se movió de OneDrive a `C:\proyectos\mi-ciudad`. La copia de OneDrive queda sólo como respaldo;
+  no se trabaja ahí.
+- Decidido: publicación en **GitHub Pages** (punto 4 de la sección 8).
+- Se usa **GitHub Desktop**, que trae Git incluido. Siguiente paso: conectar esta carpeta
+  (Add local repository → create a repository, Git ignore: Node, sin README) y hacer el primer commit
+  "Estado inicial antes de reestructurar". Los commits de cada etapa se hacen desde GitHub Desktop.
+- Repositorio conectado: `github.com/Ykharo/mi-ciudad2` (público), commit inicial subido.
+  Git no está en el PATH; Claude usa el Git que trae GitHub Desktop sólo para consultar.
+- **Decisiones pendientes aceptadas según las recomendaciones del plan** (ver sección 8): r149, Vite,
+  Three.js dentro del juego, migrar el guardado v1 → v2, un .glb por prenda, Vestidor en la Boutique,
+  nombres de código como hoy, Playwright con Chromium y WebKit, publicar en Pages desde este repositorio
+  con GitHub Actions, y borrar los archivos viejos cuando la etapa 1 esté verificada.
+  La 11 (Python) se deja para la etapa 6. Queda por confirmar si hay un iPad a mano (decisión 10).
+- Hay una carpeta `mi-ciudad/` dentro del proyecto con un repositorio vacío (sólo `.gitattributes`,
+  remoto `Ykharo/mi-ciudad`): parece un intento anterior de GitHub Desktop. No se versiona; se puede borrar.
+- **Etapa 0: la parte automática está lista; falta el checklist manual.**
+  - `package.json` con `vite`, `@playwright/test` y `three@0.149.0` (fijo). Navegadores Chromium y WebKit instalados.
+  - `npm test` corre 11 pruebas contra `juego_actual/ciudad-arcoiris-nina.html` (servido con `vite preview`):
+    5 de humo en Chromium de escritorio y en WebKit con emulación de iPad (arranca, camina con teclado,
+    joystick táctil, menú Acción, adoptar y recargar) + 5 capturas de referencia en Chromium
+    (`tests/capturas/`: portada, Nina, bailando, parque, panel de mascotas). Pasaron dos corridas seguidas.
+  - Las capturas son repetibles gracias a `Math.random` con semilla, el reloj de Playwright detenido y el
+    audio desactivado (el ruido del audio consume `Math.random` según el equipo). No hizo falta tocar el juego.
+  - Chromium usa la GPU del PC (con WebGL por software las capturas tardaban más de 2 minutos). Por eso
+    las capturas dependen de este PC: en otro equipo (o en GitHub Actions) hay que regenerarlas.
+  - Falta: recorrer `tests/checklist_manual.md` en el PC y en el iPad, y hacer el commit
+    "Etapa 0: pruebas y capturas de referencia" desde GitHub Desktop.
+  - Las capturas del salón de autos y de la tienda se agregan en la etapa 2, cuando existan los ganchos
+    de prueba (`teleport`); sin ellos, llegar hasta allá caminando es frágil.
+
 Índice:
 1. [Diagnóstico del código actual](#1-diagnóstico-del-código-actual)
 2. [Estructura de proyecto propuesta](#2-estructura-de-proyecto-propuesta)
@@ -664,29 +696,30 @@ En Chrome/Edge de escritorio **y** en un iPad real (Safari), en horizontal y ver
 
 ---
 
-## 8. Decisiones que necesito que tomes
+## 8. Decisiones
 
-1. **Three.js**: ¿nos quedamos en r149 hasta que haya un motivo para cambiar (recomendado) o quieres actualizar
-   pronto? Si es pronto, ¿a qué versión?
-2. **Bundler**: ¿Vite (recomendado) o servidor simple sin herramientas?
-3. **Three.js dentro del archivo único** (recomendado: funciona sin internet y sin `importmap`) **o desde el CDN**
-   (archivo ~0,5 MB más liviano, pero depende de jsDelivr).
+**Resumen (27-09-2026)**: se aceptaron todas las recomendaciones. Donde el plan no traía una recomendación
+explícita (publicación desde qué repositorio, archivos viejos) se eligió la opción más simple y se anota abajo.
+
+1. **Decidido:** Three.js se queda en **r149** (`three@0.149.0`) hasta que haya un motivo para cambiar (etapa 9).
+2. **Decidido:** **Vite**, sin TypeScript.
+3. **Decidido:** **Three.js dentro del juego** (funciona sin internet y sin `importmap`).
 4. ~~**Publicación**~~ **Decidido:** se publica en **GitHub Pages** y se juega en el navegador del PC y del iPad.
    Consecuencias: la versión principal pasa a ser `npm run build:web` (archivos separados, la ropa se descarga
    sólo cuando se usa); la versión de un solo archivo queda como extra opcional. Se mantiene igual la carga de
    texturas por imágenes `data:`, porque ya está probada en Safari del iPad. La publicación se puede automatizar
    con GitHub Actions (cada `git push` actualiza la página).
-5. **Git y ubicación**: ¿instalo Git? ¿Movemos el proyecto fuera de OneDrive (y lo respaldamos en GitHub
-   privado) o lo dejamos donde está?
-6. **Guardado**: ¿migrar v1 → v2 conservando mascotas y autos (recomendado) o empezar de cero?
-7. **Ropa**: ¿un .glb por prenda (recomendado)? ¿Está bien que torso, piernas y pies nunca queden vacíos
-   (se cambian, no se quitan) y que sólo pelo, gorro, abrigo y accesorios se puedan quitar?
-8. **Vestidor en la Boutique Arcoíris**: ¿te parece ese lugar?
-9. **Idioma del código**: propongo mantener lo de hoy: nombres de funciones y archivos en inglés, y textos,
-   comentarios y datos de catálogo (ids, nombres) en español. ¿O prefieres todo en español?
-10. **Pruebas**: ¿instalamos Playwright con Chromium y WebKit (~500 MB de navegadores)? ¿Tienes un iPad a mano
-    para la prueba real de cada etapa?
-11. **Python**: ¿instalamos un Python 3.11/3.12 aparte para `herramientas_avatar/`, o prefieres correr esos
-    scripts desde Blender?
-12. **Archivos viejos**: cuando la etapa 1 esté verificada, ¿se borran `fuente/juego_fuente.html` y
-    `fuente/armar_juego.py` (quedan en la historia de Git) o se mueven a una carpeta `legado/`?
+   **Decidido:** se publica **desde este repositorio** (`Ykharo/mi-ciudad2`, público, así que Pages es gratis)
+   con GitHub Actions. El repositorio donde se copiaba el juego antes se deja de actualizar cuando la versión
+   de Pages esté probada en el iPad.
+5. **Decidido:** GitHub Desktop (trae Git) y el proyecto en `C:\proyectos\mi-ciudad`, fuera de OneDrive.
+6. **Decidido:** migrar el guardado **v1 → v2** conservando mascotas y autos; la clave v1 no se borra.
+7. **Decidido:** **un .glb por prenda**. Torso, piernas y pies nunca quedan vacíos (se cambian, no se quitan);
+   pelo, gorro, abrigo y accesorios sí se pueden quitar.
+8. **Decidido:** el Vestidor va en la **Boutique Arcoíris**.
+9. **Decidido:** como hoy: funciones y archivos en inglés; textos, comentarios y datos de catálogo en español.
+10. **Decidido:** Playwright con Chromium y WebKit. **Pendiente:** ¿hay un iPad a mano para la prueba real de
+    cada etapa?
+11. **Python**: se decide en la etapa 6 (Python 3.11/3.12 aparte o el de Blender).
+12. **Decidido:** cuando la etapa 1 esté verificada, `fuente/juego_fuente.html` y `fuente/armar_juego.py` se
+    **borran** (quedan en la historia de Git; no hace falta una carpeta `legado/`).
