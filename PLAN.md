@@ -20,7 +20,20 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
   La 11 (Python) se deja para la etapa 6. La prueba en el iPad real queda para más adelante (decisión 10).
 - Hay una carpeta `mi-ciudad/` dentro del proyecto con un repositorio vacío (sólo `.gitattributes`,
   remoto `Ykharo/mi-ciudad`): parece un intento anterior de GitHub Desktop. No se versiona; se puede borrar.
-- **Etapa 0 terminada** (falta sólo el commit). Checklist manual en el PC: todo ✅; iPad pendiente.
+- **Etapa 1a lista** y probada en el navegador del PC con `npm run dev` (falta: activar Pages y commit).
+  - `index.html` + `src/styles/juego.css` + `src/main.js` generados por corte exacto de `juego_fuente.html`.
+    Único cambio de código: `loadNina()` lee los bytes con `readAsset('nina')` (`src/assets/loader.js`).
+  - Se agregó `<html><head><body>` (sin doctype, sigue en modo quirks): sin `<head>`, Vite ponía el script y
+    el CSS antes de `<meta charset>` y en el archivo único el charset quedaba después de ~740 kB.
+  - `npm run build:web` → `dist/web` (JS 739 kB + .glb 2,1 MB). `npm run build` → `dist/unico/ciudad-arcoiris.html`
+    (3,6 MB, Three.js y el modelo adentro, `<script id="asset:nina">`).
+  - `npm test` prueba 5 variantes (dev, dev-ipad, web, web-ipad, unico): 30 pruebas. Las capturas de las
+    versiones nuevas salieron **idénticas byte a byte** a las de la etapa 0. El archivo único abre como
+    `file://` y arranca sin red (sólo las fuentes de Google quedan afuera).
+  - `.github/workflows/pages.yml` publica `dist/web` en cada push a main. Hay que activar una vez
+    Settings → Pages → Source: "GitHub Actions".
+  - Pendiente de la 1a: prueba en el iPad real (se hace más adelante, ver decisión 10).
+- **Etapa 0 terminada.** Checklist manual en el PC: todo ✅; iPad pendiente.
   - `package.json` con `vite`, `@playwright/test` y `three@0.149.0` (fijo). Navegadores Chromium y WebKit instalados.
   - `npm test` corre 11 pruebas contra `juego_actual/ciudad-arcoiris-nina.html` (servido con `vite preview`):
     5 de humo en Chromium de escritorio y en WebKit con emulación de iPad (arranca, camina con teclado,

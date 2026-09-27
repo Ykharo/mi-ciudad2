@@ -1,11 +1,13 @@
 // Capturas de referencia: sirven para confirmar que la reestructuración no cambia lo que se ve.
 // La página se deja repetible (Math.random con semilla, reloj detenido, sin audio) y el bucle
-// avanza sólo con page.clock.runFor(ms). Para regenerarlas: npm run test:capturas
-import { test, expect, cargar, prepararRepetible } from './ayudantes.js';
+// avanza sólo con page.clock.runFor(ms). Se tomaron del juego de la etapa 0 (juego_actual/) y todas las
+// versiones nuevas se comparan contra ellas. Regenerarlas sólo si el cambio visible es a propósito:
+// npm run test:capturas
+import { test, expect, prepararRepetible } from './ayudantes.js';
 
-test('capturas de referencia', async ({ page }) => {
+test('capturas de referencia', async ({ page, cargar }) => {
   await prepararRepetible(page);
-  await cargar(page);
+  await cargar();
   const foto = nombre => expect(page).toHaveScreenshot(nombre + '.png');
 
   await page.clock.runFor(1000);

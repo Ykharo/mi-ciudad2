@@ -1,9 +1,9 @@
 // Pruebas de humo: el juego arranca y lo básico responde. Sólo usan el DOM y el teclado,
-// así que sirven igual para el juego armado de hoy y para las versiones reestructuradas.
-import { test, expect, cargar, jugar } from './ayudantes.js';
+// así que sirven igual para el juego de la etapa 0 y para las versiones reestructuradas.
+import { test, expect } from './ayudantes.js';
 
-test('arranca y se puede jugar', async ({ page }) => {
-  await cargar(page);
+test('arranca y se puede jugar', async ({ page, cargar }) => {
+  await cargar();
   await expect(page.locator('#game')).toHaveClass(/intro/);
   await page.locator('#btnPlay').click();
   await expect(page.locator('#start')).toBeHidden();
@@ -12,8 +12,8 @@ test('arranca y se puede jugar', async ({ page }) => {
   await expect(page.locator('#placeName')).toHaveText('Paseo Algodón');
 });
 
-test('camina con el teclado', async ({ page }) => {
-  await jugar(page);
+test('camina con el teclado', async ({ page, jugar }) => {
+  await jugar();
   const lugar = page.locator('#placeName');
   await expect(lugar).toHaveText('Paseo Algodón');
   await page.keyboard.down('w');
@@ -22,8 +22,8 @@ test('camina con el teclado', async ({ page }) => {
   await page.keyboard.up('w');
 });
 
-test('camina con el joystick', async ({ page }) => {
-  await jugar(page);
+test('camina con el joystick', async ({ page, jugar }) => {
+  await jugar();
   const joy = page.locator('#joy'), lugar = page.locator('#placeName');
   await expect(lugar).toHaveText('Paseo Algodón');
   const r = await joy.boundingBox();
@@ -41,8 +41,8 @@ test('camina con el joystick', async ({ page }) => {
   await expect.poll(altoPerilla).toBe(0);
 });
 
-test('menú Acción', async ({ page }) => {
-  await jugar(page);
+test('menú Acción', async ({ page, jugar }) => {
+  await jugar();
   const btn = page.locator('#btnAct'), menu = page.locator('#actMenu');
   await btn.click();
   await expect(menu).toBeVisible();
@@ -58,8 +58,8 @@ test('menú Acción', async ({ page }) => {
   await expect(btn).toHaveAttribute('aria-expanded', 'false');
 });
 
-test('adoptar una mascota y que siga ahí al recargar', async ({ page }) => {
-  await jugar(page);
+test('adoptar una mascota y que siga ahí al recargar', async ({ page, jugar }) => {
+  await jugar();
   await page.locator('#btnPets').click();
   const panel = page.locator('#petPanel');
   await expect(panel).toBeVisible();

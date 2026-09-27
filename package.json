@@ -5,13 +5,20 @@
   "description": "Juego 3D infantil para navegador con Nina",
   "type": "module",
   "scripts": {
+    "dev": "vite --host",
+    "build": "vite build --mode unico",
+    "build:web": "vite build",
+    "build:todo": "npm run build:web && npm run build",
+    "preview": "vite preview --host",
+    "pretest": "npm run build:todo",
     "test": "playwright test",
-    "test:capturas": "playwright test --update-snapshots",
+    "test:capturas": "playwright test tests/capturas.spec.js --project=dev --update-snapshots",
     "test:informe": "playwright show-report"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
-    "vite": "^8.3.1"
+    "vite": "^8.3.1",
+    "vite-plugin-singlefile": "^2.3.3"
   },
   "dependencies": {
     "three": "0.149.0"

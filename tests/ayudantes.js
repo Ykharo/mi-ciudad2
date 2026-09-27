@@ -1,11 +1,12 @@
 // Utilidades compartidas por las pruebas.
 import { test as base, expect } from '@playwright/test';
 
-// Página del juego que se prueba. Se puede cambiar con la variable de entorno JUEGO.
-export const JUEGO = process.env.JUEGO || '/ciudad-arcoiris-nina.html';
-
-// Cualquier error de la página o `console.error` hace fallar la prueba.
 export const test = base.extend({
+  // Página del juego dentro del servidor del proyecto (ver playwright.config.js).
+  juego: ['/', { option: true }],
+
+  // Cualquier error de la página o `console.error` hace fallar la prueba.
+  // Una prueba puede quitar de la lista los errores que espera (por ejemplo, sin red).
   errores: [async ({ page }, use) => {
     const errores = [];
     page.on('pageerror', e => errores.push(`pageerror: ${e.message}`));
@@ -17,22 +18,26 @@ export const test = base.extend({
     await use(errores);
     expect(errores, 'errores en la consola').toEqual([]);
   }, { auto: true }],
+
+  // Abre el juego y espera a que la ciudad esté construida.
+  cargar: async ({ page, juego }, use) => {
+    await use(async () => {
+      await page.goto(juego);
+      await expect(page.locator('#btnPlay')).toHaveText('¡A jugar!', { timeout: 60_000 });
+    });
+  },
+
+  // Abre el juego y toca "¡A jugar!".
+  jugar: async ({ page, cargar }, use) => {
+    await use(async () => {
+      await cargar();
+      await page.locator('#btnPlay').click();
+      await expect(page.locator('#start')).toBeHidden();
+      await expect(page.locator('#game')).not.toHaveClass(/intro/);
+    });
+  },
 });
 export { expect };
-
-// Abre el juego y espera a que la ciudad esté construida.
-export async function cargar(page) {
-  await page.goto(JUEGO);
-  await expect(page.locator('#btnPlay')).toHaveText('¡A jugar!', { timeout: 60_000 });
-}
-
-// Abre el juego y toca "¡A jugar!".
-export async function jugar(page) {
-  await cargar(page);
-  await page.locator('#btnPlay').click();
-  await expect(page.locator('#start')).toBeHidden();
-  await expect(page.locator('#game')).not.toHaveClass(/intro/);
-}
 
 // Deja la página repetible para las capturas: Math.random con semilla, sin audio
 // (el ruido del audio consume Math.random según la frecuencia de muestreo del equipo)

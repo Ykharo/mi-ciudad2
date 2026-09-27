@@ -1,0 +1,83 @@
+<html>
+<head>
+<meta charset="utf-8">
+<!-- Sin <!doctype>: el juego siempre corrió en modo "quirks" y se mantiene así para no cambiar el aspecto. -->
+<title>Ciudad Arcoíris</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="/src/styles/juego.css">
+</head>
+<body>
+
+<div id="game" class="intro">
+  <canvas id="c" aria-label="Ciudad en 3D"></canvas>
+
+  <div id="hud">
+    <div id="place"><span class="dot"></span><span id="placeName">Calle Arcoíris</span></div>
+    <div id="topright">
+      <button id="btnMusic" class="toy round" aria-label="Música">🎵</button>
+    </div>
+    <div id="joy" aria-label="Mover"><span id="joyHint">¡Mueve aquí!</span><div id="joyKnob"></div></div>
+    <div id="actions">
+      <button id="btnAction" class="toy sun" hidden></button>
+      <div id="actionRow">
+        <div id="menuBtns">
+          <button id="btnAct" class="toy pink" aria-haspopup="true" aria-expanded="false" aria-controls="actMenu"><span class="em">🎬</span>Acción</button>
+          <div id="actMenu" role="menu" hidden></div>
+          <button id="btnPets" class="toy mint"><span class="em">🐾</span>Mascotas</button>
+          <button id="btnMyCar" class="toy coral"><span class="em">🚗</span>Mi auto</button>
+          <button id="btnWave" class="toy"><span class="em">👋</span>Saludar</button>
+        </div>
+        <button id="btnJump" class="toy sky"><span class="em">⬆</span>Saltar</button>
+      </div>
+      <div id="driveBtns">
+        <div id="driveCol">
+          <button id="btnHorn" class="toy sun"><span class="em">📯</span>Bocina</button>
+          <button id="btnExit" class="toy"><span class="em">🚪</span>Bajarse</button>
+        </div>
+        <button id="btnBrake" class="toy coral"><span class="em">✋</span>Frenar</button>
+      </div>
+    </div>
+    <div id="toast" role="status"></div>
+  </div>
+
+  <aside id="petPanel" class="panel" hidden>
+    <div class="phead"><h2>Refugio de Mascotas</h2><button id="petDone" class="toy">Listo</button></div>
+    <div id="petBody" class="pbody"></div>
+    <div class="pfoot">
+      <button id="btnAdopt" class="toy mint"><span class="em">💚</span>Adoptar</button>
+    </div>
+  </aside>
+
+  <aside id="shopPanel" class="panel" hidden>
+    <div class="phead"><h2>Autos Arcoíris</h2><button id="shopDone" class="toy">Salir</button></div>
+    <div id="shopTabs" class="tabs"></div>
+    <div id="shopBody" class="pbody"></div>
+    <div class="pfoot">
+      <button id="btnCarRandom" class="toy sun"><span class="em">✨</span>Sorpréndeme</button>
+      <button id="btnBuy" class="toy sky"><span class="em">🔑</span>¡Lo quiero!</button>
+    </div>
+  </aside>
+
+  <div id="start">
+    <div class="card">
+      <h1>Ciudad Arcoíris</h1>
+      <p class="sub">Pasea por la ciudad con Nina, baila, adopta mascotas y diseña tu propio auto.</p>
+      <button id="btnPlay" class="toy pink" disabled>Construyendo la ciudad…</button>
+      <ul class="how">
+        <li><b>🕹</b>Círculo: caminar</li>
+        <li><b>👆</b>Arrastra: girar la cámara</li>
+        <li><b>🤏</b>Pellizca: acercar</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+window.addEventListener('error',function(e){var b=document.getElementById('btnPlay');if(b&&b.disabled){b.textContent=window.__cityScript?'Algo falló al construir la ciudad':'No se pudo cargar el 3D. Revisa tu conexión.';}});
+setTimeout(function(){var b=document.getElementById('btnPlay');if(b&&b.disabled&&!window.__cityScript)b.textContent='No se pudo cargar el 3D. Revisa tu conexión.';},25000);
+</script>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

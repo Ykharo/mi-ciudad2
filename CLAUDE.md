@@ -1,16 +1,29 @@
 # Ciudad Arcoíris — contexto del proyecto
 
-Juego 3D infantil para navegador (Three.js r149 por CDN, ES modules + importmap). En español, pensado
+Juego 3D infantil para navegador (Three.js r149 desde npm, empaquetado con Vite). En español, pensado
 para niños, se juega con toque (joystick en pantalla) en tablet/teléfono y con teclado en computador.
 La protagonista es **Nina**, un avatar low-poly en `.glb` con esqueleto y animaciones.
+Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
 
 ## Archivos
-- `fuente/juego_fuente.html` — TODO el código del juego (HTML + CSS + un `<script type="module">`, ~2700 líneas).
-  Contiene la marca `@@NINA_GLB@@` donde se inserta el modelo en base64.
-- `fuente/avatar_vestido.glb` — modelo de Nina (2,1 MB). No editar a mano.
-- `fuente/armar_juego.py` — genera el juego de un solo archivo: `python fuente/armar_juego.py`.
-- `juego_actual/ciudad-arcoiris-nina.html` — el juego armado (3 MB, modelo incrustado).
-  **No leer este archivo**: es el mismo código que `juego_fuente.html` más un bloque base64 enorme.
+- `index.html` — HTML del juego. Sin `<!doctype>` a propósito (modo quirks, como siempre).
+- `src/main.js` — TODO el código del juego (~2470 líneas; en la etapa 1b se separa en módulos).
+- `src/styles/juego.css` — estilos.
+- `src/assets/loader.js` + `manifest.js` — lee cada modelo del bloque base64 incrustado o con `fetch`.
+- `assets/modelos/avatar_vestido.glb` — modelo de Nina (2,1 MB). No editar a mano. `assets/` es el publicDir de Vite.
+- `tools/vite-embed-assets.js` — incrusta los modelos en la versión de un solo archivo.
+- `tests/` — Playwright: humo, capturas de referencia (`tests/capturas/`), sin red. Checklist manual en `tests/checklist_manual.md`.
+- `fuente/` — versión anterior (`juego_fuente.html` + `armar_juego.py`): ya no se edita; se borra al cerrar la etapa 1.
+- `juego_actual/ciudad-arcoiris-nina.html` — el juego armado antiguo (3 MB, modelo incrustado).
+  **No leer este archivo**: es código + un bloque base64 enorme. Tampoco leer `dist/`.
+
+## Comandos
+- `npm run dev` — desarrollo con recarga (http://localhost:5173, y desde el iPad con la IP del PC).
+- `npm run build:web` → `dist/web/` (GitHub Pages, se publica solo con GitHub Actions al hacer push a main).
+- `npm run build` → `dist/unico/ciudad-arcoiris.html` (un solo archivo, abre con doble clic).
+- `npm test` — arma ambas versiones y corre todas las pruebas (~2 min). Las capturas deben salir iguales;
+  sólo se regeneran (`npm run test:capturas`) cuando un cambio visible es a propósito.
+- Git no está en el PATH: los commits los hace el usuario desde GitHub Desktop.
 - `herramientas_avatar/` — scripts Python que generaron el modelo (ropa, animaciones, expresiones) y atlas de la cara.
   Requieren numpy, scipy y mathutils (o Blender).
 
