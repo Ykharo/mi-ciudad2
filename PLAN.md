@@ -20,7 +20,28 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
   La 11 (Python) se deja para la etapa 6. La prueba en el iPad real queda para más adelante (decisión 10).
 - Hay una carpeta `mi-ciudad/` dentro del proyecto con un repositorio vacío (sólo `.gitattributes`,
   remoto `Ykharo/mi-ciudad`): parece un intento anterior de GitHub Desktop. No se versiona; se puede borrar.
-- **Etapa 1a lista** y probada en el navegador del PC con `npm run dev` (falta: activar Pages y commit).
+- **Etapa 1b lista** (falta: probar en el navegador, commit y, si se quiere, borrar `fuente/` — decisión 12).
+  - `src/main.js` se separó en 50 módulos (+ `core/state.js` y `engine/three.js`) con una herramienta de un solo uso
+    que usa análisis de alcance (espree + eslint-scope): mismas funciones, mismos cuerpos, importaciones calculadas.
+  - A `core/state.js` pasaron sólo los `let` que se reasignan desde otro módulo: `mode`, `clock`, `currentZone`,
+    `lastCar`, `shopSpec`, `ttModel`, `ttSpin`, `ttDrag`, `musicOn`, `joyId`. Cada uno se inicializa en su módulo
+    de origen en el mismo momento que antes. Los demás `let` (`driving`, `preview`, `ttGroup`, `AC`…) se exportan
+    tal cual (un import de ES es una referencia viva de lectura).
+  - `main.js` importa todos los módulos en el orden original de las secciones, así el orden de arranque
+    (renderer → mundo → autos…) y el de creación de objetos de Three.js no cambian.
+  - `window.__cityScript` pasó a `engine/three.js` para que siga marcándose antes de crear el renderer.
+  - Diferencias con la sección 2 (a propósito, para no rediseñar en la 1b): `collide` quedó en `world/physics.js`,
+    `RAINBOW` en `engine/materials.js`, los autos en `cars/models.js` (un archivo, no una carpeta), las paletas y
+    acciones siguen en sus módulos (el catálogo es de la etapa 3), y se agregó `ui/buttons.js` para los botones del HUD.
+  - Resultado: 30/30 pruebas; capturas **idénticas byte a byte** a la etapa 0 (dev y archivo único). Recorrido
+    extra en desarrollo sin errores: helado, banca, tienda (todas las pestañas), comprar, manejar, bocina, freno,
+    bajarse, "Mi auto", garaje (cambiar y devolver), subirse a un auto de la calle, música.
+  - **Ciclos de importación que quedan** (se eliminan en la etapa 2): un grupo de 8 módulos
+    (`cars/fleet`, `cars/driving`, `game/player`, `game/npcs`, `game/save`, `audio/engine`, `ui/joystick`,
+    `ui/action-menu`). Nace de dos dependencias "hacia arriba": `cars/fleet → game/player` (`carFitsAt` lee
+    `player.pos`) y `cars/driving` → game/ui/audio (manejar es un sistema de juego: probablemente pase a `game/`).
+- **Etapa 1a terminada.** Publicada en https://ykharo.github.io/mi-ciudad2/ (GitHub Actions ✓; arranca sin
+  errores en Chromium y WebKit). Probada en el navegador del PC con `npm run dev`.
   - `index.html` + `src/styles/juego.css` + `src/main.js` generados por corte exacto de `juego_fuente.html`.
     Único cambio de código: `loadNina()` lee los bytes con `readAsset('nina')` (`src/assets/loader.js`).
   - Se agregó `<html><head><body>` (sin doctype, sigue en modo quirks): sin `<head>`, Vite ponía el script y

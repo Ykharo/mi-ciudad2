@@ -7,7 +7,14 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
 
 ## Archivos
 - `index.html` — HTML del juego. Sin `<!doctype>` a propósito (modo quirks, como siempre).
-- `src/main.js` — TODO el código del juego (~2470 líneas; en la etapa 1b se separa en módulos).
+- `src/` — el código, en ~50 módulos ES (estructura de `PLAN.md` sección 2):
+  `core/` (estado compartido `state.js`, matemática), `engine/` (Three.js, renderer, materiales, geometría, texturas),
+  `world/` (ciudad, `places/` un archivo por lugar), `characters/` (Nina, animador, caras), `pets/`, `cars/`,
+  `game/` (jugadora, vecinos, cámara, guardado), `audio/`, `ui/` (HUD, joystick, `panels/`), `main.js` (arranque y bucle).
+  - `engine/three.js` es el único que importa `three`.
+  - Variables que se reasignan desde varios módulos viven en `state` (`state.mode`, `state.clock`, `state.currentZone`,
+    `state.lastCar`, `state.shopSpec`, `state.ttModel/ttSpin/ttDrag`, `state.musicOn`, `state.joyId`).
+  - `main.js` importa todos los módulos en el orden original de las secciones: ese orden define el arranque.
 - `src/styles/juego.css` — estilos.
 - `src/assets/loader.js` + `manifest.js` — lee cada modelo del bloque base64 incrustado o con `fetch`.
 - `assets/modelos/avatar_vestido.glb` — modelo de Nina (2,1 MB). No editar a mano. `assets/` es el publicDir de Vite.
