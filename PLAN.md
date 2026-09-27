@@ -17,10 +17,10 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
   Three.js dentro del juego, migrar el guardado v1 → v2, un .glb por prenda, Vestidor en la Boutique,
   nombres de código como hoy, Playwright con Chromium y WebKit, publicar en Pages desde este repositorio
   con GitHub Actions, y borrar los archivos viejos cuando la etapa 1 esté verificada.
-  La 11 (Python) se deja para la etapa 6. Queda por confirmar si hay un iPad a mano (decisión 10).
+  La 11 (Python) se deja para la etapa 6. La prueba en el iPad real queda para más adelante (decisión 10).
 - Hay una carpeta `mi-ciudad/` dentro del proyecto con un repositorio vacío (sólo `.gitattributes`,
   remoto `Ykharo/mi-ciudad`): parece un intento anterior de GitHub Desktop. No se versiona; se puede borrar.
-- **Etapa 0: la parte automática está lista; falta el checklist manual.**
+- **Etapa 0 terminada** (falta sólo el commit). Checklist manual en el PC: todo ✅; iPad pendiente.
   - `package.json` con `vite`, `@playwright/test` y `three@0.149.0` (fijo). Navegadores Chromium y WebKit instalados.
   - `npm test` corre 11 pruebas contra `juego_actual/ciudad-arcoiris-nina.html` (servido con `vite preview`):
     5 de humo en Chromium de escritorio y en WebKit con emulación de iPad (arranca, camina con teclado,
@@ -30,8 +30,7 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
     audio desactivado (el ruido del audio consume `Math.random` según el equipo). No hizo falta tocar el juego.
   - Chromium usa la GPU del PC (con WebGL por software las capturas tardaban más de 2 minutos). Por eso
     las capturas dependen de este PC: en otro equipo (o en GitHub Actions) hay que regenerarlas.
-  - Falta: recorrer `tests/checklist_manual.md` en el PC y en el iPad, y hacer el commit
-    "Etapa 0: pruebas y capturas de referencia" desde GitHub Desktop.
+  - Falta: el commit "Etapa 0: pruebas y capturas de referencia" desde GitHub Desktop.
   - Las capturas del salón de autos y de la tienda se agregan en la etapa 2, cuando existan los ganchos
     de prueba (`teleport`); sin ellos, llegar hasta allá caminando es frágil.
 
@@ -718,8 +717,9 @@ explícita (publicación desde qué repositorio, archivos viejos) se eligió la 
    pelo, gorro, abrigo y accesorios sí se pueden quitar.
 8. **Decidido:** el Vestidor va en la **Boutique Arcoíris**.
 9. **Decidido:** como hoy: funciones y archivos en inglés; textos, comentarios y datos de catálogo en español.
-10. **Decidido:** Playwright con Chromium y WebKit. **Pendiente:** ¿hay un iPad a mano para la prueba real de
-    cada etapa?
+10. **Decidido:** Playwright con Chromium y WebKit. **iPad real: por ahora no hay uno a mano**; su prueba se
+    hace más adelante. Hasta entonces las etapas se cierran con la emulación de WebKit y el PC, y antes de
+    publicar en Pages se recorre el checklist en el iPad (cubre lo acumulado).
 11. **Python**: se decide en la etapa 6 (Python 3.11/3.12 aparte o el de Blender).
 12. **Decidido:** cuando la etapa 1 esté verificada, `fuente/juego_fuente.html` y `fuente/armar_juego.py` se
     **borran** (quedan en la historia de Git; no hace falta una carpeta `legado/`).
