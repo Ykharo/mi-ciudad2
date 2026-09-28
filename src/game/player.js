@@ -21,7 +21,8 @@ function updatePlayer(dt) {
     if (kx || ky) { const l = Math.hypot(kx, ky); jx = kx / l; jy = ky / l; }
   }
   let mag = Math.hypot(jx, jy);
-  if (mag < 0.14) { jx = jy = 0; mag = 0; } else if (mag > 1) { jx /= mag; jy /= mag; }
+  // (la zona muerta del joystick la maneja ui/joystick.js; desde ahí la palanca da 0,1–0,27 caminando y hasta 1 corriendo)
+  if (mag < 0.02) { jx = jy = 0; mag = 0; } else if (mag > 1) { jx /= mag; jy /= mag; }
   // moverse deja lo que estaba haciendo (sentada, bailando, saludando…)
   if (mag > 0 && ch.sp && ch.sp.stopOnMove) { avatarStop(ch); standUp(); }
   if (player.seat) { jx = jy = 0; mag = 0; }

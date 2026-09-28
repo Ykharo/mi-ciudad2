@@ -4,7 +4,7 @@ export const state = {
   ttModel: undefined,   // world/places/carshop.js — auto que se está diseñando en el torno
   ttSpin: undefined,    // world/places/carshop.js — giro del torno
   ttDrag: undefined,    // world/places/carshop.js — segundos que el torno queda quieto después de arrastrarlo
-  mode: undefined,      // game/actors.js — intro | play | pets | shop | drive
+  mode: undefined,      // game/actors.js — intro | play | pets | shop | wardrobe | drive
   lastCar: undefined,   // game/actors.js — último auto propio usado ("Mi auto" llama a ése)
   shopSpec: undefined,  // game/actors.js — diseño actual de la tienda
   clock: undefined,     // game/actors.js — segundos de juego

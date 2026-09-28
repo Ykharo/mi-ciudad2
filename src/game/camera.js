@@ -56,7 +56,7 @@ function updateCamera(dt) {
     k = 1 - Math.exp(-dt * 4);
   } else {
     const sheet = panelIsSheet(), yaw = cam.menuYaw;
-    let d = 5.6;
+    let d = state.mode === 'wardrobe' ? 4.6 : 5.6;   // en el Vestidor, Nina más de cerca (en el refugio cabe la mascota)
     if (camera.aspect < 1) d *= 1.25;
     const fwx = Math.sin(yaw), fwz = Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
     _look.set(p.x, 0.95, p.z);
@@ -71,7 +71,7 @@ function updateCamera(dt) {
   cam.pos.lerp(_pos, k); cam.look.lerp(_look, k);
   camera.position.copy(cam.pos); camera.lookAt(cam.look);
   fill.position.set(cam.pos.x, cam.pos.y + 3, cam.pos.z); fill.target.position.copy(cam.look);
-  fill.intensity = lerp(fill.intensity, state.mode === 'pets' || state.mode === 'shop' ? 0.7 : 0.3, k);
+  fill.intensity = lerp(fill.intensity, ['pets', 'shop', 'wardrobe'].includes(state.mode) ? 0.7 : 0.3, k);
   sun.position.set(p.x + SUN_OFF.x, SUN_OFF.y, p.z + SUN_OFF.z);
   sun.target.position.set(p.x, 0, p.z);
 }

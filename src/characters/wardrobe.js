@@ -3,7 +3,7 @@
 // se clonan (la geometría se comparte) y se enlazan a los huesos del personaje buscándolos por nombre.
 import { THREE } from '../engine/three.js';
 import { loadGLB, loadedGLB } from '../assets/loader.js';
-import { PRENDA, SLOTS } from './catalog/prendas.js';
+import { PRENDA, PRENDAS, SLOTS } from './catalog/prendas.js';
 import { lookMaterials } from './looks.js';
 
 // La sombra la hacen el cuerpo, la cabeza y las prendas marcadas con `sombra` en el catálogo (el pelo); la ropa
@@ -81,7 +81,7 @@ function detachPrenda(c, slot) {
 }
 
 // Viste a un personaje recién creado con las prendas de su look (tienen que estar cargadas: loadPrendas).
-// Se visten en el orden de SLOTS, el mismo en que venían las mallas en el modelo original.
+// Se visten en el orden de SLOTS (el orden no cambia el dibujo: se comprobó con las capturas en la etapa 4).
 function dress(c, look) {
   for (const slot of SLOTS) { const sel = look && look.prendas && look.prendas[slot]; if (sel) attachPrenda(c, slot, sel.id); }
   applyLook(c, look);
@@ -92,6 +92,18 @@ function loadPrendas(looks) {
   const ids = new Set();
   for (const l of looks) for (const sel of Object.values((l && l.prendas) || {})) ids.add(sel.id);
   return Promise.all([...ids].map(id => loadGLB('prenda:' + id)));
+}
+
+// Color con que viene un material en el modelo ('#rrggbb', o null si no está cargado): la muestra "como viene"
+// del Vestidor.
+function factoryColor(matName) {
+  for (const id of ['nina_base', ...PRENDAS.map(p => 'prenda:' + p.id)]) {
+    const g = loadedGLB(id); if (!g) continue;
+    let hex = null;
+    g.scene.traverse(o => { if (!hex && o.isMesh) for (const m of [].concat(o.material)) if (m.name === matName) hex = '#' + m.color.getHexString(); });
+    if (hex) return hex;
+  }
+  return null;
 }
 
 // Para el Vestidor (etapa 5): cambiar la ropa de un personaje que ya está en la escena.
@@ -107,4 +119,4 @@ function quitarPrenda(c, slot) {
 }
 function recolorear(c, look) { c.look = look; applyLook(c, look); }
 
-export { dress, loadPrendas, ponerPrenda, quitarPrenda, recolorear, setupMesh };
+export { dress, factoryColor, loadPrendas, ponerPrenda, quitarPrenda, recolorear, setupMesh };

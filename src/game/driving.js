@@ -12,7 +12,7 @@ import { avatarDo, avatarStop, updateAvatar } from '../characters/animator.js';
 import { setHolding } from '../characters/props.js';
 import { animatePet } from '../pets/models.js';
 import { save } from './save.js';
-import { cam, input, ownedCars, player } from './actors.js';
+import { INPUT_LENTO, cam, input, ownedCars, player } from './actors.js';
 import { standUp } from './player.js';
 import { npcs } from './npcs.js';
 
@@ -93,6 +93,19 @@ function exitCar() {
   if (c.owned) { state.lastCar = c; save(); }
 }
 
+// Acelerador del auto según la palanca (mag 0–1, ver INPUT_LENTO). Devuelve la fracción de la velocidad máxima:
+// - zona lenta (adentro del punteado; el joystick da 0,1–0,27): del 18 % al 35 % → el auto va despacio;
+// - anillo blanco: sube gradual y cada vez más (curva p²) desde el 35 %: ⅓ del anillo ≈ 42 %, ⅔ ≈ 64 %,
+//   y velocidad y aceleración máximas sólo con la perilla en el tope.
+// Con el teclado mag = 1: siempre a fondo.
+const LENTO_AUTO = [0.18, 0.35];
+function acelerador(mag) {
+  if (mag <= 0) return 0;
+  if (mag <= INPUT_LENTO) return LENTO_AUTO[0] + (LENTO_AUTO[1] - LENTO_AUTO[0]) * clamp((mag - 0.1) / (INPUT_LENTO - 0.1), 0, 1);
+  const p = (mag - INPUT_LENTO) / (1 - INPUT_LENTO);   // cuánto se entró al anillo blanco (0–1)
+  return LENTO_AUTO[1] + (1 - LENTO_AUTO[1]) * p * p;
+}
+
 function updateCar(dt) {
   const c = driving, S = c.stats, M = c.model;
   let jx = input.jx, jy = input.jy;
@@ -100,22 +113,44 @@ function updateCar(dt) {
   const kx = (k.KeyD || k.ArrowRight ? 1 : 0) - (k.KeyA || k.ArrowLeft ? 1 : 0);
   const ky = (k.KeyS || k.ArrowDown ? 1 : 0) - (k.KeyW || k.ArrowUp ? 1 : 0);
   if (kx || ky) { jx = kx; jy = ky; }
+  // mag: cuánto se empuja (joystick: 0,1–0,27 en la zona lenta, hasta 1 en la rápida; teclado: siempre 1)
   let mag = Math.min(1, Math.hypot(jx, jy));
-  if (mag < 0.14) { jx = jy = 0; mag = 0; }
+  if (mag < 0.02) { jx = jy = 0; mag = 0; }
   const brake = input.brake || k.Space;
-  // pushing up or sideways drives forward; pulling down brakes, then backs up
-  const back = jy > 0.45 && Math.abs(jx) < 0.7;
+  // hacia arriba o hacia los lados avanza; hacia abajo (también en diagonal) frena y después retrocede.
+  // Se mira la dirección de la palanca, no cuánto se empuja: también funciona despacio.
+  const back = mag > 0 && jy / mag > 0.35;
+  const acel = acelerador(mag);
+  const tope = S.max * Math.max(0.12, acel);   // lo más rápido que se va con la palanca así
   if (brake || back) {
     if (c.speed > 0.4) c.speed -= DRIVE.brake * dt;
-    else c.speed = Math.max(-DRIVE.rev, c.speed - 6 * dt);
+    else c.speed = Math.max(-DRIVE.rev * (back ? Math.max(0.35, acel) : 1), c.speed - 6 * dt);   // despacio atrás en la zona lenta
   } else if (mag > 0) {
-    c.speed += (c.speed < 0 ? DRIVE.brake : S.acc * (c.speed > S.max * 0.66 ? 0.6 : 1)) * mag * dt;
+    if (c.speed < 0) c.speed += DRIVE.brake * dt;
+    else if (c.speed < tope) c.speed = Math.min(tope, c.speed + S.acc * (c.speed > S.max * 0.66 ? 0.6 : 1) * Math.max(0.35, acel) * dt);
+    else c.speed = Math.max(tope, c.speed - DRIVE.drag * 3 * dt);   // se soltó un poco la palanca: baja suave, sin frenazo
   } else c.speed -= Math.sign(c.speed) * Math.min(Math.abs(c.speed), DRIVE.drag * dt);
-  c.speed = clamp(c.speed, -DRIVE.rev, S.max * (mag > 0 || brake ? Math.max(0.35, mag) : 1));
+  c.speed = clamp(c.speed, -DRIVE.rev, S.max);
 
-  c.steer = lerp(c.steer, jx, 1 - Math.exp(-dt * 7));
+  // El volante sigue la dirección de la palanca (no cuánto se empuja): se puede doblar bien yendo despacio.
+  // Enderezado: con la palanca a menos de ~15° de la vertical el volante vuelve al centro y el auto sigue derecho
+  // (un ladeo chico sin querer no lo desvía); más allá, el giro sube parejo desde cero. El teclado no se afecta.
+  const RECTO = 0.26;   // sen(15°)
+  const rapido = clamp((Math.abs(c.speed) - 4) / 12, 0, 1);   // 0 hasta 4 m/s, 1 desde 16 m/s
+  let dirX = mag > 0 ? jx / mag : 0;
+  dirX = Math.abs(dirX) < RECTO ? 0 : Math.sign(dirX) * (Math.abs(dirX) - RECTO) / (1 - RECTO);
+  // Curva de respuesta ("expo"): un ladeo chico gira poco y sólo el ladeo fuerte gira a fondo. Más marcada despacio
+  // (exponente 1,8) que rápido (1,2). El teclado da ladeo total (1): no le afecta.
+  dirX = Math.sign(dirX) * Math.pow(Math.abs(dirX), lerp(1.8, 1.2, rapido));
+  // controles de giro del joystick: como las flechas, sin tocar la velocidad, pero girando la mitad (más suaves)
+  if (input.giro && !kx) dirX = input.giro * 0.5;
+  // Dirección según la velocidad: el giro máximo va del 70 % (despacio) al 42 % (a 16 m/s o más), y el volante se
+  // mueve más suave yendo rápido. Así despacio no es brusco y a toda velocidad los giros son amplios pero alcanzan.
+  // al soltar el giro las ruedas vuelven al centro despacio (~1 s); girar hacia un lado sigue siendo rápido
+  const volviendo = Math.abs(dirX) < Math.abs(c.steer) && Math.sign(dirX) !== -Math.sign(c.steer);
+  c.steer = lerp(c.steer, dirX, 1 - Math.exp(-dt * (volviendo ? 2.5 : 7 - 3 * rapido)));
   const grip = clamp(Math.abs(c.speed) / 4, 0, 1) * (c.speed >= 0 ? 1 : -1);
-  c.heading -= c.steer * S.turn * grip * dt;
+  c.heading -= c.steer * S.turn * lerp(0.7, 0.42, rapido) * grip * dt;
 
   c.x += Math.sin(c.heading) * c.speed * dt;
   c.z += Math.cos(c.heading) * c.speed * dt;

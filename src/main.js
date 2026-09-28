@@ -55,6 +55,7 @@ import './ui/action-menu.js';
 import './game/modes.js';
 import { MAX_PETS, updatePreview } from './ui/panels/pets.js';
 import { refreshTT } from './ui/panels/shop.js';
+import './ui/panels/wardrobe.js';
 import { installTestHooks } from './debug/hooks.js';
 
 let last = performance.now(), placeT = 0;

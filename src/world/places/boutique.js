@@ -5,6 +5,7 @@ import { G, box, cyl, mesh, rbox, rlo, sph } from '../../engine/geometry.js';
 import { makeSign, stripeTexture } from '../../engine/textures.js';
 import { world } from '../layout.js';
 import { addObs } from '../physics.js';
+import { addZone } from '../zones.js';
 
 /* ---------- special places ---------- */
 function mannequin(g, x, y, z, color, skirt) {
@@ -56,6 +57,8 @@ function boutique(x, z) {
   world.add(g);
   addObs(x, z, w / 2 + 0.3, d / 2 + 0.3, 11);
   addObs(x - 4.9, z + d / 2 + 0.75, 2.5, 0.8); addObs(x + 4.9, z + d / 2 + 0.75, 2.5, 0.8);
+  // el Vestidor: en la alfombra de la entrada (lo abre ui/panels/wardrobe.js)
+  addZone({ id: 'boutique', x, z: z + d / 2 + 3.2, r: 3.4, label: '👗 Vestidor' });
 }
 
 export { boutique };

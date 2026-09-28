@@ -18,7 +18,7 @@
     <div id="topright">
       <button id="btnMusic" class="toy round" aria-label="Música">🎵</button>
     </div>
-    <div id="joy" aria-label="Mover"><span id="joyHint">¡Mueve aquí!</span><div id="joyKnob"></div></div>
+    <div id="joy" aria-label="Mover"><span id="joyHint">¡Mueve aquí!</span><div id="joySpeed" aria-live="off"><b>0</b><span>km/h</span></div><div id="joyKnob"></div></div>
     <div id="actions">
       <button id="btnAction" class="toy sun" hidden></button>
       <div id="actionRow">
@@ -57,6 +57,16 @@
     <div class="pfoot">
       <button id="btnCarRandom" class="toy sun"><span class="em">✨</span>Sorpréndeme</button>
       <button id="btnBuy" class="toy sky"><span class="em">🔑</span>¡Lo quiero!</button>
+    </div>
+  </aside>
+
+  <aside id="wardrobePanel" class="panel" hidden>
+    <div class="phead"><h2>Vestidor</h2><button id="wardrobeDone" class="toy">Listo</button></div>
+    <div id="wardrobeTabs" class="tabs"></div>
+    <div id="wardrobeBody" class="pbody"></div>
+    <div class="pfoot">
+      <button id="btnLookRandom" class="toy sun"><span class="em">✨</span>Sorpréndeme</button>
+      <button id="btnLookOriginal" class="toy"><span class="em">↩️</span>Original</button>
     </div>
   </aside>
 

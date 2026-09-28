@@ -20,7 +20,75 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
   La 11 (Python) se deja para la etapa 6. La prueba en el iPad real queda para más adelante (decisión 10).
 - Hay una carpeta `mi-ciudad/` dentro del proyecto con un repositorio vacío (sólo `.gitattributes`,
   remoto `Ykharo/mi-ciudad`): parece un intento anterior de GitHub Desktop. No se versiona; se puede borrar.
-- **Etapa 4 lista** (falta: probar en el navegador y commit). Siguiente: etapa 5.
+- **Mejora (después de la etapa 5): joystick con zona lenta y zona rápida.** Pedido: más recorrido para caminar y
+  manejar despacio. El joystick pasó de 156 a 200 px (164 en pantallas chicas); mientras la perilla está entera
+  adentro del círculo punteado es lento (Nina camina 0,5–1,3 m/s; el auto va a 12–27 % de su máximo y retrocede
+  despacio) y en el anillo blanco de afuera es rápido (Nina corre, el auto llega a su máximo). La zona lenta ocupa
+  ~60 % del recorrido. Medidas en fracciones del radio (`ui/joystick.js`, el CSS usa las mismas). Además: el volante
+  sigue la dirección de la palanca (no cuánto se empuja), soltar un poco la palanca baja la velocidad suave (antes
+  cortaba de golpe), y la zona lenta tiene un tono azulado para verse sobre la vereda. El teclado no cambia.
+  Prueba nueva: caminar/correr y auto lento/rápido según la zona. 100/100, capturas regeneradas (cambia el joystick).
+  - Ajuste pedido para el auto (`acelerador()` en `game/driving.js`): el primer tercio del anillo blanco sigue siendo
+    lento; desde ahí la velocidad tope y la aceleración suben parejo hasta el máximo, que se alcanza sólo con la
+    perilla en el tope. Nina a pie no cambió (corre desde que entra al anillo). El límite de la zona lenta es un solo
+    valor, `INPUT_LENTO` en `game/actors.js`, que usan el joystick y el auto.
+  - Ayudas de manejo (pedidas: el auto costaba controlarlo con el joystick a alta velocidad):
+    **dirección según la velocidad** (hasta 4 m/s gira igual; después el giro máximo baja hasta 30 % a 16 m/s, y el
+    volante se mueve más suave) y **enderezado** (palanca a menos de 15° de la vertical = volante al centro; más
+    allá, el giro sube parejo). Antes, a cualquier velocidad sobre 4 m/s el auto giraba hasta 126°/s, y la palanca
+    ladeada 10° lo desviaba ~35° en 2 s; ahora sigue derecho. Prueba nueva (se comprobó que falla con lo anterior).
+    Descartada por ahora la opción C (mantener la velocidad al acercar la perilla al centro). 105/105.
+  - **Palanca fija al manejar** (a prueba; `PALANCA_FIJA` en `ui/joystick.js` la apaga): al soltar la perilla
+    manejando, queda fija (anillo amarillo + 🔒) y el auto mantiene dirección y velocidad. Se suelta con doble toque en
+    la bola (vuelve al centro y el auto se detiene solo), con el freno (✋ o espacio), llevándola al centro, al bajarse
+    o al abrir un panel. A pie no cambia. Aviso "Toca 2 veces la bola para soltar" las 2 primeras veces. Prueba nueva.
+  - Mientras se ajusta la conducción, sólo se corren las pruebas de manejo/joystick; la batería completa al terminar.
+  - Ajuste de sensibilidad (pedido): curva de respuesta "expo" en el volante (exponente 1,8 despacio → 1,2 rápido),
+    giro máximo 70 % despacio → 42 % a 16 m/s (antes 100 % → 30 %), y en el anillo blanco la velocidad sube gradual
+    con curva p² (⅓ ≈ 35 %, ⅔ ≈ 59 %, tope 100 %) en vez de quedarse plana el primer tercio y subir de golpe.
+  - Palanca fija "como el teclado" (pedido): al soltarla manejando, vuelve al centro en horizontal (suave, 0,18 s: las
+    ruedas quedan rectas y el auto sigue derecho) pero mantiene la altura (la velocidad, adelante o atrás). Si se
+    soltó casi a la altura del centro, no queda fija. La prueba de la palanca fija cubre el caso en diagonal.
+  - Pedido: las ruedas vuelven más lento al centro al soltar el giro (~1 s; perilla 0,4 s). Girar hacia un lado sigue
+    rápido. Aplica también al soltar A/D.
+  - Pedido: **controles de giro** sobre el anillo blanco (sólo al manejar), a la izquierda y derecha, en el tercio
+    central de cada costado: veladura azulada suave + flecha ‹ › blanca; amarilla al apretar. Funcionan como las
+    flechas del teclado (`input.giro`): giran sin cambiar la velocidad ni mover la perilla. SVG generado en
+    `ui/joystick.js` con radio 1; la zona para tocar es más grande que el dibujo. Prueba nueva.
+  - **Error arreglado:** con los controles de giro, la bola fija no se podía volver a mover ni soltar con doble clic.
+    La zona invisible para tocar las flechas tenía `pointer-events: all`, y su contorno (ancho por defecto 1 unidad =
+    el radio entero) tapaba la bola. Ahora sólo el relleno recibe toques. Las pruebas no lo vieron porque mandaban los
+    eventos directo al joystick: las de manejo pasaron a `tests/manejo.spec.js` y usan el mouse real (pasa por todas
+    las capas, como un dedo), con la herramienta `joystick()` de `tests/ayudantes.js`.
+  - Doble toque más estricto: dos toques cortos (< 0,3 s, casi sin arrastrar) con < 0,4 s entre ellos; agarrar la
+    bola apenas se soltó ya no la suelta.
+  - Pedidos: el auto un poco más rápido en la zona lenta (18–35 % de su máximo; antes 12–27 %) y los controles de
+    giro giran la mitad (volante al 50 %).
+  - Velocímetro en km/h dentro del círculo del joystick (sólo al manejar), un poco bajo el centro para que la perilla
+    —que sube al acelerar— no lo tape. Se alimenta del evento `motor`.
+  - **Conducción cerrada** con la batería completa: 115/115.
+  - Encontrado: `index.html` no tiene `<meta name="viewport">`, así que Safari de teléfono y de iPad dibuja la
+    página a 980 px de ancho y la achica (todo el HUD se ve más chico en el teléfono, y las reglas CSS para pantallas
+    de menos de 560 px nunca se aplican). Es así desde el original; agregarla es un cambio visible — pendiente de decidir.
+- **Arreglo (después de la etapa 5): retroceder en diagonal.** Reportado al manejar: con la palanca abajo-izquierda
+  o abajo-derecha el auto a veces avanzaba, y parecía girar distinto hacia cada lado. Causa: retroceder exigía
+  `|jx| < 0,7`, y a 45° es 0,707 (con teclado, S+A/S+D siempre avanzaba). Ahora cualquier palanca con componente
+  hacia abajo > 0,35 frena y retrocede (`game/driving.js`). Prueba nueva en `tests/lugares.spec.js` (teclado a los
+  dos lados + joystick a 45°); se comprobó que falla con el código anterior. 95/95.
+- **Etapa 5 lista** (falta: probar en el navegador y commit). Siguiente: etapa 6.
+  - Zona `boutique` en la alfombra de la entrada (👗 Vestidor), modo `wardrobe`, panel `ui/panels/wardrobe.js`.
+    Nina se pone en la alfombra mirando a la calle: la cámara queda al frente con la Boutique de fondo (4,6 m, más
+    cerca que en el refugio); arrastrar la gira, como en el refugio.
+  - Pestañas Pelo / Arriba / Abajo / Zapatos / Piel. Por prenda: opciones de prenda (hoy una por espacio), un bloque
+    de colores por canal con la muestra "↩" (el color con que viene, `factoryColor`) y los extras (mariposa sí/no).
+    Todo sale del catálogo: una prenda nueva aparece sola. "Sorpréndeme" (ropa y pelo al azar; la piel no se toca)
+    y "Original" (Nina de fábrica). Cada cambio se ve al instante, pone cara feliz y se guarda.
+  - Se agregó la pestaña **Piel** (no estaba en el plan; el look ya la tenía).
+  - Pruebas nuevas (`tests/vestidor.spec.js`): colores + mariposa + detalles de zapatillas + piel, guardado y
+    recarga; Sorpréndeme y Original. Captura nueva 8-vestidor. 90/90.
+  - Vertical revisado con WebKit (tamaños de iPad y de teléfono): el panel es hoja inferior y Nina se ve completa
+    arriba. Falta el iPad real (pendiente general).
+- **Etapa 4 terminada.**
   - Decidido y hecho: el pelo **sí** proyecta sombra. Ahora lo dice el catálogo (`sombra: true` en la prenda) en vez de
     un nombre de malla. Cambio visible a propósito: capturas regeneradas (difieren sólo alrededor de las sombras de
     los personajes).

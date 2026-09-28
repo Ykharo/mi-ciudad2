@@ -45,4 +45,13 @@ test('capturas de referencia', async ({ page, cargar }) => {
   await page.locator('#btnAction').click({ force: true });
   await page.clock.runFor(1500);
   await foto('7-tienda');
+
+  // 8 se agregó en la etapa 5: el Vestidor abierto, con un color elegido
+  await page.locator('#shopDone').click();
+  await page.evaluate(() => window.__juego.teleport(20, -8.3));
+  await page.clock.runFor(1000);
+  await page.locator('#btnAction').click({ force: true });
+  await page.locator('#wardrobeBody [data-k="color"][data-v="#A77BF3"]').click();
+  await page.clock.runFor(1500);
+  await foto('8-vestidor');
 });

@@ -16,6 +16,7 @@ PC = Chrome/Edge de escritorio. iPad = Safari en un iPad real, en horizontal y v
 | Autos Arcoíris: pestañas, "Sorpréndeme", bocina, comprar → manejar, frenar, retroceder, chocar, bajarse; mascota de copiloto | ✅ | pendiente |
 | "Mi auto" trae el auto; "Mi garaje": cambiar y devolver | ✅ | pendiente |
 | Recargar: mascotas, autos y diseño de la tienda se conservan | ✅ | pendiente |
+| Vestidor (desde la etapa 5): pestañas, colores, mariposa, piel, Sorpréndeme, Original; girar a Nina arrastrando; al recargar Nina sigue igual | — | — |
 | Música on/off; al cambiar de pestaña el audio se pausa | ✅ | pendiente |
 | Rendimiento: fluido caminando por el centro con vecinos a la vista | ✅ | pendiente |
 | Versión de un solo archivo: abre con doble clic y en el visor donde se publica | ✅ | pendiente |

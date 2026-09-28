@@ -1,16 +1,8 @@
 // Lugares y autos. Usan los ganchos de prueba (window.__juego, con ?test) para llevar a Nina
 // directo a cada lugar en vez de caminar hasta allá.
-import { test, expect } from './ayudantes.js';
+import { test, expect, ir, modo, accion } from './ayudantes.js';
 
-const ir = (page, x, z) => page.evaluate(([x, z]) => window.__juego.teleport(x, z), [x, z]);
-const modo = page => page.evaluate(() => window.__juego.state.mode);
 const guardado = page => page.evaluate(() => JSON.parse(localStorage.getItem('ciudadArcoiris.v2')));
-// Espera a que aparezca el botón de acción con ese texto y lo toca. El botón salta suavemente (animación),
-// así que nunca queda "quieto": se toca sin esperar eso.
-async function accion(page, texto) {
-  await expect(page.locator('#btnAction')).toHaveText(texto);
-  await page.locator('#btnAction').click({ force: true });
-}
 
 test('sentarse en una banca del parque', async ({ page, jugar }) => {
   await jugar();

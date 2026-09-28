@@ -18,17 +18,17 @@ export const PIEL = {
 };
 
 export const PRENDAS = [
-  { id: 'mono', nombre: 'Moño alto', slot: 'pelo', mallas: ['Pelo_Moño'], sombra: true,
+  { id: 'mono', nombre: 'Moño alto', ic: '💇', slot: 'pelo', mallas: ['Pelo_Moño'], sombra: true,
     canales: { principal: { mats: ['Hair_Chestnut'], paleta: 'pelo' } },
     derivados: { Hair_Light: ['principal', 'contraste', 1.1, 0.12], Hair_Dark: ['principal', 'sombra', 0.72] } },
-  { id: 'peto', nombre: 'Peto', slot: 'torso', mallas: ['Ropa_Peto'],
+  { id: 'peto', nombre: 'Peto', ic: '👚', slot: 'torso', mallas: ['Ropa_Peto'],
     canales: { principal: { mats: ['Cotton_Charcoal'], paleta: 'ropa' } },
     derivados: { Cotton_Edge: ['principal', 'contraste', 0.84, 0.1] },
-    extras: { Top_Emblem: { nombre: 'Mariposa' } } },
-  { id: 'pantalon_cargo', nombre: 'Pantalón cargo', slot: 'piernas', mallas: ['Ropa_Pantalon'],
+    extras: { Top_Emblem: { nombre: 'Mariposa', ic: '🦋' } } },
+  { id: 'pantalon_cargo', nombre: 'Pantalón cargo', ic: '👖', slot: 'piernas', mallas: ['Ropa_Pantalon'],
     canales: { principal: { mats: ['Cargo_Pearl'], paleta: 'pantalon' } },
     derivados: { Cargo_Pocket: ['principal', 'sombra', 0.92], Cargo_Stitch: ['principal', 'contraste', 0.68, 0.25] } },
-  { id: 'zapatillas', nombre: 'Zapatillas', slot: 'pies', mallas: ['Ropa_Zapatillas'],
+  { id: 'zapatillas', nombre: 'Zapatillas', ic: '👟', slot: 'pies', mallas: ['Ropa_Zapatillas'],
     canales: {
       principal: { mats: ['Sneaker_Ivory'], paleta: 'zapatos' },
       panel: { mats: ['Sneaker_Panel'], paleta: 'ropa', siFalta: ['principal', 'sombra', 0.8] },

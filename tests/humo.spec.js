@@ -33,9 +33,9 @@ test('camina con el joystick', async ({ page, jugar }) => {
   await joy.dispatchEvent('pointerdown', toque(cx, cy));
   await joy.dispatchEvent('pointermove', toque(cx, cy - 80));
   await expect(page.locator('#joyHint')).toBeHidden();
-  // la perilla sube hasta el borde (60 px) y vuelve al centro al soltar
+  // la perilla sube hasta su tope (75 % del radio) y vuelve al centro al soltar
   const altoPerilla = async () => { const k = await page.locator('#joyKnob').boundingBox(); return Math.round(k.y + k.height / 2 - cy); };
-  await expect.poll(altoPerilla).toBe(-60);
+  await expect.poll(altoPerilla).toBeLessThan(-0.6 * r.height / 2);
   await expect(lugar).not.toHaveText('Paseo Algodón');
   await joy.dispatchEvent('pointerup', toque(cx, cy - 80));
   await expect.poll(altoPerilla).toBe(0);

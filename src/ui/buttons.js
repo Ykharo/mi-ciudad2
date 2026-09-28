@@ -9,6 +9,7 @@ import { greetAround, npcSay, npcs } from '../game/npcs.js';
 import { callCar, driving, exitCar } from '../game/driving.js';
 import { hornSound, initAudio, startMusic, stopMusic } from '../audio/audio.js';
 import { $, btnAction } from './dom.js';
+import { soltarPalanca } from './joystick.js';
 import { openPets } from './panels/pets.js';
 
 $('#btnJump').addEventListener('pointerdown', e => { e.preventDefault(); input.jump = true; });
@@ -19,7 +20,7 @@ $('#btnWave').addEventListener('click', () => {
   greetAround();
 });
 const btnBrake = $('#btnBrake');
-const brakeOn = e => { e.preventDefault(); input.brake = true; btnBrake.classList.add('held'); };
+const brakeOn = e => { e.preventDefault(); soltarPalanca(); input.brake = true; btnBrake.classList.add('held'); };
 const brakeOff = () => { input.brake = false; btnBrake.classList.remove('held'); };
 btnBrake.addEventListener('pointerdown', brakeOn);
 ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => btnBrake.addEventListener(ev, brakeOff));

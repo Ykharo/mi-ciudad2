@@ -32,6 +32,8 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
   `assets/` es el publicDir de Vite.
 - `src/characters/wardrobe.js` — pegar/quitar prendas (`ponerPrenda`, `quitarPrenda`, `recolorear`), materiales
   compartidos. `src/characters/avatar.js` — `loadCharacters(looks)` y `makeAvatar(look)` (base + prendas).
+- `src/ui/panels/wardrobe.js` — el Vestidor (zona `boutique` en la Boutique Arcoíris, modo `wardrobe`): colores por
+  canal, extras, piel, Sorpréndeme, Original. Guarda en `player.look` (y en el guardado v2).
 - `src/debug/probador.html` — probador de prendas y animaciones (sólo con `npm run dev`:
   http://localhost:5173/src/debug/probador.html). `tools/fotos_poses.mjs` fotografía las poses difíciles con él.
 - `tools/vite-embed-assets.js` — incrusta los modelos (base + todas las prendas) en la versión de un solo archivo.

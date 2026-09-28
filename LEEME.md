@@ -1,6 +1,8 @@
 # Ciudad Arcoíris con Nina
 
 Juego 3D para niños en el navegador. Se juega con el dedo en tablet o teléfono y con el teclado en el computador.
+Nina pasea por la ciudad, baila, adopta mascotas, diseña y maneja autos, y se cambia de ropa en el Vestidor de la
+Boutique Arcoíris.
 
 ## Para jugar
 - **En internet**: la versión web se publica en GitHub Pages cada vez que se sube un cambio a `main`.

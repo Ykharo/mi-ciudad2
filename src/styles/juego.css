@@ -41,12 +41,34 @@ button:focus-visible{outline:4px solid var(--sky);outline-offset:3px;}
 .round.off{--bg:#E8E4EE;--bd:#C9C2D6;}
 
 #joy{position:absolute;left:calc(30px + env(safe-area-inset-left,0px));bottom:calc(30px + env(safe-area-inset-bottom,0px));
-  width:156px;height:156px;border-radius:50%;background:rgba(255,255,255,.32);border:4px solid rgba(255,255,255,.9);
-  box-shadow:0 6px 0 rgba(38,49,92,.14), inset 0 0 0 10px rgba(255,255,255,.18);touch-action:none;}
-#joy::before{content:"";position:absolute;inset:34px;border-radius:50%;border:3px dashed rgba(255,255,255,.7);}
-#joyKnob{position:absolute;left:50%;top:50%;width:70px;height:70px;border-radius:50%;transform:translate(-50%,-50%);
+  width:200px;height:200px;border-radius:50%;border:4px solid rgba(255,255,255,.9);
+  /* Mientras la perilla está entera adentro del punteado, va lento (Nina camina); en el anillo blanco, rápido.
+     El punteado está en el 78 % del radio y la perilla mide el 32 % del círculo: ver las medidas en ui/joystick.js */
+  /* la zona lenta va con un tono de tinta para que el punteado y el anillo blancos se vean también sobre la vereda */
+  background:radial-gradient(circle closest-side,rgba(38,49,92,.16) 0 78%,rgba(255,255,255,.55) 78% 100%);
+  box-shadow:0 6px 0 rgba(38,49,92,.14);touch-action:none;}
+#joy::before{content:"";position:absolute;inset:11%;border-radius:50%;border:3px dashed rgba(255,255,255,.9);box-sizing:border-box;}
+#joyKnob{position:absolute;left:50%;top:50%;width:32%;height:32%;border-radius:50%;transform:translate(-50%,-50%);box-sizing:border-box;
   background:radial-gradient(circle at 35% 30%,#fff 0 18%,#FF9CC7 19% 100%);border:4px solid #fff;
   box-shadow:0 5px 0 var(--pink-d),0 10px 20px rgba(38,49,92,.25);pointer-events:none;}
+/* palanca fija al manejar (ui/joystick.js): anillo amarillo y candado */
+/* velocímetro al manejar: un poco bajo el centro, para que la perilla (que sube al acelerar) no lo tape */
+#joySpeed{position:absolute;left:50%;top:61%;transform:translate(-50%,-50%);display:none;flex-direction:column;align-items:center;
+  pointer-events:none;color:#fff;text-shadow:0 1px 3px rgba(38,49,92,.55);}
+#game.driving #joySpeed{display:flex;}
+#joySpeed b{font:800 30px/1 var(--display);font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
+#joySpeed span{font:800 10px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;opacity:.85;margin-top:1px;}
+#joyKnob.volviendo{transition:transform .4s ease-out;}
+/* controles de giro sobre el anillo blanco (sólo al manejar; ui/joystick.js) */
+.giros{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;display:none;}
+#game.driving .giros{display:block;}
+.giros .velo{fill:rgba(38,49,92,.18);transition:fill .12s;}
+.giros .flecha{fill:none;stroke:#fff;stroke-width:.05;stroke-linecap:round;stroke-linejoin:round;}
+/* sólo el relleno recibe toques: con "all", el contorno invisible (1 unidad = el radio entero) tapaba la perilla */
+.giros .toque{fill:transparent;stroke:none;pointer-events:fill;touch-action:none;cursor:pointer;}
+.giros .giro.on .velo{fill:rgba(255,201,60,.75);}
+#joyKnob.fija{box-shadow:0 0 0 5px var(--sun),0 5px 0 var(--pink-d),0 10px 20px rgba(38,49,92,.25);}
+#joyKnob.fija::after{content:"🔒";position:absolute;inset:0;display:grid;place-items:center;font-size:18px;line-height:1;}
 #joyHint{position:absolute;left:50%;top:-30px;transform:translateX(-50%);font:800 14px/1 var(--display);color:#fff;
   text-shadow:0 2px 0 rgba(38,49,92,.35);white-space:nowrap;pointer-events:none;}
 
@@ -121,6 +143,11 @@ button:focus-visible{outline:4px solid var(--sky);outline-offset:3px;}
 .opt.on{border-color:var(--pink);background:#FFF0F7;box-shadow:0 3px 0 #FFB8D6;}
 #petPanel .opt.on{border-color:var(--mint);background:#EAFBF4;box-shadow:0 3px 0 #9DE8CF;}
 .opt:active{transform:translateY(2px);}
+#wardrobePanel .phead{background:var(--pink);}
+/* muestra "como viene": el color original de la prenda, con una flechita */
+.sw.fabrica{position:relative;}
+.sw.fabrica::after{content:"↩";position:absolute;inset:0;display:grid;place-items:center;font:800 18px/1 var(--display);color:#fff;
+  text-shadow:0 1px 2px rgba(38,49,92,.6);}
 .sws{display:flex;flex-wrap:wrap;gap:10px;}
 .sw{width:46px;height:46px;border-radius:50%;border:4px solid #fff;box-shadow:0 0 0 2px #E2DAEA,0 3px 0 rgba(38,49,92,.12);padding:0;}
 .sw.on{box-shadow:0 0 0 4px var(--ink),0 3px 0 rgba(38,49,92,.12);transform:scale(1.06);}
@@ -157,9 +184,7 @@ button:focus-visible{outline:4px solid var(--sky);outline-offset:3px;}
   @keyframes slideIn{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
 }
 @media (max-width:560px){
-  #joy{width:130px;height:130px;left:18px;bottom:22px;}
-  #joy::before{inset:28px;}
-  #joyKnob{width:58px;height:58px;}
+  #joy{width:164px;height:164px;left:18px;bottom:22px;}
   #btnJump{width:86px;height:86px;}
   #btnBrake{width:86px;height:86px;}
   #actions{right:14px;bottom:20px;gap:10px;}

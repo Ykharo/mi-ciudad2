@@ -14,7 +14,7 @@ canvas.addEventListener('pointermove', e => {
   const p = pointers.get(e.pointerId); if (!p) return;
   const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
   if (pointers.size === 1) {
-    if (state.mode === 'pets') player.facing += dx * 0.012;
+    if (state.mode === 'pets' || state.mode === 'wardrobe') player.facing += dx * 0.012;
     else if (state.mode === 'shop') { state.ttSpin += dx * 0.012; state.ttDrag = 1.5; }
     else if (state.mode === 'play' || state.mode === 'drive') { cam.yaw -= dx * 0.0065; cam.pitch = clamp(cam.pitch + dy * 0.004, 0.08, 1.15); }
   } else if (pointers.size === 2 && (state.mode === 'play' || state.mode === 'drive')) {

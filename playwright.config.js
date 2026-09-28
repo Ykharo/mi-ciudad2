@@ -46,11 +46,11 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    proyecto('dev', 'dev', escritorio, /(humo|lugares|guardado|capturas)\.spec\.js/),
-    proyecto('dev-ipad', 'dev', ipad, /(humo|lugares|guardado)\.spec\.js/),
-    proyecto('web', 'web', escritorio, /(humo|lugares|guardado|capturas)\.spec\.js/),
-    proyecto('web-ipad', 'web', ipad, /(humo|lugares|guardado)\.spec\.js/),
-    proyecto('unico', 'unico', escritorio, /(humo|lugares|guardado|capturas|sin-red)\.spec\.js/),
+    proyecto('dev', 'dev', escritorio, /(humo|lugares|manejo|guardado|vestidor|capturas)\.spec\.js/),
+    proyecto('dev-ipad', 'dev', ipad, /(humo|lugares|manejo|guardado|vestidor)\.spec\.js/),
+    proyecto('web', 'web', escritorio, /(humo|lugares|manejo|guardado|vestidor|capturas)\.spec\.js/),
+    proyecto('web-ipad', 'web', ipad, /(humo|lugares|manejo|guardado|vestidor)\.spec\.js/),
+    proyecto('unico', 'unico', escritorio, /(humo|lugares|manejo|guardado|vestidor|capturas|sin-red)\.spec\.js/),
   ],
   webServer: Object.values(SERVIDORES).map(s => ({
     command: `${s.cmd} --port ${s.puerto} --strictPort`,
