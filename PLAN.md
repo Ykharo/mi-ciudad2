@@ -20,7 +20,25 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
   La 11 (Python) se deja para la etapa 6. La prueba en el iPad real queda para más adelante (decisión 10).
 - Hay una carpeta `mi-ciudad/` dentro del proyecto con un repositorio vacío (sólo `.gitattributes`,
   remoto `Ykharo/mi-ciudad`): parece un intento anterior de GitHub Desktop. No se versiona; se puede borrar.
-- **Etapa 2 lista** (falta: probar en el navegador y commit). Siguiente: etapa 3.
+- **Etapa 3 lista** (falta: probar en el navegador y commit). Siguiente: etapa 4.
+  - Catálogos de SÓLO DATOS en `src/characters/catalog/`: `paletas.js`, `prendas.js` (piel + 4 prendas del modelo
+    actual con canales, derivados y extras, como en 3.2), `personajes.js` (`LOOK_NINA`, `PERSONAJES`, plantillas
+    `VECINOS` con el orden del sorteo) y `acciones.js` (`ACTIONS`, `AUTO_FACE`, `HOLD`).
+  - `src/characters/looks.js`: `lookMaterials` (reemplaza a `recolor`), `randomLook` desde plantillas y `fixLook`.
+    Las reglas de color escritas a mano en `recolor()` quedaron como datos (`['sombra', k]`, `['contraste', k, blanco]`).
+    El look de fábrica de Nina no cambia colores (los tonos del modelo no salen de las reglas).
+  - Paso 1 (catálogo, clonando como antes): las 7 capturas **idénticas**: los vecinos salen iguales.
+  - Paso 2, materiales compartidos por (material, color, visible), salvo las capas de la cara: 152 → 102 materiales
+    con 8 personajes. Three.js r149 usa `Math.random` en cada UUID, así que clonar menos cambia la secuencia de
+    azar de las pruebas y mueve a los vecinos. Se agregó `UUID_APARTE=1` a las capturas (dev): con esa opción,
+    antes y después del cambio las capturas salieron idénticas (la 7, con el ruido de siempre de la GPU).
+    Después se regeneraron las capturas de referencia (sólo cambia dónde andan los vecinos).
+  - Guardado v2 (`ciudadArcoiris.v2`): `{ version: 2, nina: { look }, pets, cars, shop }`. Una partida v1 se migra
+    al cargar y se guarda enseguida en v2; la clave v1 no se borra. Pruebas nuevas (`tests/guardado.spec.js`):
+    migración v1 → v2 y guardado dañado.
+  - Pruebas: 80/80. En WebKit cada prueba usa ahora un navegador nuevo: WebKit no libera los contextos WebGL de
+    páginas cerradas y perdía el contexto en la carga número 16 (pasó a notarse con las pruebas nuevas).
+- **Etapa 2 terminada.**
   - Primero, sobre el código de la 1b: ganchos de prueba `window.__juego` (`src/debug/hooks.js`, sólo en desarrollo
     o con `?test`: state, player, npcs, cars, `teleport(x, z)`), 8 pruebas nuevas en `tests/lugares.spec.js`
     (banca, helado, refugio, comprar y manejar, garaje, "Mi auto" con partida guardada, "Mi auto" sin auto,

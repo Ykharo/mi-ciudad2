@@ -20,7 +20,8 @@ Requiere Node (una vez: `npm install`).
 - `src/` — el código del juego, separado por tema. Algunos puntos útiles:
   - `characters/avatar.js` — carga del modelo, escala (`NINA_SCALE`), colores de los vecinos (`recolor`, `randomLook`)
     y clones (`makeAvatar`). `characters/face.js` — expresiones (`FACE_CELLS`). `characters/animator.js` — animaciones.
-  - `ui/action-menu.js` — `ACTIONS`, la lista del menú 🎬 Acción (id = nombre de la animación en el .glb).
+  - `characters/catalog/` — sólo datos: paletas de colores, prendas, personajes y plantillas de vecinos, y
+    `acciones.js` con `ACTIONS`, la lista del menú 🎬 Acción (id = nombre de la animación en el .glb).
   - `cars/build.js` — `CAR_SCALE`, tamaño de los autos respecto al personaje. `cars/catalog.js` — tipos, colores, adornos.
   - `game/player.js` — `PLAYER_SPEED`, velocidad al caminar/correr. `game/driving.js` — manejar.
   - `world/city.js` arma la ciudad; cada lugar especial está en `world/places/`.

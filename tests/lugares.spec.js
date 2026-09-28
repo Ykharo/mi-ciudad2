@@ -4,7 +4,7 @@ import { test, expect } from './ayudantes.js';
 
 const ir = (page, x, z) => page.evaluate(([x, z]) => window.__juego.teleport(x, z), [x, z]);
 const modo = page => page.evaluate(() => window.__juego.state.mode);
-const guardado = page => page.evaluate(() => JSON.parse(localStorage.getItem('ciudadArcoiris.v1')));
+const guardado = page => page.evaluate(() => JSON.parse(localStorage.getItem('ciudadArcoiris.v2')));
 // Espera a que aparezca el botón de acción con ese texto y lo toca. El botón salta suavemente (animación),
 // así que nunca queda "quieto": se toca sin esperar eso.
 async function accion(page, texto) {
@@ -95,8 +95,9 @@ test('garaje: cambiar y devolver un auto', async ({ page, jugar }) => {
 test('"Mi auto" trae el auto guardado', async ({ page, jugar }) => {
   // partida guardada con un auto estacionado en Avenida Menta (sólo la primera vez: sobrevive a recargas)
   await page.addInitScript(() => {
-    if (localStorage.getItem('ciudadArcoiris.v1')) return;
-    localStorage.setItem('ciudadArcoiris.v1', JSON.stringify({
+    if (localStorage.getItem('ciudadArcoiris.v2')) return;
+    localStorage.setItem('ciudadArcoiris.v2', JSON.stringify({
+      version: 2, nina: { look: null },
       pets: [{ kind: 'gato', color: '#FFFFFF', name: 'Nube' }],
       cars: [{ spec: { type: 'buggy', color: '#4FB6F5' }, x: 61, z: -1.9, h: -Math.PI / 2 }], shop: null,
     }));

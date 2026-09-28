@@ -74,7 +74,8 @@ test('adoptar una mascota y que siga ahí al recargar', async ({ page, jugar }) 
   await page.locator('#petDone').click();
   await expect(panel).toBeHidden();
 
-  const guardado = await page.evaluate(() => JSON.parse(localStorage.getItem('ciudadArcoiris.v1')));
+  const guardado = await page.evaluate(() => JSON.parse(localStorage.getItem('ciudadArcoiris.v2')));
+  expect(guardado.version).toBe(2);
   expect(guardado.pets.map(p => [p.kind, p.name])).toEqual([['perro', 'Toby'], ['gato', 'Luna']]);
 
   await page.reload();

@@ -2,20 +2,13 @@
 import { GLTFLoader, SkeletonUtils, THREE } from '../engine/three.js';
 import { readAsset } from '../assets/loader.js';
 import { camera, scene } from '../engine/renderer.js';
-import { shade, tint } from '../engine/materials.js';
 import { setFace } from './face.js';
-
-/* ================= CHARACTERS ================= */
-const SKIN = ['#FFE3CC', '#F6C9A4', '#E3A97F', '#C78A5C', '#9B6643', '#6A432E'];
-const HAIR_COLORS = ['#2B1B14', '#5A3521', '#9C5B2E', '#E0A84E', '#F6DE95', '#E8664F', '#FF8FC2', '#9B7BF3', '#55C3F0', '#F2F2F6'];
-const CLOTH_COLORS = ['#FF6FAE', '#FF4F5E', '#FF9B4A', '#FFD23F', '#7BD85A', '#34CFA0', '#4FB6F5', '#5B6CF0', '#A77BF3', '#FFFFFF', '#2E3350', '#F7B7D2'];
-const SHOE_COLORS = ['#FFFFFF', '#FF6FAE', '#FF4F5E', '#FFD23F', '#4FB6F5', '#34CFA0', '#A77BF3', '#2E3350', '#9A6A45'];
+import { lookMaterials } from './looks.js';
 
 /* ================= NINA: avatar .glb con esqueleto de 17 huesos y 11 animaciones =================
    Espacio glTF: +Y arriba, mira hacia +Z (igual que el juego). La protagonista es el modelo tal cual;
-   los vecinos son clones del mismo modelo con otros colores, estatura y tamaño de cabeza. */
+   los vecinos son clones del mismo modelo con otros colores, estatura y tamaño de cabeza (ver looks.js). */
 const NINA_SCALE = 1.4;                  // el modelo mide ~1,65 m; en la ciudad queda como los autos esperan
-const PANTS_COLORS = ['#D9D6E3', '#4F7DBF', '#2E3350', '#F7B7D2', '#FFD23F', '#34CFA0', '#A77BF3', '#FF9B4A', '#FFFFFF', '#9A6A45'];
 const SHADOW_PARTS = new Set(['Body_Base', 'Head_Base', 'Pelo_Moño']);
 const avatars = [];
 const NINA = { scene: null, clips: {}, walkStride: 0, runStride: 0, runSpeed: 0 };
@@ -87,33 +80,28 @@ async function loadNina() {
   NINA.runSpeed = (ex.run_speed_mps || 1.75) * NINA_SCALE;
 }
 
-function recolor(mats, look) {
-  const set = (n, c) => { if (mats[n] && c) mats[n].color.set(c); };
-  const dark = hex => new THREE.Color(hex).getHSL({}).l < 0.3;
-  set('Skin_Warm', look.skin); set('Ear_Warm', look.skin && shade(look.skin, 0.9));
-  if (look.hair) { set('Hair_Chestnut', look.hair); set('Hair_Light', dark(look.hair) ? tint(look.hair, 0.12) : shade(look.hair, 1.1)); set('Hair_Dark', shade(look.hair, 0.72)); }
-  if (look.top) { set('Cotton_Charcoal', look.top); set('Cotton_Edge', dark(look.top) ? tint(look.top, 0.1) : shade(look.top, 0.84)); }
-  if (look.pants) { set('Cargo_Pearl', look.pants); set('Cargo_Pocket', shade(look.pants, 0.92)); set('Cargo_Stitch', dark(look.pants) ? tint(look.pants, 0.25) : shade(look.pants, 0.68)); }
-  if (look.shoes) { set('Sneaker_Ivory', look.shoes); set('Sneaker_Panel', look.accent || shade(look.shoes, 0.8)); }
-  if (mats.Top_Emblem && look.emblem === false) mats.Top_Emblem.visible = false;
-}
-function randomLook(r = Math.random) {
-  const p = a => a[Math.floor(r() * a.length)];
-  return {
-    skin: p(SKIN), hair: p(HAIR_COLORS), top: p(CLOTH_COLORS), pants: p(PANTS_COLORS), shoes: p(SHOE_COLORS), accent: p(CLOTH_COLORS),
-    emblem: r() < 0.5, scale: 0.86 + r() * 0.2, head: 0.95 + r() * 0.12
-  };
+// Materiales compartidos entre personajes: uno por (material del modelo, color, visible). Dos vecinos con la
+// misma polera usan el mismo material. Las capas de la cara (ojos, cejas, boca) sí son de cada personaje,
+// porque cada uno pone su propia expresión (se clona sólo la textura: la imagen se comparte).
+const FACE_LAYERS = /^Face_(Eyes|Eyebrows|Mouth)$/;
+const sharedMats = new Map();
+function sharedMat(m, color, hidden) {
+  const key = m.uuid + '|' + (color || '') + (hidden ? '|oculto' : '');
+  let n = sharedMats.get(key);
+  if (!n) { n = m.clone(); if (color) n.color.set(color); if (hidden) n.visible = false; sharedMats.set(key, n); }
+  return n;
 }
 
-// un personaje = clon del modelo con sus propios materiales (y su propia cara) + su mezclador de animaciones
+// un personaje = clon del modelo con sus materiales (compartidos, salvo la cara) + su mezclador de animaciones
 function makeAvatar(look) {
   const model = SkeletonUtils.clone(NINA.scene);
   const c = { root: new THREE.Group(), model, look, mats: {}, act: {}, sp: null, fade: [], phase: 0, face: 'normal', blinkT: 2, blinkOn: 0, holding: null, ice: null };
-  const k = NINA_SCALE * (look && look.scale || 1);
+  const k = NINA_SCALE * (look && look.escala || 1);
   model.scale.setScalar(k); c.k = k;
+  const { colors, hidden } = lookMaterials(look);
   const copies = new Map();
   model.traverse(o => {
-    if (o.isBone) { if (o.name === 'HeadBone' && look && look.head) o.scale.setScalar(look.head); if (o.name === 'HandR') c.hand = o; }
+    if (o.isBone) { if (o.name === 'HeadBone' && look && look.cabeza) o.scale.setScalar(look.cabeza); if (o.name === 'HandR') c.hand = o; }
     if (!o.isMesh) return;
     o.frustumCulled = false;
     o.material = Array.isArray(o.material) ? o.material.map(m => copy(m)) : copy(o.material);
@@ -123,13 +111,13 @@ function makeAvatar(look) {
   });
   function copy(m) {
     if (!copies.has(m)) {
-      const n = m.clone();
-      if (n.map && /^Face_(Eyes|Eyebrows|Mouth)$/.test(m.name)) { n.map = m.map.clone(); n.map.needsUpdate = true; }
+      let n;
+      if (m.map && FACE_LAYERS.test(m.name)) { n = m.clone(); n.map = m.map.clone(); n.map.needsUpdate = true; }
+      else n = sharedMat(m, colors[m.name], hidden.has(m.name));
       copies.set(m, n); c.mats[m.name] = n;
     }
     return copies.get(m);
   }
-  if (look) recolor(c.mats, look);
   c.mixer = new THREE.AnimationMixer(model);
   for (const [name, clip] of Object.entries(NINA.clips)) {
     const a = c.mixer.clipAction(clip); a.play(); a.setEffectiveWeight(0); c.act[name] = a;
@@ -152,4 +140,4 @@ function cullAvatars() {
   }
 }
 
-export { NINA, NINA_SCALE, cullAvatars, loadNina, makeAvatar, randomLook };
+export { NINA, NINA_SCALE, cullAvatars, loadNina, makeAvatar };

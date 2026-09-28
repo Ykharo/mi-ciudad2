@@ -26,6 +26,7 @@ import './world/places/park.js';
 import { carFitsAt, spawnCar } from './cars/fleet.js';
 import { buildCity } from './world/city.js';
 import { cullAvatars, loadNina, makeAvatar } from './characters/avatar.js';
+import { fixLook } from './characters/looks.js';
 import './characters/face.js';
 import './characters/animator.js';
 import './characters/props.js';
@@ -36,7 +37,7 @@ import { buildCarModel } from './cars/build.js';
 import './cars/models.js';
 import { SPAWNS } from './world/places/carshop.js';
 import { MAX_CARS, addPet, cam, ownedCars, player } from './game/actors.js';
-import { loadSave } from './game/save.js';
+import { loadSave, save } from './game/save.js';
 import { updatePlayer } from './game/player.js';
 import { spawnNPCs, updateNPCs } from './game/npcs.js';
 import { followChain } from './pets/follow.js';
@@ -87,7 +88,8 @@ async function boot() {
   sky = buildSky(); buildClouds(); buildCity();
   const saved = loadSave();
   await loadNina();
-  player.ch = makeAvatar(null);
+  player.look = fixLook(saved && saved.nina && saved.nina.look);
+  player.ch = makeAvatar(player.look);
   const pets = saved ? (saved.pets || []) : [{ kind: 'perro', color: '#E9B77A', name: 'Toby' }];
   pets.slice(0, MAX_PETS).forEach(p => { if (PET_KINDS.some(k => k.id === p.kind)) addPet(p.kind, p.color || '#E9B77A', String(p.name || 'Toby').slice(0, 12)); });
   // your own cars, parked where you left them
@@ -104,6 +106,7 @@ async function boot() {
   });
   state.lastCar = ownedCars[ownedCars.length - 1] || null;
   if (saved && saved.shop) state.shopSpec = fixCarSpec(saved.shop);
+  if (saved && saved.migrada) save();   // partida v1: queda guardada en el formato nuevo
   refreshTT();
   spawnNPCs(7);
   resize();

@@ -3,10 +3,9 @@ import { THREE } from '../engine/three.js';
 import { clamp, lerp } from '../core/math.js';
 import { NINA, NINA_SCALE } from './avatar.js';
 import { BLINKS, setFace } from './face.js';
+import { AUTO_FACE, HOLD } from './catalog/acciones.js';
 
-const AUTO_FACE = { wave: 'feliz', dance: 'feliz', jump: 'sorpresa', lie: 'feliz', split: 'guino', candle: 'feliz' };
 // animaciones especiales (saltar, saludar, bailar, sentarse…) por encima de caminar/correr
-const HOLD = new Set(['sit', 'lie', 'split']);
 function avatarDo(c, name, o = {}) {
   const a = c.act[name]; if (!a) return;
   if (c.sp && c.sp.a !== a) c.fade.push({ a: c.sp.a, w: c.sp.w });

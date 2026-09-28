@@ -37,8 +37,11 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
 - `npm run build:web` → `dist/web/` (GitHub Pages, se publica solo con GitHub Actions al hacer push a main).
 - `npm run build` → `dist/unico/ciudad-arcoiris.html` (un solo archivo, abre con doble clic).
 - `npm run lint` — ESLint, incluidas las reglas de capas y ciclos.
-- `npm test` — lint + arma ambas versiones + todas las pruebas (~5 min, 70 pruebas). Las capturas deben salir
+- `npm test` — lint + arma ambas versiones + todas las pruebas (~5 min, 80 pruebas). Las capturas deben salir
   iguales; sólo se regeneran (`npm run test:capturas`) cuando un cambio visible es a propósito.
+  Ojo: Three.js r149 usa `Math.random` para los UUID, así que crear más o menos materiales/geometrías mueve a los
+  vecinos en las capturas aunque nada se dibuje distinto. Para comprobar que el dibujo no cambió:
+  `$env:UUID_APARTE=1` + capturas en el proyecto dev, antes y después del cambio, y comparar.
 - Git no está en el PATH: los commits los hace el usuario desde GitHub Desktop.
 - `herramientas_avatar/` — scripts Python que generaron el modelo (ropa, animaciones, expresiones) y atlas de la cara.
   Requieren numpy, scipy y mathutils (o Blender).
@@ -59,6 +62,13 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
 ## Convenciones del juego
 - Sin gestión de color (r149, modo legacy): los colores hex se usan tal cual; al cargar el glb se pasan
   los `baseColorFactor` de lineal a sRGB.
-- Guardado en `localStorage` con clave `ciudadArcoiris.v1` (mascotas, autos, diseño en la tienda). Envolver en try/catch.
+- Guardado en `localStorage` con clave `ciudadArcoiris.v2`: `{ version: 2, nina: { look }, pets, cars, shop }`
+  (`game/save.js`). Una partida `ciudadArcoiris.v1` se migra al cargar y la clave v1 no se borra. Envolver en try/catch.
+  Todo lo guardado se valida al cargar (`fixLook`, `fixCarSpec`, tipos de mascota).
+- Personajes guiados por datos: `characters/catalog/` (paletas, prendas con canales y derivados, personajes y
+  plantillas de vecinos, acciones) es SÓLO DATOS; `characters/looks.js` los aplica. Un look es JSON; lo que no
+  indica queda como viene en el modelo (el look de fábrica de Nina no cambia ningún color).
+- Los materiales de los personajes se comparten por (material, color, visible), salvo las capas de la cara.
+  Nunca modificar el material de un personaje después de crearlo (salvo `Face_*`): afectaría a otros.
 - Autos a escala `CAR_SCALE = 0.7`; `M.hw/hl/camY` están en metros del mundo, `M.sy/seat/passenger` en unidades locales del auto.
 - Textos de interfaz en español de Chile, tono infantil.

@@ -2,20 +2,13 @@
 import { state } from '../core/state.js';
 import { on } from '../core/events.js';
 import { avatarDo, avatarStop } from '../characters/animator.js';
+import { ACTIONS } from '../characters/catalog/acciones.js';
 import { input, player } from '../game/actors.js';
 import { standUp } from '../game/player.js';
 import { greetAround } from '../game/npcs.js';
 import { sfx } from '../audio/audio.js';
 import { $ } from './dom.js';
 
-// menú de acciones: todas las animaciones de movimiento de Nina
-const ACTIONS = [
-  { id: 'wave', name: 'Saludar', ic: '👋' }, { id: 'dance', name: 'Bailar', ic: '💃', loop: true },
-  { id: 'jump', name: 'Saltar', ic: '⬆️' }, { id: 'walk_back', name: 'Caminar atrás', ic: '🔙', loop: true },
-  { id: 'sit', name: 'Sentarse', ic: '🧘' }, { id: 'lie', name: 'Acostarse', ic: '😴' },
-  { id: 'split', name: 'Spagat', ic: '🤸' }, { id: 'candle', name: 'Vela invertida', ic: '🕯️' },
-  { id: 'stop', name: 'Quedarse quieta', ic: '🧍' }
-];
 const btnAct = $('#btnAct'), actMenu = $('#actMenu');
 function renderActMenu() {
   const cur = player.ch && player.ch.sp ? player.ch.sp.name : '';
