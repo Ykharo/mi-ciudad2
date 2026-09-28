@@ -25,7 +25,7 @@ import './world/places/icecream.js';
 import './world/places/park.js';
 import { carFitsAt, spawnCar } from './cars/fleet.js';
 import { buildCity } from './world/city.js';
-import { cullAvatars, loadNina, makeAvatar } from './characters/avatar.js';
+import { cullAvatars, loadCharacters, makeAvatar } from './characters/avatar.js';
 import { fixLook } from './characters/looks.js';
 import './characters/face.js';
 import './characters/animator.js';
@@ -87,8 +87,8 @@ async function boot() {
   try { await Promise.race([document.fonts ? document.fonts.load('800 40px "Baloo 2"') : null, new Promise(r => setTimeout(r, 1500))]); } catch (e) { }
   sky = buildSky(); buildClouds(); buildCity();
   const saved = loadSave();
-  await loadNina();
   player.look = fixLook(saved && saved.nina && saved.nina.look);
+  await loadCharacters([player.look]);   // la base y las prendas de Nina y de los vecinos
   player.ch = makeAvatar(player.look);
   const pets = saved ? (saved.pets || []) : [{ kind: 'perro', color: '#E9B77A', name: 'Toby' }];
   pets.slice(0, MAX_PETS).forEach(p => { if (PET_KINDS.some(k => k.id === p.kind)) addPet(p.kind, p.color || '#E9B77A', String(p.name || 'Toby').slice(0, 12)); });

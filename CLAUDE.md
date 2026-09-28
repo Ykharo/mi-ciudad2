@@ -24,9 +24,17 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
   - `main.js` importa todos los módulos en el orden original de las secciones: ese orden define el arranque.
   - Ganchos de prueba `window.__juego` (state, player, npcs, cars, `teleport(x, z)`): sólo en desarrollo o con `?test`.
 - `src/styles/juego.css` — estilos.
-- `src/assets/loader.js` + `manifest.js` — lee cada modelo del bloque base64 incrustado o con `fetch`.
-- `assets/modelos/avatar_vestido.glb` — modelo de Nina (2,1 MB). No editar a mano. `assets/` es el publicDir de Vite.
-- `tools/vite-embed-assets.js` — incrusta los modelos en la versión de un solo archivo.
+- `src/assets/loader.js` + `manifest.js` — `loadGLB(id)`: lee cada modelo (bloque base64 incrustado o `fetch`),
+  lo decodifica (texturas como imágenes `data:`, colores a sRGB) y lo guarda. Ids: `nina_base`, `prenda:<id>`.
+- `assets/modelos/nina_base.glb` (esqueleto, cuerpo, cabeza, cara, 11 animaciones) y `assets/modelos/prendas/<id>.glb`
+  (una prenda cada uno). Generados, cuantizados: **no editar a mano**; se regeneran con `node tools/separar_glb.mjs`
+  desde `herramientas_avatar/avatar_vestido.glb` (el modelo vestido completo que sale de los scripts de Python).
+  `assets/` es el publicDir de Vite.
+- `src/characters/wardrobe.js` — pegar/quitar prendas (`ponerPrenda`, `quitarPrenda`, `recolorear`), materiales
+  compartidos. `src/characters/avatar.js` — `loadCharacters(looks)` y `makeAvatar(look)` (base + prendas).
+- `src/debug/probador.html` — probador de prendas y animaciones (sólo con `npm run dev`:
+  http://localhost:5173/src/debug/probador.html). `tools/fotos_poses.mjs` fotografía las poses difíciles con él.
+- `tools/vite-embed-assets.js` — incrusta los modelos (base + todas las prendas) en la versión de un solo archivo.
 - `tests/` — Playwright: humo, lugares (con los ganchos), capturas de referencia (`tests/capturas/`), sin red.
   Checklist manual en `tests/checklist_manual.md`.
 - `juego_actual/ciudad-arcoiris-nina.html` — el juego armado antiguo (3 MB, modelo incrustado).
@@ -46,12 +54,16 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
 - `herramientas_avatar/` — scripts Python que generaron el modelo (ropa, animaciones, expresiones) y atlas de la cara.
   Requieren numpy, scipy y mathutils (o Blender).
 
-## Datos del avatar (`avatar_vestido.glb`)
+## Datos del avatar (`herramientas_avatar/avatar_vestido.glb`, separado en base + prendas)
 - Espacio glTF: +Y arriba, el personaje mira hacia +Z. Mide ~1,65 m; en el juego se escala `NINA_SCALE = 1.4`.
 - Esqueleto de 17 huesos: Hips, Spine, Chest, Neck, HeadBone, UpperArm/Forearm/Hand L/R, Thigh/Shin/Foot L/R.
   Sin rotaciones en reposo.
 - Mallas: Body_Base, Head_Base, orejas, capas de cara Face_Eyes / Face_Eyebrows / Face_Mouth / Face_Blush,
   y ropa separada: Pelo_Moño, Ropa_Peto, Ropa_Pantalon, Ropa_Zapatillas (todas skinneadas al mismo esqueleto).
+  Cada prenda tiene varios materiales (una malla por material en Three.js: `Ropa_Peto_1..4`). El peto usa el mismo
+  material de costura que el pantalón (`Cargo_Stitch`), así que sus costuras toman el color del pantalón.
+- Sombras: Body_Base, Head_Base y las prendas con `sombra: true` en el catálogo (el pelo). La ropa pegada al cuerpo
+  no proyecta sombra (ya la hace el cuerpo). Hasta la etapa 4 el pelo no hacía sombra por un error de nombres.
 - Cara: atlas 4×2 para ojos, cejas y boca. Casillas: normal (0,0), feliz (1,0), triste (2,0), sorpresa (3,0),
   enojada (0,1), guiño (1,1). Se cambia con `map.offset.set(col*0.25, fila*0.5)`. Parpadeo = ojos de (1,0).
 - 11 animaciones: idle, walk (0,47 m/s), run (1,75 m/s), jump, wave, sit, lie, dance, split,

@@ -6,6 +6,7 @@
 //              ['sombra', k]              color × k  (k < 1 oscurece, k > 1 aclara)
 //              ['contraste', k, blanco]   si el color es oscuro, lo acerca al blanco; si no, color × k
 // extras:    partes que se pueden esconder (por ahora, la mariposa del peto).
+// sombra:    la prenda proyecta sombra (el pelo sí; la ropa pegada al cuerpo no hace falta: ya la hace el cuerpo).
 // Un color que no se elige queda como viene en el modelo ("de fábrica").
 //
 // Hoy las cuatro prendas vienen dentro de avatar_vestido.glb; en la etapa 4 cada una tendrá su propio .glb.
@@ -17,7 +18,7 @@ export const PIEL = {
 };
 
 export const PRENDAS = [
-  { id: 'mono', nombre: 'Moño alto', slot: 'pelo', mallas: ['Pelo_Moño'],
+  { id: 'mono', nombre: 'Moño alto', slot: 'pelo', mallas: ['Pelo_Moño'], sombra: true,
     canales: { principal: { mats: ['Hair_Chestnut'], paleta: 'pelo' } },
     derivados: { Hair_Light: ['principal', 'contraste', 1.1, 0.12], Hair_Dark: ['principal', 'sombra', 0.72] } },
   { id: 'peto', nombre: 'Peto', slot: 'torso', mallas: ['Ropa_Peto'],

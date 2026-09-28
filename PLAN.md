@@ -20,7 +20,35 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
   La 11 (Python) se deja para la etapa 6. La prueba en el iPad real queda para más adelante (decisión 10).
 - Hay una carpeta `mi-ciudad/` dentro del proyecto con un repositorio vacío (sólo `.gitattributes`,
   remoto `Ykharo/mi-ciudad`): parece un intento anterior de GitHub Desktop. No se versiona; se puede borrar.
-- **Etapa 3 lista** (falta: probar en el navegador y commit). Siguiente: etapa 4.
+- **Etapa 4 lista** (falta: probar en el navegador y commit). Siguiente: etapa 5.
+  - Decidido y hecho: el pelo **sí** proyecta sombra. Ahora lo dice el catálogo (`sombra: true` en la prenda) en vez de
+    un nombre de malla. Cambio visible a propósito: capturas regeneradas (difieren sólo alrededor de las sombras de
+    los personajes).
+  - `tools/separar_glb.mjs` (glTF-Transform) genera, desde `herramientas_avatar/avatar_vestido.glb`,
+    `assets/modelos/nina_base.glb` y `assets/modelos/prendas/{mono,peto,pantalon_cargo,zapatillas}.glb`. Qué mallas
+    van en cada prenda lo dice el catálogo (`mallas`). Tropiezos resueltos: registrar las extensiones (si no, se
+    perdía `KHR_texture_transform` del atlas de la cara) y soltar a mano los muestreadores de las animaciones (si no,
+    cada prenda llevaba 360 KB de animaciones que no usa).
+  - `assets/loader.js`: `loadGLB(id)` con caché (misma decodificación de siempre, con imágenes `data:`); ids
+    `nina_base` y `prenda:<id>` (convención: `modelos/prendas/<id>.glb`, no hace falta anotarlas en el manifiesto).
+    El plugin del archivo único incrusta la base y todas las prendas.
+  - `characters/wardrobe.js`: `attachPrenda` clona las mallas de la prenda (comparte la geometría) y las enlaza a los
+    huesos del personaje por nombre; `ponerPrenda` / `quitarPrenda` / `recolorear` para el Vestidor. Los materiales
+    compartidos se cambian (nunca se modifican) al recolorear. `makeAvatar(look)` = base + prendas del look, en el
+    mismo orden de antes.
+  - Verificación con `UUID_APARTE`: base + prendas contra el modelo completo de la etapa 3, idénticas salvo 1 píxel en
+    dos capturas (bordes de personajes lejanos: cambia el orden de dibujo de superficies a la misma profundidad).
+  - Cuantización (`KHR_mesh_quantization`: posición 14 bits, normales 10, pesos 8, UV 12): modelos 2.095 → 1.437 KB
+    (−31 %). Revisada con el probador en 12 poses × 3 vistas (`tools/fotos_poses.mjs`): a la vista no cambia nada ni
+    aparecen grietas (sí hay diferencias de pocos niveles de color en miles de píxeles de primer plano). Adoptada.
+  - Archivo único: 3.610 → **2.725 KB**. Versión web: base 942 KB + prendas 47–207 KB cada una.
+  - `src/debug/probador.html` (sólo desarrollo): animación, pausa en un segundo, prenda por espacio, colores al azar,
+    Nina de fábrica; también por la dirección (`?anim=split&t=1.2&vista=lado&look=azar&seed=3&sin=pelo`).
+  - Capturas de referencia regeneradas (la cuantización cambia algunos niveles de color en los personajes, y hay más
+    objetos de Three.js, así que los vecinos andan por otro lado). 80/80 pruebas.
+  - Encontrado: el pelo **nunca proyectó sombra** (`SHADOW_PARTS` busca `Pelo_Moño`, pero las mallas se llaman
+    `Pelo_Moño_1..3`). Se decidió arreglarlo (ver arriba).
+- **Etapa 3 terminada.**
   - Catálogos de SÓLO DATOS en `src/characters/catalog/`: `paletas.js`, `prendas.js` (piel + 4 prendas del modelo
     actual con canales, derivados y extras, como en 3.2), `personajes.js` (`LOOK_NINA`, `PERSONAJES`, plantillas
     `VECINOS` con el orden del sorteo) y `acciones.js` (`ACTIONS`, `AUTO_FACE`, `HOLD`).

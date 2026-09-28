@@ -39,7 +39,7 @@ export default [
     },
   },
   {
-    files: ['tests/**/*.js', 'tools/**/*.js', '*.config.js'],
+    files: ['tests/**/*.js', 'tools/**/*.{js,mjs}', '*.config.js'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'module', globals: { ...globals.node, ...globals.browser } },
   },
 ];
