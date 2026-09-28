@@ -5,7 +5,7 @@ import { cone, cyl, mesh, rlo, sph } from '../../engine/geometry.js';
 import { makeSign, stripeTexture } from '../../engine/textures.js';
 import { world } from '../layout.js';
 import { addObs } from '../physics.js';
-import { zones } from '../zones.js';
+import { addZone } from '../zones.js';
 
 function iceCreamShop(x, z) {
   const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = Math.PI;
@@ -38,7 +38,7 @@ function iceCreamShop(x, z) {
     [-1, 1].forEach(s => world.add(mesh(rlo(0.6, 0.5, 0.6, 0.12), mat('#FFD23F'), tx + s * 1.1, 0.25, tz)));
     addObs(tx, tz, 0.7, 0.7);
   });
-  zones.push({ id: 'icecream', x: x + 1.2, z: z - d / 2 - 2.0, r: 3.0, label: '🍦 Pedir un helado' });
+  addZone({ id: 'icecream', x: x + 1.2, z: z - d / 2 - 2.0, r: 3.0, label: '🍦 Pedir un helado' });
 }
 
 export { iceCreamShop };

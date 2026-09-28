@@ -1,7 +1,11 @@
 // Arranque y bucle principal: el único módulo que conoce a todos.
+// Importa todos los módulos en el orden de las secciones del juego original: ese orden es el de arranque
+// (renderer → mundo → autos → personajes → juego → audio → interfaz) y conviene no cambiarlo.
 import { THREE } from './engine/three.js';
 import { state } from './core/state.js';
+import './core/events.js';
 import './core/math.js';
+import './core/svg.js';
 import { camera, renderer, scene } from './engine/renderer.js';
 import './engine/materials.js';
 import './engine/geometry.js';
@@ -31,12 +35,14 @@ import { fixCarSpec } from './cars/catalog.js';
 import { buildCarModel } from './cars/build.js';
 import './cars/models.js';
 import { SPAWNS } from './world/places/carshop.js';
+import { MAX_CARS, addPet, cam, ownedCars, player } from './game/actors.js';
 import { loadSave } from './game/save.js';
-import { MAX_CARS, addPet, cam, ownedCars, player, updatePlayer, updateZones } from './game/player.js';
+import { updatePlayer } from './game/player.js';
 import { spawnNPCs, updateNPCs } from './game/npcs.js';
 import { followChain } from './pets/follow.js';
 import { updateCamera } from './game/camera.js';
-import { driving } from './cars/driving.js';
+import { driving, updateCar } from './game/driving.js';
+import { updateZones } from './game/interact.js';
 import { AC, initAudio, sfx, startMusic } from './audio/audio.js';
 import './audio/engine.js';
 import { $, gameEl } from './ui/dom.js';
@@ -48,14 +54,14 @@ import './ui/action-menu.js';
 import './game/modes.js';
 import { MAX_PETS, updatePreview } from './ui/panels/pets.js';
 import { refreshTT } from './ui/panels/shop.js';
+import { installTestHooks } from './debug/hooks.js';
 
-/* ================= LOOP & BOOT ================= */
 let last = performance.now(), placeT = 0;
 const placeName = $('#placeName');
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (now - last) / 1000); last = now; state.clock += dt;
-  updatePlayer(dt);
+  if (state.mode === 'drive') updateCar(dt); else updatePlayer(dt);
   if (state.mode === 'drive') followChain(player.pets.filter(p => !p.riding), player.pos, dt, state.clock, driving.hl + 1.3);
   else followChain(player.pets, player.pos, dt, state.clock, 1.7);
   updateNPCs(dt, state.clock);
@@ -89,8 +95,8 @@ async function boot() {
     if (!o) return;
     const spec = fixCarSpec(o.spec), M = buildCarModel(spec);
     let x = +o.x, z = +o.z, h = +o.h || 0;
-    if (!isFinite(x) || !isFinite(z) || !carFitsAt(M.hw, M.hl, x, z, h)) {
-      const sp = SPAWNS.find(([a, b, c]) => carFitsAt(M.hw, M.hl, a, b, c));
+    if (!isFinite(x) || !isFinite(z) || !carFitsAt(M.hw, M.hl, x, z, h, null, player.pos)) {
+      const sp = SPAWNS.find(([a, b, c]) => carFitsAt(M.hw, M.hl, a, b, c, null, player.pos));
       if (!sp) { M.dispose(); return; }
       [x, z, h] = sp;
     }
@@ -110,5 +116,6 @@ async function boot() {
     cam.yaw = player.facing + Math.PI + 0.35; sfx('open');
   });
 }
+if (import.meta.env.DEV || new URLSearchParams(location.search).has('test')) installTestHooks();
 if (typeof THREE === 'undefined') { const b = $('#btnPlay'); b.textContent = 'No se pudo cargar el 3D. Revisa tu conexión.'; }
 else boot().catch(err => { console.error(err); const b = $('#btnPlay'); b.textContent = 'Algo falló al construir la ciudad'; });

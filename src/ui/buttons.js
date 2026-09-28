@@ -1,15 +1,23 @@
 // Botones del HUD.
 import { state } from '../core/state.js';
 import { pick } from '../core/math.js';
-import { setHolding } from '../characters/props.js';
-import { input, player, sitOnBench } from '../game/player.js';
-import { npcSay, npcs } from '../game/npcs.js';
-import { callCar, driving, enterCar, exitCar } from '../cars/driving.js';
-import { hornSound, initAudio, sfx, startMusic, stopMusic } from '../audio/audio.js';
-import { $, btnAction, toast } from './dom.js';
+import { runZone } from '../world/zones.js';
+import { avatarDo } from '../characters/animator.js';
+import { input, player } from '../game/actors.js';
+import { standUp } from '../game/player.js';
+import { greetAround, npcSay, npcs } from '../game/npcs.js';
+import { callCar, driving, exitCar } from '../game/driving.js';
+import { hornSound, initAudio, startMusic, stopMusic } from '../audio/audio.js';
+import { $, btnAction } from './dom.js';
 import { openPets } from './panels/pets.js';
-import { openShop } from './panels/shop.js';
 
+$('#btnJump').addEventListener('pointerdown', e => { e.preventDefault(); input.jump = true; });
+$('#btnJump').addEventListener('click', e => { if (e.detail === 0) input.jump = true; });
+$('#btnWave').addEventListener('click', () => {
+  if (state.mode !== 'play' || player.air) return;
+  standUp(); avatarDo(player.ch, 'wave', { start: 0.05 });
+  greetAround();
+});
 const btnBrake = $('#btnBrake');
 const brakeOn = e => { e.preventDefault(); input.brake = true; btnBrake.classList.add('held'); };
 const brakeOff = () => { input.brake = false; btnBrake.classList.remove('held'); };
@@ -23,11 +31,8 @@ function honk() {
 $('#btnHorn').addEventListener('click', honk);
 $('#btnPets').addEventListener('click', openPets);
 $('#btnMyCar').addEventListener('click', callCar);
-btnAction.addEventListener('click', () => {
-  const id = btnAction.dataset.id;
-  if (id === 'bench' && state.currentZone) sitOnBench(state.currentZone.bench); else if (id === 'pets') openPets(); else if (id === 'icecream') giveIceCream();
-  else if (id === 'shop') openShop(); else if (id === 'car' && state.currentZone) enterCar(state.currentZone.car);
-});
+// cada zona trae su acción (ver world/zones.js: onZoneAction)
+btnAction.addEventListener('click', () => runZone(state.currentZone));
 const btnMusic = $('#btnMusic');
 btnMusic.addEventListener('click', () => {
   initAudio(); state.musicOn = !state.musicOn;
@@ -35,13 +40,5 @@ btnMusic.addEventListener('click', () => {
   btnMusic.textContent = state.musicOn ? '🎵' : '🔇'; btnMusic.classList.toggle('off', !state.musicOn);
   btnMusic.setAttribute('aria-label', state.musicOn ? 'Apagar música' : 'Encender música');
 });
-
-const FLAVORS = [['#FF9CC7', 'frutilla'], ['#7A4A30', 'chocolate'], ['#8FE3C5', 'menta'], ['#FFF5DE', 'vainilla'], ['#B89CFF', 'mora'], ['#FFD23F', 'mango']];
-function giveIceCream() {
-  const [c, n] = pick(FLAVORS);
-  setHolding(player.ch, c);
-  player.iceTime = 45; player.happy = 0.6; sfx('adopt');
-  toast(`¡Mmm! Un helado de ${n}`);
-}
 
 export { honk };

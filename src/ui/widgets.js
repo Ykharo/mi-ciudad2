@@ -1,13 +1,13 @@
 // Piezas de HTML para los paneles.
+import { svgI } from '../core/svg.js';
 
-const svgI = (w, h, body) => `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true">${body}</svg>`;
 function optsHTML(list, cur, key) {
   return '<div class="opts">' + list.map(s => `<button class="opt${s.id === cur ? ' on' : ''}" data-k="${key}" data-v="${s.id}">${s.ic ? `<span class="ic">${s.ic}</span>` : ''}<span>${s.name}</span></button>`).join('') + '</div>';
 }
 function swHTML(list, cur, key) {
   return '<div class="sws">' + list.map((c, i) => {
-    const v = key === 'skin' ? i : c, on = key === 'skin' ? i === cur : c.toLowerCase() === String(cur).toLowerCase();
-    return `<button class="sw${on ? ' on' : ''}" style="background:${c}" data-k="${key}" data-v="${v}" aria-label="Color ${i + 1}"></button>`;
+    const on = c.toLowerCase() === String(cur).toLowerCase();
+    return `<button class="sw${on ? ' on' : ''}" style="background:${c}" data-k="${key}" data-v="${c}" aria-label="Color ${i + 1}"></button>`;
   }).join('') + '</div>';
 }
 const clone = o => JSON.parse(JSON.stringify(o));
@@ -28,4 +28,4 @@ function carIcon(type, c, a) {
 }
 const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
 
-export { carIcon, clone, optsHTML, stars, svgI, swHTML };
+export { carIcon, clone, optsHTML, stars, swHTML };

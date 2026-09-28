@@ -1,8 +1,7 @@
 // Guardado en localStorage.
 import { state } from '../core/state.js';
-import { ownedCars, player } from './player.js';
+import { ownedCars, player } from './actors.js';
 
-/* ================= GAMEPLAY ================= */
 const SAVE_KEY = 'ciudadArcoiris.v1';
 function loadSave() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return s && typeof s === 'object' ? s : null; } catch (e) { return null; } }
 function save() {

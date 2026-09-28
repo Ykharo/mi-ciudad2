@@ -5,10 +5,11 @@
 // Las capturas de referencia (tests/capturas/) son las mismas para todas: vienen del juego de la etapa 0.
 import { defineConfig, devices } from '@playwright/test';
 
+// ?test instala los ganchos de prueba (window.__juego, ver src/debug/hooks.js)
 const SERVIDORES = {
-  dev:   { puerto: 5173, cmd: 'npx vite', pagina: '/' },
-  web:   { puerto: 4173, cmd: 'npx vite preview', pagina: '/' },
-  unico: { puerto: 4174, cmd: 'npx vite preview --mode unico', pagina: '/ciudad-arcoiris.html' },
+  dev:   { puerto: 5173, cmd: 'npx vite', pagina: '/?test' },
+  web:   { puerto: 4173, cmd: 'npx vite preview', pagina: '/?test' },
+  unico: { puerto: 4174, cmd: 'npx vite preview --mode unico', pagina: '/ciudad-arcoiris.html?test' },
 };
 
 const escritorio = {
@@ -30,8 +31,9 @@ export default defineConfig({
   timeout: 120_000,
   expect: {
     timeout: 30_000,
-    // el render de WebGL puede variar algún píxel entre corridas
-    toHaveScreenshot: { maxDiffPixelRatio: 0.01 },
+    // La GPU puede variar un nivel de color en algún píxel entre corridas (vidrios transparentes);
+    // eso ya lo ignora el umbral por píxel (threshold 0,2). Más de 50 píxeles distintos es un cambio real.
+    toHaveScreenshot: { maxDiffPixels: 50 },
   },
   // un solo navegador a la vez: WebGL es pesado y las pruebas se estorban
   workers: 1,
@@ -44,11 +46,11 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    proyecto('dev', 'dev', escritorio, /(humo|capturas)\.spec\.js/),
-    proyecto('dev-ipad', 'dev', ipad, /humo\.spec\.js/),
-    proyecto('web', 'web', escritorio, /(humo|capturas)\.spec\.js/),
-    proyecto('web-ipad', 'web', ipad, /humo\.spec\.js/),
-    proyecto('unico', 'unico', escritorio, /(humo|capturas|sin-red)\.spec\.js/),
+    proyecto('dev', 'dev', escritorio, /(humo|lugares|capturas)\.spec\.js/),
+    proyecto('dev-ipad', 'dev', ipad, /(humo|lugares)\.spec\.js/),
+    proyecto('web', 'web', escritorio, /(humo|lugares|capturas)\.spec\.js/),
+    proyecto('web-ipad', 'web', ipad, /(humo|lugares)\.spec\.js/),
+    proyecto('unico', 'unico', escritorio, /(humo|lugares|capturas|sin-red)\.spec\.js/),
   ],
   webServer: Object.values(SERVIDORES).map(s => ({
     command: `${s.cmd} --port ${s.puerto} --strictPort`,

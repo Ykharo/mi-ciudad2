@@ -6,7 +6,7 @@ import { G, box, cyl, mesh, rlo } from '../../engine/geometry.js';
 import { makeSign } from '../../engine/textures.js';
 import { world } from '../layout.js';
 import { addObs } from '../physics.js';
-import { zones } from '../zones.js';
+import { addZone } from '../zones.js';
 import { animated } from '../../engine/loop.js';
 import { house } from '../houses.js';
 import { animatePet, buildPet } from '../../pets/models.js';
@@ -45,7 +45,7 @@ function shelter(x, z) {
     const p = buildPet(k, c); p.root.position.set(px, 0, pz); p.root.rotation.y = -Math.PI / 2 + i; scene.add(p.root);
     animated.push((t) => { animatePet(p, t + i * 2, 0, 0.016); p.root.rotation.y += Math.sin(t * 0.6 + i) * 0.004; });
   });
-  zones.push({ id: 'pets', x, z: z - 9 / 2 - 2.4, r: 3.4, label: '🐾 Adoptar mascota' });
+  addZone({ id: 'pets', x, z: z - 9 / 2 - 2.4, r: 3.4, label: '🐾 Adoptar mascota' });
 }
 
 export { shelter };

@@ -1,23 +1,21 @@
 // Manejar: subirse, bajarse, conducir y llamar al auto.
+// Avisa con eventos ('auto', 'motor', 'zona', 'sonido', 'aviso'): la interfaz y el audio reaccionan solos.
 import { THREE } from '../engine/three.js';
 import { state } from '../core/state.js';
+import { emit } from '../core/events.js';
 import { clamp, lerp } from '../core/math.js';
 import { scene } from '../engine/renderer.js';
 import { collide } from '../world/physics.js';
-import { _cp, carDist, carFitsAt, cars, syncCar } from './fleet.js';
+import { onZoneAction } from '../world/zones.js';
+import { _cp, carDist, carFitsAt, cars, syncCar } from '../cars/fleet.js';
 import { avatarDo, avatarStop, updateAvatar } from '../characters/animator.js';
 import { setHolding } from '../characters/props.js';
 import { animatePet } from '../pets/models.js';
-import { save } from '../game/save.js';
-import { cam, input, ownedCars, player, standUp } from '../game/player.js';
-import { npcs } from '../game/npcs.js';
-import { sfx } from '../audio/audio.js';
-import { setEngine, startEngine, stopEngine } from '../audio/engine.js';
-import { gameEl, setActionButton, toast } from '../ui/dom.js';
-import { joyHint } from '../ui/joystick.js';
-import { setActMenu } from '../ui/action-menu.js';
+import { save } from './save.js';
+import { cam, input, ownedCars, player } from './actors.js';
+import { standUp } from './player.js';
+import { npcs } from './npcs.js';
 
-/* ================= DRIVING ================= */
 let driving = null;
 const DRIVE = { rev: 5.5, brake: 22, drag: 3.2 };
 
@@ -46,7 +44,7 @@ function steerArms(ch, steer) {
 }
 function enterCar(c) {
   if (state.mode !== 'play' || !c) return;
-  setActMenu(false); driving = c; state.mode = 'drive';
+  driving = c; state.mode = 'drive';
   player.vel.set(0, 0, 0); player.air = false; player.y = 0;
   c.speed = 0; c.steer = 0;
   standUp(); setHolding(player.ch, player.ch.holding);
@@ -59,12 +57,10 @@ function enterCar(c) {
     p.obj.root.position.set(M.passenger.x, M.sy, M.passenger.z); p.obj.root.rotation.set(0, 0, 0); p.obj.root.scale.setScalar(1 / M.k);
   }
   if (c.owned) state.lastCar = c;
-  gameEl.classList.add('driving'); setActionButton(null); state.currentZone = null;
+  emit('zona', null); state.currentZone = null;
   input.brake = false;
   cam.dist = Math.max(cam.dist, 10 + c.hl * 1.3);
-  sfx('open'); startEngine();
-  joyHint.textContent = '¡Maneja aquí!'; joyHint.hidden = false;
-  setTimeout(() => { joyHint.hidden = true; }, 3500);
+  emit('sonido', 'open'); emit('auto', 'subir', c);
 }
 function spotIsFree(x, z) {
   _cp.set(x, 0, z); collide(_cp, 0.55);
@@ -91,8 +87,8 @@ function exitCar() {
   const M = c.model;
   if (M.steerWheel) M.steerWheel.rotation.z = 0;
   if (M.sirens) M.sirens.forEach(m => { m.emissiveIntensity = 0.2; });
-  driving = null; state.mode = 'play'; gameEl.classList.remove('driving');
-  input.brake = false; stopEngine(); sfx('open');
+  driving = null; state.mode = 'play';
+  input.brake = false; emit('auto', 'bajar', c); emit('sonido', 'open');
   cam.yaw = player.facing + Math.PI;
   if (c.owned) { state.lastCar = c; save(); }
 }
@@ -138,7 +134,7 @@ function updateCar(dt) {
   const push = Math.hypot(px, pz);
   if (push > 0.001) {
     c.x += px; c.z += pz;
-    if (Math.abs(c.speed) > 3 && c.bump <= 0) { sfx('bonk'); c.bump = 0.4; player.bonk = 0.9; c.shell.position.y = 0.12 + 0.05 * S.bounce; }
+    if (Math.abs(c.speed) > 3 && c.bump <= 0) { emit('sonido', 'bonk'); c.bump = 0.4; player.bonk = 0.9; c.shell.position.y = 0.12 + 0.05 * S.bounce; }
     c.speed *= Math.abs(c.speed) > 3 ? 0.35 : 0.8;
   }
   c.bump -= dt;
@@ -161,14 +157,14 @@ function updateCar(dt) {
   updateAvatar(player.ch, dt, 0, player.bonk > 0 ? 'sorpresa' : (Math.abs(sp01) > 0.7 ? 'feliz' : null));
   steerArms(player.ch, c.steer);
   for (const p of player.pets) if (p.riding) animatePet(p.obj, state.clock, 0, dt);
-  setEngine(Math.abs(c.speed));
+  emit('motor', Math.abs(c.speed), S.pitch);
 }
 
 // bring your own car next to you
 function callCar() {
   if (state.mode !== 'play') return;
   const c = state.lastCar && ownedCars.includes(state.lastCar) ? state.lastCar : ownedCars[ownedCars.length - 1];
-  if (!c) { toast('Todavía no tienes auto. ¡Ve a Autos Arcoíris a diseñar uno! 🚗'); return; }
+  if (!c) { emit('aviso', 'Todavía no tienes auto. ¡Ve a Autos Arcoíris a diseñar uno! 🚗'); return; }
   const f = Math.round(player.facing / (Math.PI / 2)) * (Math.PI / 2);
   const fx = Math.sin(f), fz = Math.cos(f), lx = Math.cos(f), lz = -Math.sin(f);
   const tries = [];
@@ -176,12 +172,14 @@ function callCar() {
   [c.hl + 1.4, c.hl + 3.2].forEach(b => tries.push([fx * b, fz * b], [-fx * b, -fz * b]));
   for (const [dx, dz] of tries) {
     const x = player.pos.x + dx, z = player.pos.z + dz;
-    if (carFitsAt(c.hw, c.hl, x, z, f, c.obs)) {
+    if (carFitsAt(c.hw, c.hl, x, z, f, c.obs, player.pos)) {
       c.x = x; c.z = z; c.heading = f; syncCar(c); state.lastCar = c;
-      sfx('adopt'); toast('¡Aquí está tu auto!'); save(); return;
+      emit('sonido', 'adopt'); emit('aviso', '¡Aquí está tu auto!'); save(); return;
     }
   }
-  toast('No cabe tu auto aquí. Prueba en la calle.');
+  emit('aviso', 'No cabe tu auto aquí. Prueba en la calle.');
 }
+
+onZoneAction('car', z => enterCar(z.car));
 
 export { callCar, driving, enterCar, exitCar, nearestCar, updateCar };

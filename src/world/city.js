@@ -4,6 +4,7 @@ import { mergeStatic } from '../engine/merge.js';
 import { makeSign } from '../engine/textures.js';
 import { LINES, world } from './layout.js';
 import { obstacles } from './physics.js';
+import { addArea } from './zones.js';
 import { buildGround } from './ground.js';
 import { flowers, tree } from './nature.js';
 import { HOUSE_STYLES, house } from './houses.js';
@@ -14,17 +15,19 @@ import { park } from './places/park.js';
 import { spawnCar } from '../cars/fleet.js';
 import { carShop } from './places/carshop.js';
 
+// Cada lugar especial con el rectángulo de su manzana (x0, x1, z0, z1), para el nombre del lugar.
 function buildCity() {
   buildGround();
-  boutique(20, -17);
-  shelter(15, 17);
-  iceCreamShop(-26, 15);
-  park(-20, -20);
+  boutique(20, -17); addArea('Boutique Arcoíris', 5.5, 34.5, -34.5, -5.5);
+  shelter(15, 17); addArea('Refugio de Mascotas', 5.5, 34.5, 5.5, 34.5);
+  iceCreamShop(-26, 15); addArea('Heladería', -34.5, -5.5, 5.5, 21);
+  park(-20, -20); addArea('Parque Central', -34.5, -5.5, -34.5, -5.5);
   // "Mi Casa" next to the ice cream shop, facing Calle Arcoíris
   const mine = house(-13, 26, Math.PI / 2, { w: 9, d: 7.5, h: 6, wall: '#FFD6E2', roof: '#FF6FAE', door: '#9B6BF0', path: 3.3 });
   const s = makeSign('Mi Casa', '#9B6BF0', '#FFFFFF', 3.4); s.position.set(0, 5.1, 7.5 / 2 + 0.07); mine.add(s);
+  addArea('Mi Casa', -34.5, -5.5, 21, 34.5);
   flowers(-7.5, 20, 2, 4, 14, 41); flowers(-7.5, 32, 2, 4, 14, 42);
-  carShop();
+  carShop(); addArea('Autos Arcoíris', 45.5, 76, -34.5, -5.5);
 
   // houses in the outer blocks, each facing the nearest street
   const outer = [-57.75, -20, 20, 57.75];

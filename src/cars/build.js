@@ -7,7 +7,7 @@ import { mergeChildren, mergeInto } from '../engine/merge.js';
 import { CAR_TYPE, CAR_TYPES } from './catalog.js';
 import { carKit } from './models.js';
 
-const CAR_SCALE = 0.7;
+const CAR_SCALE = 0.7;   // autos a escala de Nina (antes eran para el personaje antiguo, más grande)
 
 /* side designs: laid flat on the body sides, merged with the body afterwards */
 const numMats = new Map();

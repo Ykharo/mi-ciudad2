@@ -2,13 +2,12 @@
 import { state } from '../core/state.js';
 import { clamp } from '../core/math.js';
 import { canvas } from '../engine/renderer.js';
-import { cam, player } from '../game/player.js';
+import { cam, player } from '../game/actors.js';
 
-/* camera drag + pinch on the 3D view */
 const pointers = new Map(); let pinchD = 0;
 canvas.addEventListener('pointerdown', e => {
   try { canvas.setPointerCapture(e.pointerId); } catch (_) { }
-  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); cam.dragging = true;
   if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinchD = Math.hypot(a.x - b.x, a.y - b.y); }
 });
 canvas.addEventListener('pointermove', e => {
@@ -24,10 +23,8 @@ canvas.addEventListener('pointermove', e => {
     pinchD = d;
   }
 });
-const endPtr = e => { pointers.delete(e.pointerId); pinchD = 0; };
+const endPtr = e => { pointers.delete(e.pointerId); pinchD = 0; cam.dragging = pointers.size > 0; };
 canvas.addEventListener('pointerup', endPtr); canvas.addEventListener('pointercancel', endPtr);
 canvas.addEventListener('wheel', e => { e.preventDefault(); if (state.mode === 'play' || state.mode === 'drive') cam.dist = clamp(cam.dist * (1 + e.deltaY * 0.001), 5, 22); }, { passive: false });
 document.addEventListener('gesturestart', e => e.preventDefault());
 document.addEventListener('contextmenu', e => { if (e.target.tagName !== 'INPUT') e.preventDefault(); });
-
-export { pointers };

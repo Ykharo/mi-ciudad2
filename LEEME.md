@@ -12,7 +12,7 @@ Requiere Node (una vez: `npm install`).
 
 - `npm run dev` — abre el juego en http://localhost:5173 y se recarga solo al guardar.
   Para probar en el iPad, usa la dirección con la IP del PC que muestra la terminal.
-- `npm test` — arma el juego y corre las pruebas automáticas.
+- `npm test` — revisa el código (`npm run lint`), arma el juego y corre las pruebas automáticas.
 - `npm run build:web` / `npm run build` — arma la versión web o la de un solo archivo.
 
 ## Dónde está cada cosa
@@ -22,7 +22,7 @@ Requiere Node (una vez: `npm install`).
     y clones (`makeAvatar`). `characters/face.js` — expresiones (`FACE_CELLS`). `characters/animator.js` — animaciones.
   - `ui/action-menu.js` — `ACTIONS`, la lista del menú 🎬 Acción (id = nombre de la animación en el .glb).
   - `cars/build.js` — `CAR_SCALE`, tamaño de los autos respecto al personaje. `cars/catalog.js` — tipos, colores, adornos.
-  - `game/player.js` — `PLAYER_SPEED`, velocidad al caminar/correr.
+  - `game/player.js` — `PLAYER_SPEED`, velocidad al caminar/correr. `game/driving.js` — manejar.
   - `world/city.js` arma la ciudad; cada lugar especial está en `world/places/`.
   - `main.js` — arranque y bucle principal.
 - `assets/modelos/avatar_vestido.glb` — el modelo de Nina (esqueleto, 11 animaciones, ropa, caras).

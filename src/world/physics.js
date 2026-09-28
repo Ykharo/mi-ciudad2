@@ -1,7 +1,7 @@
 // Obstáculos y choques contra ellos.
 import { clamp } from '../core/math.js';
 
-const obstacles = [];    // functions(t, dt)
+const obstacles = [];   // {x,z,hw,hd}
 function addObs(x, z, hw, hd, h = 0) { obstacles.push({ x, z, hw, hd, h }); }
 function addObsRot(x, z, w, d, ry, h = 0) { const q = Math.round(ry / (Math.PI / 2)) & 1; q ? addObs(x, z, d / 2, w / 2, h) : addObs(x, z, w / 2, d / 2, h); }
 

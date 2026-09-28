@@ -1,7 +1,7 @@
-// Música y efectos sintetizados con WebAudio.
+// Música y efectos sintetizados con WebAudio. Los efectos del juego llegan con el evento 'sonido'.
 import { state } from '../core/state.js';
+import { on } from '../core/events.js';
 
-/* ================= AUDIO ================= */
 let AC = null, master, musicGain, sfxGain, noiseBuf, seqTimer = null, nextTime = 0, step = 0; state.musicOn = true;
 const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
 function initAudio() {
@@ -78,5 +78,7 @@ function hornSound(kind) {
   else if (kind === 'payaso') [0, 0.22].forEach((d, i) => toneF(i ? 700 : 900, t + d, 0.18, 'square', 0.35, 'bandpass', 1400, i ? 520 : 650));
   else sfx('horn');
 }
+
+on('sonido', sfx);
 
 export { AC, hornSound, initAudio, sfx, sfxGain, startMusic, stopMusic };

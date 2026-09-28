@@ -6,7 +6,7 @@ import { mat } from '../../engine/materials.js';
 import { box, cyl, mesh, rlo, sph } from '../../engine/geometry.js';
 import { world } from '../layout.js';
 import { addObs, addObsRot } from '../physics.js';
-import { zones } from '../zones.js';
+import { addZone } from '../zones.js';
 import { animated } from '../../engine/loop.js';
 import { flowers, tree } from '../nature.js';
 
@@ -37,7 +37,7 @@ function bench(x, z, ry) {
   g.add(mesh(rlo(2.6, 0.7, 0.14, 0.06), wood, 0, 1.1, -0.38));
   [-1, 1].forEach(s => g.add(mesh(rlo(0.14, 0.62, 0.7, 0.04), iron, s * 1.1, 0.31, 0)));
   world.add(g); addObsRot(x, z, 2.6, 0.9, ry);
-  zones.push({ id: 'bench', x: x + Math.sin(ry) * 1.0, z: z + Math.cos(ry) * 1.0, r: 1.5, label: '🪑 Sentarse', bench: { x, z, ry } });
+  addZone({ id: 'bench', x: x + Math.sin(ry) * 1.0, z: z + Math.cos(ry) * 1.0, r: 1.5, label: '🪑 Sentarse', bench: { x, z, ry } });
 }
 function park(cx, cz) {
   world.add(mesh(cyl(7.2, 7.2, 0.04, 40), mat('#F3E4C6', { roughness: 1 }), cx, 0.025, cz, false, true));

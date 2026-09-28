@@ -1,6 +1,5 @@
 // Animaciones decorativas que se llaman en cada cuadro: f(t, dt).
 
-       // interaction spots
-const animated = [];
+const animated = [];    // functions(t, dt)
 
 export { animated };

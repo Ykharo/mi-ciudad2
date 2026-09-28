@@ -5,10 +5,8 @@ import { lerp, lerpAngle } from '../core/math.js';
 import { SUN_OFF, camera, fill, sun } from '../engine/renderer.js';
 import { obstacles } from '../world/physics.js';
 import { TT } from '../world/places/carshop.js';
-import { cam, player } from './player.js';
-import { driving } from '../cars/driving.js';
-import { pointers } from '../ui/pointer-camera.js';
-import { preview } from '../ui/panels/pets.js';
+import { cam, player } from './actors.js';
+import { driving } from './driving.js';
 
 /* ---------- camera ---------- */
 const _look = new THREE.Vector3(), _pos = new THREE.Vector3();
@@ -32,7 +30,7 @@ function updateCamera(dt) {
   let k;
   if (state.mode === 'drive') {
     const c = driving;
-    if (!pointers.size) cam.yaw = lerpAngle(cam.yaw, c.heading + Math.PI, 1 - Math.exp(-dt * (Math.abs(c.speed) > 1 ? 2.6 : 0.8)));
+    if (!cam.dragging) cam.yaw = lerpAngle(cam.yaw, c.heading + Math.PI, 1 - Math.exp(-dt * (Math.abs(c.speed) > 1 ? 2.6 : 0.8)));
     _look.set(c.x, c.model.camY, c.z);
     const dist = cameraBlock(_look, cam.yaw, cam.pitch, cam.dist + Math.abs(c.speed) * 0.12);
     const cp = Math.cos(cam.pitch) * dist;
@@ -62,7 +60,8 @@ function updateCamera(dt) {
     if (camera.aspect < 1) d *= 1.25;
     const fwx = Math.sin(yaw), fwz = Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
     _look.set(p.x, 0.95, p.z);
-    if (state.mode === 'pets' && preview) { _look.x = (p.x + preview.root.position.x) / 2; _look.z = (p.z + preview.root.position.z) / 2; }
+    const pv = state.preview;   // la mascota de muestra del refugio
+    if (state.mode === 'pets' && pv) { _look.x = (p.x + pv.root.position.x) / 2; _look.z = (p.z + pv.root.position.z) / 2; }
     _pos.set(_look.x + fwx * d, _look.y + 0.5, _look.z + fwz * d);
     const vt = Math.tan(camera.fov * Math.PI / 360), ht = vt * camera.aspect;
     if (sheet) _look.y -= 0.5 * d * vt;

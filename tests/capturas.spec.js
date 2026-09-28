@@ -33,4 +33,16 @@ test('capturas de referencia', async ({ page, cargar }) => {
   await page.locator('#btnPets').click();
   await page.clock.runFor(1500);
   await foto('5-mascotas');
+
+  // 6 y 7 se agregaron en la etapa 2 (tomadas con el código de la etapa 1b, antes de desenredar)
+  // mirando hacia el salón (-z): al cerrar el panel la cámara se pone detrás de Nina
+  await page.evaluate(() => { window.__juego.player.facing = Math.PI; });
+  await page.locator('#petDone').click();
+  await page.evaluate(() => window.__juego.teleport(61, -8.5));
+  await page.clock.runFor(2500);
+  await foto('6-salon');
+
+  await page.locator('#btnAction').click({ force: true });
+  await page.clock.runFor(1500);
+  await foto('7-tienda');
 });

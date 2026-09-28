@@ -7,7 +7,7 @@ import { G, box, cone, cyl, mesh, rlo, sph, tube } from '../../engine/geometry.j
 import { checkerTexture, makeSign, stripeTexture } from '../../engine/textures.js';
 import { world } from '../layout.js';
 import { addObs } from '../physics.js';
-import { zones } from '../zones.js';
+import { addZone } from '../zones.js';
 import { animated } from '../../engine/loop.js';
 import { fixCarSpec } from '../../cars/catalog.js';
 import { buildCarModel } from '../../cars/build.js';
@@ -54,7 +54,7 @@ function carShop() {
   ttGroup.add(mesh(cyl(2.9, 2.9, 0.11, 44), mat('#FFF0F7'), 0, 0.055, 0, false, true));
   for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; ttGroup.add(mesh(sph(0.1, 8, 6), white, Math.cos(a) * 3.3, 0.1, Math.sin(a) * 3.3, false, false)); }
   addObs(TT.x, TT.z, 3.8, 3.8);
-  zones.push({ id: 'shop', x: TT.x, z: TT.z, r: 6.4, label: '🚗 Diseñar mi auto' });
+  addZone({ id: 'shop', x: TT.x, z: TT.z, r: 6.4, label: '🚗 Diseñar mi auto' });
   animated.push((t, dt) => {
     state.ttDrag = Math.max(0, state.ttDrag - dt);
     if (!state.ttDrag) state.ttSpin += dt * (state.mode === 'shop' ? 0.22 : 0.35);

@@ -3,7 +3,6 @@ import { THREE } from '../engine/three.js';
 import { mat, shade } from '../engine/materials.js';
 import { box, cyl, mesh, rbox, sph, tube } from '../engine/geometry.js';
 
-   // autos a escala de Nina (antes eran para el personaje antiguo, más grande)
 const GLASS_M = new THREE.MeshStandardMaterial({ color: 0xD6F1FF, roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.28, depthWrite: false, side: THREE.DoubleSide });
 
 /* shared parts kit handed to each model builder; +z is the front of the car */

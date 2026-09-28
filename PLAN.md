@@ -20,8 +20,30 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
   La 11 (Python) se deja para la etapa 6. La prueba en el iPad real queda para más adelante (decisión 10).
 - Hay una carpeta `mi-ciudad/` dentro del proyecto con un repositorio vacío (sólo `.gitattributes`,
   remoto `Ykharo/mi-ciudad`): parece un intento anterior de GitHub Desktop. No se versiona; se puede borrar.
-- **Etapa 1 terminada** (salvo la prueba en el iPad real, pendiente). Siguiente: etapa 2.
-- **Etapa 1b terminada**: probada en el navegador del PC y guardada en el commit "Etapa 1b: separar en módulos".
+- **Etapa 2 lista** (falta: probar en el navegador y commit). Siguiente: etapa 3.
+  - Primero, sobre el código de la 1b: ganchos de prueba `window.__juego` (`src/debug/hooks.js`, sólo en desarrollo
+    o con `?test`: state, player, npcs, cars, `teleport(x, z)`), 8 pruebas nuevas en `tests/lugares.spec.js`
+    (banca, helado, refugio, comprar y manejar, garaje, "Mi auto" con partida guardada, "Mi auto" sin auto,
+    auto de la calle) y 2 capturas nuevas (6-salon, 7-tienda). Con eso armado se desenredó.
+  - `core/events.js`: `game/` avisa (`zona`, `aviso`, `sonido`, `menu`, `auto`, `motor`) y `ui/`/`audio/` escuchan.
+    `game/` ya no toca el DOM ni el audio; `setEngine(velocidad, tono)` recibe todo por parámetro.
+  - `game/actors.js` guarda los datos compartidos (player, cam, input, ownedCars); `cars/driving.js` pasó a
+    `game/driving.js`; `main.js` elige cada cuadro entre `updateCar` y `updatePlayer`; `updateZones` está en
+    `game/interact.js`.
+  - Zonas con acción: `addZone(...)` en el lugar y `onZoneAction(id, fn)` en quien sabe hacerlo; el botón de acción
+    sólo hace `runZone(state.currentZone)`. Nombres de lugar: `addArea(...)` en `world/city.js`.
+  - `carFitsAt(…, skip, avoid)` recibe la posición a evitar. `svgI` pasó a `core/svg.js`. La cámara lee
+    `cam.dragging` y `state.preview` en vez de módulos de la interfaz.
+  - Código muerto quitado: `rand`, `hedge`, `player.phase`, rama `skin` de `swHTML`.
+  - ESLint (`npm run lint`, corre antes de `npm test`): `import/no-cycle` y `import/no-restricted-paths` con las
+    capas de la sección 2.1. Se comprobó que detecta ciclos e importaciones prohibidas. Resultado: **0 ciclos, 0 violaciones**.
+  - Pruebas: 70/70. Capturas 1–6 idénticas byte a byte a antes del refactor; la 7 (tienda) varía hasta 1 nivel de
+    color en unos pocos píxeles del parabrisas transparente aun sin cambiar el código (ruido de la GPU), por eso
+    el margen de las capturas pasó de 1 % de la imagen a 50 píxeles con el umbral por píxel normal.
+  - Recorrido extra sin errores: música, saludar, menú Acción que se cierra al abrir un panel, "Llevar a casa",
+    subirse con el botón, aviso "¡Maneja aquí!", bocina, freno, bajarse con el botón.
+- **Etapa 1 terminada** (salvo la prueba en el iPad real, pendiente).
+- **Etapa 1b terminada** (sus ciclos de importación se eliminaron en la etapa 2): probada en el navegador del PC y guardada en el commit "Etapa 1b: separar en módulos".
   Después se borró `fuente/` (decisión 12): `juego_fuente.html`, `armar_juego.py` y la copia de
   `avatar_vestido.glb` (idéntica a `assets/modelos/`). Quedan en la historia de Git.
   - `src/main.js` se separó en 50 módulos (+ `core/state.js` y `engine/three.js`) con una herramienta de un solo uso

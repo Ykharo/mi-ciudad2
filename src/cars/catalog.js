@@ -1,7 +1,7 @@
 // Catálogo de autos y validación de diseños guardados.
 import { pick } from '../core/math.js';
 import { RAINBOW } from '../engine/materials.js';
-import { svgI } from '../ui/widgets.js';
+import { svgI } from '../core/svg.js';
 import { carBuggy, carCamioneta, carClasico, carDeportivo, carDescapotable, carJeep, carKarting, carMonster } from './models.js';
 
 /* ================= CARS: models, paint, wheels, decorations ================= */

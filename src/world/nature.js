@@ -1,10 +1,10 @@
-// Árboles, flores y cercos.
+// Árboles y flores.
 import { THREE } from '../engine/three.js';
 import { TAU, seeded } from '../core/math.js';
 import { mat } from '../engine/materials.js';
-import { cone, cyl, mesh, rlo, sph } from '../engine/geometry.js';
+import { cone, cyl, mesh, sph } from '../engine/geometry.js';
 import { world } from './layout.js';
-import { addObs, addObsRot } from './physics.js';
+import { addObs } from './physics.js';
 
 /* ---------- trees & plants ---------- */
 const TREE_GREENS = ['#5DBE5A', '#4DB06A', '#7BCB4F'];
@@ -37,9 +37,6 @@ function flowers(cx, cz, w, d, n, seed = 1) {
     world.add(mesh(cyl(0.03, 0.03, 0.4, 5), stem, x, 0.2, z, false, false));
     world.add(mesh(sph(0.13, 8, 6), mat(FLOWER_COLS[Math.floor(r() * 5)]), x, 0.44, z, false, false));
   }
-}
-function hedge(x, z, w, d, ry = 0) {
-  const m = mesh(rlo(w, 0.9, d, 0.3), mat('#56B45B'), x, 0.45, z); m.rotation.y = ry; world.add(m); addObsRot(x, z, w, d, ry);
 }
 
 export { FLOWER_COLS, flowers, tree };

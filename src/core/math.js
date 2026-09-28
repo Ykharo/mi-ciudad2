@@ -1,8 +1,6 @@
 // Utilidades numéricas y de azar.
 
-/* ================= ENGINE & HELPERS ================= */
 const TAU = Math.PI * 2;
-const rand = (a, b) => a + Math.random() * (b - a);
 const pick = a => a[Math.floor(Math.random() * a.length)];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;

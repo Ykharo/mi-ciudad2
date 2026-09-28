@@ -1,9 +1,9 @@
 // Joystick en pantalla.
 import { state } from '../core/state.js';
-import { input } from '../game/player.js';
+import { on } from '../core/events.js';
+import { input } from '../game/actors.js';
 import { $ } from './dom.js';
 
-/* joystick */
 const joy = $('#joy'), knob = $('#joyKnob'), joyHint = $('#joyHint');
 state.joyId = null; const joyC = { x: 0, y: 0 }; const JR = 60;
 function moveJoy(e) {
@@ -21,4 +21,11 @@ joy.addEventListener('pointermove', e => { if (e.pointerId === state.joyId) move
 const endJoy = e => { if (e.pointerId !== state.joyId) return; state.joyId = null; input.jx = input.jy = 0; knob.style.transform = 'translate(-50%,-50%)'; };
 joy.addEventListener('pointerup', endJoy); joy.addEventListener('pointercancel', endJoy);
 
-export { joyHint, knob };
+// al abrir un panel el joystick se suelta (el juego ya soltó la entrada y el dedo)
+on('menu', abierto => { if (abierto) knob.style.transform = 'translate(-50%,-50%)'; });
+// al subirse a un auto, recordar dónde se maneja
+on('auto', que => {
+  if (que !== 'subir') return;
+  joyHint.textContent = '¡Maneja aquí!'; joyHint.hidden = false;
+  setTimeout(() => { joyHint.hidden = true; }, 3500);
+});

@@ -4,7 +4,6 @@ import { world } from '../world/layout.js';
 import { collide, obstacles } from '../world/physics.js';
 import { fixCarSpec } from './catalog.js';
 import { buildCarModel } from './build.js';
-import { player } from '../game/player.js';
 
 const cars = [];
 
@@ -39,14 +38,15 @@ function carDist(c, x, z) {
   const dx = x - c.x, dz = z - c.z, s = Math.sin(c.heading), co = Math.cos(c.heading);
   return Math.hypot(Math.max(0, Math.abs(dx * co - dz * s) - c.hw), Math.max(0, Math.abs(dx * s + dz * co) - c.hl));
 }
-function carFitsAt(hw, hl, x, z, heading, skip) {
+// ¿cabe un auto aquí? Sin chocar obstáculos (salvo `skip`) ni quedar encima de `avoid` (la jugadora).
+function carFitsAt(hw, hl, x, z, heading, skip, avoid) {
   if (Math.abs(x) > 72 || Math.abs(z) > 72) return false;
   const fx = Math.sin(heading), fz = Math.cos(heading), offs = hl > hw ? [-(hl - hw), 0, hl - hw] : [0];
   for (const s of offs) {
     const ox = x + fx * s, oz = z + fz * s;
     _cp.set(ox, 0, oz); collide(_cp, hw + 0.1, skip);
     if (Math.hypot(_cp.x - ox, _cp.z - oz) > 0.01) return false;
-    if (Math.hypot(player.pos.x - ox, player.pos.z - oz) < hw + 0.7) return false;
+    if (avoid && Math.hypot(avoid.x - ox, avoid.z - oz) < hw + 0.7) return false;
   }
   return true;
 }

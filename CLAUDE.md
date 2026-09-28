@@ -8,18 +8,27 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
 ## Archivos
 - `index.html` — HTML del juego. Sin `<!doctype>` a propósito (modo quirks, como siempre).
 - `src/` — el código, en ~50 módulos ES (estructura de `PLAN.md` sección 2):
-  `core/` (estado compartido `state.js`, matemática), `engine/` (Three.js, renderer, materiales, geometría, texturas),
-  `world/` (ciudad, `places/` un archivo por lugar), `characters/` (Nina, animador, caras), `pets/`, `cars/`,
-  `game/` (jugadora, vecinos, cámara, guardado), `audio/`, `ui/` (HUD, joystick, `panels/`), `main.js` (arranque y bucle).
+  `core/` (estado `state.js`, eventos `events.js`, matemática), `engine/` (Three.js, renderer, materiales, geometría,
+  texturas), `world/` (ciudad, zonas, `places/` un archivo por lugar), `characters/` (Nina, animador, caras), `pets/`,
+  `cars/` (catálogo, modelos, autos en la calle), `game/` (`actors.js` datos compartidos, jugadora, manejo, vecinos,
+  cámara, guardado), `audio/`, `ui/` (HUD, joystick, `panels/`), `debug/` (ganchos de prueba), `main.js` (arranque y bucle).
+  - **Capas** (`PLAN.md` 2.1, las verifica `npm run lint`): core ← engine ← assets ← contenido (world, characters,
+    pets, cars) ← game ← audio, ui ← debug ← main.js. Nadie importa capas de más arriba y no hay ciclos.
+    Para avisar hacia arriba se usan eventos: `emit('zona' | 'aviso' | 'sonido' | 'menu' | 'auto' | 'motor', …)`
+    (lista en `core/events.js`); `game/` no toca el DOM ni el audio.
+  - Zonas: el lugar hace `addZone({ id, x, z, r, label })` y quien sabe qué hacer registra `onZoneAction(id, fn)`.
+    Nombre del lugar: `addArea(...)` en `world/city.js`.
   - `engine/three.js` es el único que importa `three`.
   - Variables que se reasignan desde varios módulos viven en `state` (`state.mode`, `state.clock`, `state.currentZone`,
-    `state.lastCar`, `state.shopSpec`, `state.ttModel/ttSpin/ttDrag`, `state.musicOn`, `state.joyId`).
+    `state.lastCar`, `state.shopSpec`, `state.ttModel/ttSpin/ttDrag`, `state.musicOn`, `state.joyId`, `state.preview`).
   - `main.js` importa todos los módulos en el orden original de las secciones: ese orden define el arranque.
+  - Ganchos de prueba `window.__juego` (state, player, npcs, cars, `teleport(x, z)`): sólo en desarrollo o con `?test`.
 - `src/styles/juego.css` — estilos.
 - `src/assets/loader.js` + `manifest.js` — lee cada modelo del bloque base64 incrustado o con `fetch`.
 - `assets/modelos/avatar_vestido.glb` — modelo de Nina (2,1 MB). No editar a mano. `assets/` es el publicDir de Vite.
 - `tools/vite-embed-assets.js` — incrusta los modelos en la versión de un solo archivo.
-- `tests/` — Playwright: humo, capturas de referencia (`tests/capturas/`), sin red. Checklist manual en `tests/checklist_manual.md`.
+- `tests/` — Playwright: humo, lugares (con los ganchos), capturas de referencia (`tests/capturas/`), sin red.
+  Checklist manual en `tests/checklist_manual.md`.
 - `juego_actual/ciudad-arcoiris-nina.html` — el juego armado antiguo (3 MB, modelo incrustado).
   **No leer este archivo**: es código + un bloque base64 enorme. Tampoco leer `dist/`.
 
@@ -27,8 +36,9 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
 - `npm run dev` — desarrollo con recarga (http://localhost:5173, y desde el iPad con la IP del PC).
 - `npm run build:web` → `dist/web/` (GitHub Pages, se publica solo con GitHub Actions al hacer push a main).
 - `npm run build` → `dist/unico/ciudad-arcoiris.html` (un solo archivo, abre con doble clic).
-- `npm test` — arma ambas versiones y corre todas las pruebas (~2 min). Las capturas deben salir iguales;
-  sólo se regeneran (`npm run test:capturas`) cuando un cambio visible es a propósito.
+- `npm run lint` — ESLint, incluidas las reglas de capas y ciclos.
+- `npm test` — lint + arma ambas versiones + todas las pruebas (~5 min, 70 pruebas). Las capturas deben salir
+  iguales; sólo se regeneran (`npm run test:capturas`) cuando un cambio visible es a propósito.
 - Git no está en el PATH: los commits los hace el usuario desde GitHub Desktop.
 - `herramientas_avatar/` — scripts Python que generaron el modelo (ropa, animaciones, expresiones) y atlas de la cara.
   Requieren numpy, scipy y mathutils (o Blender).

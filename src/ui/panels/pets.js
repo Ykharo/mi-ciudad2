@@ -5,18 +5,18 @@ import { scene } from '../../engine/renderer.js';
 import { PET_COLORS, PET_KINDS, PET_NAMES, animatePet, buildPet, disposePet, setPetName } from '../../pets/models.js';
 import { optsHTML, swHTML } from '../widgets.js';
 import { save } from '../../game/save.js';
-import { addPet, cam, player } from '../../game/player.js';
+import { onZoneAction } from '../../world/zones.js';
+import { addPet, cam, player } from '../../game/actors.js';
 import { sfx } from '../../audio/audio.js';
 import { $, esc, toast } from '../dom.js';
 import { enterMenu, leaveMenu } from '../../game/modes.js';
 
-/* ---------- pet shelter ---------- */
 const petPanel = $('#petPanel'), petBody = $('#petBody');
 const MAX_PETS = 4;
-let petSel = { kind: 'perro', color: '#E9B77A', name: '' }, petSuggest = 'Toby', preview = null;
+let petSel = { kind: 'perro', color: '#E9B77A', name: '' }, petSuggest = 'Toby';
 function makePreview() {
-  if (preview) disposePet(preview);
-  preview = buildPet(petSel.kind, petSel.color); setPetName(preview, petSel.name.trim() || petSuggest); scene.add(preview.root);
+  if (state.preview) disposePet(state.preview);
+  state.preview = buildPet(petSel.kind, petSel.color); setPetName(state.preview, petSel.name.trim() || petSuggest); scene.add(state.preview.root);
 }
 function renderPets() {
   const list = player.pets.length
@@ -34,11 +34,11 @@ petBody.addEventListener('click', e => {
   if (b.dataset.k === 'pk') petSel.kind = b.dataset.v; else petSel.color = b.dataset.v;
   sfx('pop'); renderPets(); makePreview();
 });
-petBody.addEventListener('input', e => { if (e.target.id === 'petName') { petSel.name = e.target.value; setPetName(preview, petSel.name.trim() || petSuggest); } });
+petBody.addEventListener('input', e => { if (e.target.id === 'petName') { petSel.name = e.target.value; setPetName(state.preview, petSel.name.trim() || petSuggest); } });
 $('#btnAdopt').addEventListener('click', () => {
   if (player.pets.length >= MAX_PETS) { toast('Ya tienes 4 mascotas. Lleva una a casa para adoptar otra.'); return; }
   const name = petSel.name.trim() || petSuggest;
-  addPet(petSel.kind, petSel.color, name, preview.root.position.clone());
+  addPet(petSel.kind, petSel.color, name, state.preview.root.position.clone());
   save(); sfx('adopt'); player.happy = 0.6;
   toast(`¡${name} ahora es tu mascota!`);
   petSel.name = ''; petSuggest = pick(PET_NAMES.filter(n => !player.pets.some(p => p.name === n)).concat(['Pompón']));
@@ -48,13 +48,15 @@ function openPets() {
   if (state.mode !== 'play') return; enterMenu('pets'); petPanel.hidden = false;
   petSel.name = ''; petSuggest = pick(PET_NAMES); renderPets(); makePreview();
 }
-$('#petDone').addEventListener('click', () => { petPanel.hidden = true; if (preview) { disposePet(preview); preview = null; } leaveMenu(); });
+$('#petDone').addEventListener('click', () => { petPanel.hidden = true; if (state.preview) { disposePet(state.preview); state.preview = null; } leaveMenu(); });
 function updatePreview(dt, t) {
-  if (!preview) return;
+  if (!state.preview) return;
   const yaw = cam.menuYaw, fx = Math.sin(yaw), fz = Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
-  preview.root.position.set(player.pos.x + fx * 1.4 + rx * 1.1, 0, player.pos.z + fz * 1.4 + rz * 1.1);
-  preview.root.rotation.y = yaw - 0.5 + Math.sin(t * 0.8) * 0.3;
-  animatePet(preview, t, 0, dt);
+  state.preview.root.position.set(player.pos.x + fx * 1.4 + rx * 1.1, 0, player.pos.z + fz * 1.4 + rz * 1.1);
+  state.preview.root.rotation.y = yaw - 0.5 + Math.sin(t * 0.8) * 0.3;
+  animatePet(state.preview, t, 0, dt);
 }
 
-export { MAX_PETS, openPets, preview, updatePreview };
+onZoneAction('pets', openPets);
+
+export { MAX_PETS, openPets, updatePreview };

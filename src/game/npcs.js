@@ -9,7 +9,7 @@ import { carDist, cars } from '../cars/fleet.js';
 import { NINA_SCALE, makeAvatar, randomLook } from '../characters/avatar.js';
 import { avatarBusy, avatarDo, updateAvatar } from '../characters/animator.js';
 import { PET_COLORS, buildPet } from '../pets/models.js';
-import { player } from './player.js';
+import { player } from './actors.js';
 import { followChain } from '../pets/follow.js';
 
 const npcs = [];
@@ -73,5 +73,7 @@ function updateNPCs(dt, t) {
     if (n.pets.length) followChain(n.pets, n.pos, dt, t);
   }
 }
+// Nina saluda: los vecinos cercanos contestan
+function greetAround() { npcs.forEach(n => { if (n.pos.distanceTo(player.pos) < 9) { n.greet = 2.2; n.cool = 8; npcSay(n, '¡Hola!'); } }); }
 
-export { npcSay, npcs, spawnNPCs, updateNPCs };
+export { greetAround, npcSay, npcs, spawnNPCs, updateNPCs };

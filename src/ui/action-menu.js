@@ -1,8 +1,10 @@
 // Menú 🎬 Acción.
 import { state } from '../core/state.js';
+import { on } from '../core/events.js';
 import { avatarDo, avatarStop } from '../characters/animator.js';
-import { input, player, standUp } from '../game/player.js';
-import { npcSay, npcs } from '../game/npcs.js';
+import { input, player } from '../game/actors.js';
+import { standUp } from '../game/player.js';
+import { greetAround } from '../game/npcs.js';
 import { sfx } from '../audio/audio.js';
 import { $ } from './dom.js';
 
@@ -25,7 +27,6 @@ function setActMenu(open) {
   if (open) renderActMenu();
   actMenu.hidden = !open; btnAct.setAttribute('aria-expanded', open ? 'true' : 'false');
 }
-function greetAround() { npcs.forEach(n => { if (n.pos.distanceTo(player.pos) < 9) { n.greet = 2.2; n.cool = 8; npcSay(n, '¡Hola!'); } }); }
 function doAction(id) {
   if (state.mode !== 'play') return;
   const A = ACTIONS.find(a => a.id === id); if (!A) return;
@@ -41,5 +42,6 @@ btnAct.addEventListener('click', e => { e.stopPropagation(); setActMenu(actMenu.
 actMenu.addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (!b) return; setActMenu(false); doAction(b.dataset.act); });
 document.addEventListener('pointerdown', e => { if (!actMenu.hidden && !actMenu.contains(e.target) && !btnAct.contains(e.target)) setActMenu(false); });
 window.addEventListener('keydown', e => { if (e.code === 'Escape') setActMenu(false); });
-
-export { greetAround, setActMenu };
+// el menú se cierra al abrir un panel o subirse a un auto
+on('menu', abierto => { if (abierto) setActMenu(false); });
+on('auto', que => { if (que === 'subir') setActMenu(false); });

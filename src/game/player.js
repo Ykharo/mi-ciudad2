@@ -1,40 +1,16 @@
-// La jugadora: movimiento, bancas y zonas.
-import { THREE } from '../engine/three.js';
+// La jugadora: movimiento, saltar, bancas y helado.
 import { state } from '../core/state.js';
-import { clamp, lerpAngle } from '../core/math.js';
-import { scene } from '../engine/renderer.js';
+import { emit } from '../core/events.js';
+import { clamp, lerpAngle, pick } from '../core/math.js';
 import { collide } from '../world/physics.js';
-import { zones } from '../world/zones.js';
+import { onZoneAction } from '../world/zones.js';
 import { avatarDo, avatarStop, updateAvatar } from '../characters/animator.js';
 import { setHolding } from '../characters/props.js';
-import { buildPet, setPetName } from '../pets/models.js';
-import { DEFAULT_CAR, fixCarSpec } from '../cars/catalog.js';
+import { cam, input, player } from './actors.js';
 import { npcs } from './npcs.js';
-import { nearestCar, updateCar } from '../cars/driving.js';
-import { sfx } from '../audio/audio.js';
-import { setActionButton } from '../ui/dom.js';
-
-state.mode = 'intro'; // intro | play | pets | shop | drive
-const ownedCars = [], MAX_CARS = 4;
-state.lastCar = null; state.shopSpec = fixCarSpec(DEFAULT_CAR);
-const player = { ch: null, pos: new THREE.Vector3(9, 0, -1.5), vel: new THREE.Vector3(), facing: Math.PI * 0.8, vy: 0, y: 0, air: false, phase: 0, speed01: 0, happy: 0, bonk: 0, iceTime: 0, seat: null, pets: [] };
-const cam = { yaw: 0.35, pitch: 0.36, dist: 11.5, look: new THREE.Vector3(), pos: new THREE.Vector3(), menuYaw: 0 };
-const input = { jx: 0, jy: 0, jump: false, keys: {} };
-state.clock = 0;
-
-function addPet(kind, color, name, pos) {
-  const obj = buildPet(kind, color);
-  setPetName(obj, name);
-  scene.add(obj.root);
-  const p = { kind, color, name, obj, pos: (pos || player.pos).clone(), facing: player.facing };
-  if (!pos) { p.pos.x -= Math.sin(player.facing) * (1.6 + player.pets.length * 1.3); p.pos.z -= Math.cos(player.facing) * (1.6 + player.pets.length * 1.3); }
-  player.pets.push(p);
-  return p;
-}
 
 const PLAYER_SPEED = 4.8;
 function updatePlayer(dt) {
-  if (state.mode === 'drive') { updateCar(dt); return; }
   const ch = player.ch;
   let jx = 0, jy = 0;
   if (state.mode === 'play') {
@@ -66,7 +42,7 @@ function updatePlayer(dt) {
   const sp = player.seat ? 0 : Math.hypot(player.vel.x, player.vel.z);
   if (sp > 0.4 && state.mode === 'play') player.facing = lerpAngle(player.facing, Math.atan2(player.vel.x, player.vel.z), 1 - Math.exp(-dt * 12));
   if (input.jump && !player.air && !player.seat && state.mode === 'play') {
-    player.vy = 8.2; player.air = true; sfx('jump');
+    player.vy = 8.2; player.air = true; emit('sonido', 'jump');
     avatarDo(ch, 'jump', { start: 0.36, ts: 0.75, stopOnMove: false });
   }
   input.jump = false;
@@ -89,15 +65,19 @@ function sitOnBench(b) {
   player.seat = { x: b.x + fx * (0.05 + 0.10 * k), y: 0.72 - 0.158 * k, z: b.z + fz * (0.05 + 0.10 * k), facing: b.ry };
   player.vel.set(0, 0, 0); player.pos.set(b.x + fx * 1.1, 0, b.z + fz * 1.1); player.facing = b.ry;
   avatarDo(player.ch, 'sit', { start: 0.95, ts: 1.2 });
-  setActionButton(null); state.currentZone = null; sfx('pop');
+  emit('zona', null); state.currentZone = null; emit('sonido', 'pop');
 }
 function standUp() { if (!player.seat) return; player.seat = null; }
-state.currentZone = null;
-function updateZones() {
-  let found = null;
-  if (state.mode === 'play' && !player.seat) for (const q of zones) if (Math.hypot(player.pos.x - q.x, player.pos.z - q.z) < q.r) { found = q; break; }
-  if (state.mode === 'play' && !found) { const c = nearestCar(1.5); if (c) found = c.zone; }
-  if (found !== state.currentZone) { state.currentZone = found; setActionButton(found); }
+
+const FLAVORS = [['#FF9CC7', 'frutilla'], ['#7A4A30', 'chocolate'], ['#8FE3C5', 'menta'], ['#FFF5DE', 'vainilla'], ['#B89CFF', 'mora'], ['#FFD23F', 'mango']];
+function giveIceCream() {
+  const [c, n] = pick(FLAVORS);
+  setHolding(player.ch, c);
+  player.iceTime = 45; player.happy = 0.6; emit('sonido', 'adopt');
+  emit('aviso', `¡Mmm! Un helado de ${n}`);
 }
 
-export { MAX_CARS, addPet, cam, input, ownedCars, player, sitOnBench, standUp, updatePlayer, updateZones };
+onZoneAction('bench', z => sitOnBench(z.bench));
+onZoneAction('icecream', giveIceCream);
+
+export { standUp, updatePlayer };

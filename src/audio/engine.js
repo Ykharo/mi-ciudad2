@@ -1,5 +1,5 @@
-// Ruido del motor al manejar.
-import { driving } from '../cars/driving.js';
+// Ruido del motor al manejar. Escucha los eventos 'auto' y 'motor'.
+import { on } from '../core/events.js';
 import { AC, sfxGain } from './audio.js';
 
 /* soft engine hum while driving */
@@ -12,10 +12,11 @@ function startEngine() {
   g.gain.setTargetAtTime(0.14, AC.currentTime, 0.2);
   engine = { o, g };
 }
-function setEngine(speed) { if (engine) engine.o.frequency.setTargetAtTime((48 + speed * 7) * (driving ? driving.stats.pitch : 1), AC.currentTime, 0.08); }
+function setEngine(speed, pitch) { if (engine) engine.o.frequency.setTargetAtTime((48 + speed * 7) * pitch, AC.currentTime, 0.08); }
 function stopEngine() {
   if (!engine) return; const e = engine; engine = null;
   e.g.gain.setTargetAtTime(0.0001, AC.currentTime, 0.1); setTimeout(() => { try { e.o.stop(); } catch (_) { } }, 600);
 }
 
-export { setEngine, startEngine, stopEngine };
+on('auto', que => { if (que === 'subir') startEngine(); else stopEngine(); });
+on('motor', setEngine);

@@ -7,13 +7,13 @@ import { CAR_COLORS, CAR_TYPE, CAR_TYPES, DECALS, DEFAULT_CAR, EXTRAS, HORNS, RI
 import { buildCarModel } from '../../cars/build.js';
 import { SPAWNS, TT, ttGroup } from '../../world/places/carshop.js';
 import { save } from '../../game/save.js';
-import { MAX_CARS, ownedCars, player } from '../../game/player.js';
-import { enterCar } from '../../cars/driving.js';
+import { onZoneAction } from '../../world/zones.js';
+import { MAX_CARS, ownedCars, player } from '../../game/actors.js';
+import { enterCar } from '../../game/driving.js';
 import { hornSound, initAudio, sfx } from '../../audio/audio.js';
 import { $, esc, toast } from '../dom.js';
 import { enterMenu, leaveMenu } from '../../game/modes.js';
 
-/* ---------- car shop ---------- */
 const shopPanel = $('#shopPanel'), shopTabsEl = $('#shopTabs'), shopBody = $('#shopBody'), btnBuy = $('#btnBuy');
 const SHOP_TABS = [{ id: 'modelo', label: 'Modelo' }, { id: 'pintura', label: 'Pintura' }, { id: 'diseno', label: 'Diseño' }, { id: 'ruedas', label: 'Ruedas' }, { id: 'adornos', label: 'Adornos' }, { id: 'bocina', label: 'Bocina' }, { id: 'garaje', label: 'Mi garaje' }];
 let shopTab = 'modelo', shopEditing = null;
@@ -87,7 +87,7 @@ btnBuy.addEventListener('click', () => {
     shopTab = 'garaje'; renderShopTabs(); renderShop(); return;
   }
   const spec = clone(state.shopSpec), M = buildCarModel(spec);
-  const spot = SPAWNS.find(([x, z, h]) => carFitsAt(M.hw, M.hl, x, z, h));
+  const spot = SPAWNS.find(([x, z, h]) => carFitsAt(M.hw, M.hl, x, z, h, null, player.pos));
   if (!spot) { M.dispose(); toast('La calle está llena de autos. Intenta en un ratito.'); return; }
   const c = spawnCar(spec, spot[0], spot[1], spot[2], true, M);
   ownedCars.push(c); state.lastCar = c;
@@ -110,4 +110,6 @@ function closeShop() {
 }
 $('#shopDone').addEventListener('click', closeShop);
 
-export { openShop, refreshTT };
+onZoneAction('shop', openShop);
+
+export { refreshTT };
