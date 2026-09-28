@@ -3,7 +3,7 @@
 Este documento propone cómo reorganizar el proyecto para que pueda seguir creciendo (ropa, personajes, lugares)
 sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún archivo existente.
 
-## Dónde quedamos (27-09-2026)
+## Dónde quedamos (28-09-2026)
 
 - El proyecto se movió de OneDrive a `C:\proyectos\mi-ciudad`. La copia de OneDrive queda sólo como respaldo;
   no se trabaja ahí.
@@ -20,6 +20,28 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
   La 11 (Python) se deja para la etapa 6. La prueba en el iPad real queda para más adelante (decisión 10).
 - Hay una carpeta `mi-ciudad/` dentro del proyecto con un repositorio vacío (sólo `.gitattributes`,
   remoto `Ykharo/mi-ciudad`): parece un intento anterior de GitHub Desktop. No se versiona; se puede borrar.
+- **Etapa 6 lista** (falta: probarla en el navegador y commit). Prendas de la hoja de referencia
+  (`referencias/ropa/hoja_de_referencia_nina.png`): **falda tableada**, **chaqueta** y **pelo largo**.
+  - Decisión 11: en vez de Python/Blender, un generador en Node: `node tools/generar_prendas.mjs [id…]`. Cada prenda
+    es un archivo en `tools/prendas/` (`falda.mjs`, `chaqueta.mjs`, `pelo_largo.mjs`) que mide el cuerpo de Nina con
+    rayos (three.js en Node) y arma la malla; `cuerpo.mjs` tiene las utilidades (rayos, pesos copiados del cuerpo,
+    grillas, grosor) y `escribir.mjs` escribe el .glb con el esqueleto del original, lo valida (pesos que suman 1,
+    los 17 huesos, materiales declarados en el catálogo, tope 450 KB) y lo cuantiza. Reemplaza al
+    `validar_prenda.mjs` que proponía el plan.
+  - Falda: 24 tablas, cuadrillé (textura gris 64×64 que se tiñe con el color elegido), pretina; pesos cadera→muslos
+    para que camine y se siente sin estirarse. 121 KB. Chaqueta: abierta adelante, mangas que siguen el brazo, borde,
+    puños y cuello en otro color ("Color de los bordes"). Nuevo espacio opcional `abrigo`. 182 KB. Pelo largo:
+    casquete con raya al medio, cortina ondulada por la espalda y mechones que enmarcan la cara y caen sobre el pecho;
+    tapa las orejas, hace sombra, mismos tonos y reglas de color que el moño. 163 KB.
+  - Error encontrado al hacer la chaqueta: el grosor (`cascara`) va hacia adentro según hacia dónde miran las caras,
+    y en la chaqueta miraban hacia adentro (el forro quedaba por fuera). Ahora `orientar()` las da vuelta si hace falta.
+  - Vestidor: pestaña **Chaqueta** con "Sin chaqueta" (los espacios opcionales tienen la opción de quedar vacíos).
+    Con 6 pestañas, van en dos filas si no caben. Prueba nueva (pelo largo + chaqueta + falda, sacarse la chaqueta,
+    se guarda). Captura del Vestidor regenerada (cambian las pestañas). 120/120.
+  - Revisadas en el probador (`?con=pelo:pelo_largo,abrigo:chaqueta,piernas:falda_tableada`) en 12 poses. Con los
+    brazos arriba (wave) el brazo puede cruzar el mechón de adelante; es aceptable por ahora.
+  - Quedan de la etapa 6 original: separar `Body_Base` en regiones ocultables y un accesorio rígido. Los moños (lazos)
+    del pelo de la referencia, para más adelante.
 - **Mejora (después de la etapa 5): joystick con zona lenta y zona rápida.** Pedido: más recorrido para caminar y
   manejar despacio. El joystick pasó de 156 a 200 px (164 en pantallas chicas); mientras la perilla está entera
   adentro del círculo punteado es lento (Nina camina 0,5–1,3 m/s; el auto va a 12–27 % de su máximo y retrocede

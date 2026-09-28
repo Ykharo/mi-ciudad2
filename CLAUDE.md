@@ -29,15 +29,21 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
 - `assets/modelos/nina_base.glb` (esqueleto, cuerpo, cabeza, cara, 11 animaciones) y `assets/modelos/prendas/<id>.glb`
   (una prenda cada uno). Generados, cuantizados: **no editar a mano**; se regeneran con `node tools/separar_glb.mjs`
   desde `herramientas_avatar/avatar_vestido.glb` (el modelo vestido completo que sale de los scripts de Python).
+  Las prendas **nuevas** (sin `mallas` en el catálogo: falda_tableada, chaqueta, pelo_largo) salen de
+  `node tools/generar_prendas.mjs [id…]`: un archivo por prenda en `tools/prendas/`, que mide el cuerpo con rayos
+  (`cuerpo.mjs`) y escribe/valida/cuantiza el .glb (`escribir.mjs`). Superficies con grosor: `orientar()` antes de
+  `cascara()` (el grosor va hacia adentro según la normal). Revisar con el probador (`?con=slot:id,…`).
   `assets/` es el publicDir de Vite.
 - `src/characters/wardrobe.js` — pegar/quitar prendas (`ponerPrenda`, `quitarPrenda`, `recolorear`), materiales
   compartidos. `src/characters/avatar.js` — `loadCharacters(looks)` y `makeAvatar(look)` (base + prendas).
 - `src/ui/panels/wardrobe.js` — el Vestidor (zona `boutique` en la Boutique Arcoíris, modo `wardrobe`): colores por
-  canal, extras, piel, Sorpréndeme, Original. Guarda en `player.look` (y en el guardado v2).
+  canal, extras, piel, Sorpréndeme, Original. Guarda en `player.look` (y en el guardado v2). Espacios del cuerpo
+  (`SLOTS`): pelo, torso, abrigo, piernas, pies; `abrigo` es opcional ("Sin chaqueta").
 - `src/debug/probador.html` — probador de prendas y animaciones (sólo con `npm run dev`:
   http://localhost:5173/src/debug/probador.html). `tools/fotos_poses.mjs` fotografía las poses difíciles con él.
 - `tools/vite-embed-assets.js` — incrusta los modelos (base + todas las prendas) en la versión de un solo archivo.
-- `tests/` — Playwright: humo, lugares (con los ganchos), capturas de referencia (`tests/capturas/`), sin red.
+- `tests/` — Playwright: humo, lugares (con los ganchos), manejo (joystick con el mouse real), guardado, vestidor,
+  capturas de referencia (`tests/capturas/`), sin red.
   Checklist manual en `tests/checklist_manual.md`.
 - `juego_actual/ciudad-arcoiris-nina.html` — el juego armado antiguo (3 MB, modelo incrustado).
   **No leer este archivo**: es código + un bloque base64 enorme. Tampoco leer `dist/`.
@@ -47,7 +53,7 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
 - `npm run build:web` → `dist/web/` (GitHub Pages, se publica solo con GitHub Actions al hacer push a main).
 - `npm run build` → `dist/unico/ciudad-arcoiris.html` (un solo archivo, abre con doble clic).
 - `npm run lint` — ESLint, incluidas las reglas de capas y ciclos.
-- `npm test` — lint + arma ambas versiones + todas las pruebas (~5 min, 80 pruebas). Las capturas deben salir
+- `npm test` — lint + arma ambas versiones + todas las pruebas (~10 min, 120 pruebas). Las capturas deben salir
   iguales; sólo se regeneran (`npm run test:capturas`) cuando un cambio visible es a propósito.
   Ojo: Three.js r149 usa `Math.random` para los UUID, así que crear más o menos materiales/geometrías mueve a los
   vecinos en las capturas aunque nada se dibuje distinto. Para comprobar que el dibujo no cambió:

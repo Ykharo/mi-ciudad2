@@ -1,7 +1,7 @@
 // Probador de prendas (sólo desarrollo: npm run dev → http://localhost:5173/src/debug/probador.html).
 // Un personaje con selector de animación y de prenda por espacio del cuerpo, para revisar cada prenda en cada pose.
 // También se maneja por la dirección, para fotografiar poses desde las pruebas:
-//   ?anim=split&t=1.2&vista=frente|lado|atras|arriba&look=fabrica|azar&seed=7&sin=pelo
+//   ?anim=split&t=1.2&vista=frente|lado|atras|arriba&look=fabrica|azar&seed=7&sin=pelo&con=piernas:falda_tableada
 import { THREE } from '../engine/three.js';
 import { seeded } from '../core/math.js';
 import { SUN_OFF, camera, fill, renderer, scene, sun } from '../engine/renderer.js';
@@ -21,6 +21,7 @@ sun.position.copy(SUN_OFF); sun.target.position.set(0, 0, 0);   // como en el ju
 
 let look = q.get('look') === 'azar' ? randomLook(seeded(+(q.get('seed') || 1))) : copia(LOOK_NINA);
 for (const s of (q.get('sin') || '').split(',').filter(Boolean)) delete look.prendas[s];
+for (const par of (q.get('con') || '').split(',').filter(Boolean)) { const [s, id] = par.split(':'); look.prendas[s] = { id }; }
 await loadCharacters([look, ...PRENDAS.map(p => ({ prendas: { [p.slot]: { id: p.id } } }))]);
 let ch = makeAvatar(look);
 

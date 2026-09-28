@@ -29,7 +29,9 @@ Requiere Node (una vez: `npm install`).
   - `world/city.js` arma la ciudad; cada lugar especial está en `world/places/`.
   - `main.js` — arranque y bucle principal.
 - `assets/modelos/nina_base.glb` — Nina sin ropa: esqueleto, cuerpo, cara y las 11 animaciones.
-  `assets/modelos/prendas/` — un archivo por prenda. Se generan con `node tools/separar_glb.mjs`.
+  `assets/modelos/prendas/` — un archivo por prenda. Las cuatro originales se generan con `node tools/separar_glb.mjs`;
+  las nuevas (falda, chaqueta, pelo largo) con `node tools/generar_prendas.mjs`, una por archivo en `tools/prendas/`.
+  Las imágenes de referencia para ropa nueva van en `referencias/ropa/`.
 - `herramientas_avatar/` — scripts Python que generaron el modelo (ropa, animaciones, expresiones), atlas de la cara
   y `avatar_vestido.glb`, el modelo completo del que salen la base y las prendas.
 - Probador de ropa: con `npm run dev`, abre http://localhost:5173/src/debug/probador.html (elige prendas, colores y

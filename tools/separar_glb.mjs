@@ -24,7 +24,8 @@ const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 const original = await io.read(ENTRADA);
 const kb = f => (statSync(f).size / 1024).toFixed(0) + ' KB';
 
-const todasLasPrendas = PRENDAS.flatMap(p => p.mallas);
+const DEL_MODELO = PRENDAS.filter(p => p.mallas);   // las generadas por código (tools/generar_prendas.mjs) no están aquí
+const todasLasPrendas = DEL_MODELO.flatMap(p => p.mallas);
 const nodos = doc => doc.getRoot().listNodes();
 for (const n of todasLasPrendas) if (!nodos(original).some(x => x.getName() === n)) throw new Error(`El modelo no tiene la malla ${n}`);
 
@@ -47,5 +48,5 @@ async function separar(quedan, conAnimaciones, salida) {
 mkdirSync('assets/modelos/prendas', { recursive: true });
 const base = nodos(original).filter(n => n.getMesh() && !todasLasPrendas.includes(n.getName())).map(n => n.getName());
 await separar(base, true, 'assets/modelos/nina_base.glb');
-for (const p of PRENDAS) await separar(p.mallas, false, `assets/modelos/prendas/${p.id}.glb`);
+for (const p of DEL_MODELO) await separar(p.mallas, false, `assets/modelos/prendas/${p.id}.glb`);
 console.log(`(original ${kb(ENTRADA)})`);

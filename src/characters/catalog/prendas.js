@@ -10,7 +10,9 @@
 // Un color que no se elige queda como viene en el modelo ("de fábrica").
 //
 // Hoy las cuatro prendas vienen dentro de avatar_vestido.glb; en la etapa 4 cada una tendrá su propio .glb.
-export const SLOTS = ['pelo', 'torso', 'piernas', 'pies'];
+export const SLOTS = ['pelo', 'torso', 'abrigo', 'piernas', 'pies'];
+// espacios que pueden quedar vacíos (decisión 7: torso, piernas y pies siempre llevan algo)
+export const SLOTS_OPCIONALES = ['abrigo'];
 
 export const PIEL = {
   mats: ['Skin_Warm'],
@@ -28,6 +30,19 @@ export const PRENDAS = [
   { id: 'pantalon_cargo', nombre: 'Pantalón cargo', ic: '👖', slot: 'piernas', mallas: ['Ropa_Pantalon'],
     canales: { principal: { mats: ['Cargo_Pearl'], paleta: 'pantalon' } },
     derivados: { Cargo_Pocket: ['principal', 'sombra', 0.92], Cargo_Stitch: ['principal', 'contraste', 0.68, 0.25] } },
+  // --- prendas generadas por código (tools/generar_prendas.mjs), sin `mallas`: no salen del modelo original
+  { id: 'pelo_largo', nombre: 'Pelo largo', ic: '👩', slot: 'pelo', sombra: true,
+    canales: { principal: { mats: ['PeloLargo_Base'], paleta: 'pelo' } },
+    derivados: { PeloLargo_Claro: ['principal', 'contraste', 1.1, 0.12], PeloLargo_Oscuro: ['principal', 'sombra', 0.72] } },
+  { id: 'falda_tableada', nombre: 'Falda', ic: '🩷', slot: 'piernas',
+    canales: { principal: { mats: ['Falda_Tela'], paleta: 'ropa' } },
+    derivados: { Falda_Pretina: ['principal', 'sombra', 0.88] } },
+  { id: 'chaqueta', nombre: 'Chaqueta', ic: '🧥', slot: 'abrigo',
+    canales: {
+      principal: { mats: ['Chaqueta_Tela'], paleta: 'ropa' },
+      detalles: { mats: ['Chaqueta_Detalle'], paleta: 'ropa' },
+    },
+    derivados: { Chaqueta_Forro: ['principal', 'sombra', 0.85] } },
   { id: 'zapatillas', nombre: 'Zapatillas', ic: '👟', slot: 'pies', mallas: ['Ropa_Zapatillas'],
     canales: {
       principal: { mats: ['Sneaker_Ivory'], paleta: 'zapatos' },

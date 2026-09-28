@@ -133,6 +133,8 @@ button:focus-visible{outline:4px solid var(--sky);outline-offset:3px;}
 .pbody p.note.editing{background:#EAF6FF;border-radius:14px;padding:10px 12px;color:var(--ink);margin-top:12px;}
 .tab{flex:none;border:0;background:#F4EEF6;color:var(--ink);font:800 17px/1 var(--display);padding:11px 16px 9px;border-radius:999px;}
 .tab.on{background:var(--ink);color:#fff;}
+/* el Vestidor tiene 6 pestañas: si no caben, van en dos filas en vez de esconderse a la derecha */
+#wardrobeTabs{flex-wrap:wrap;row-gap:8px;overflow-x:visible;touch-action:auto;}
 .pbody{flex:1;overflow-y:auto;padding:4px 18px 18px;touch-action:pan-y;-webkit-overflow-scrolling:touch;}
 .pbody h3{margin:16px 0 10px;font:800 13px/1 var(--body);text-transform:uppercase;letter-spacing:.09em;color:var(--ink-soft);}
 .pbody p.note{margin:6px 0 0;font:700 14px/1.4 var(--body);color:var(--ink-soft);}

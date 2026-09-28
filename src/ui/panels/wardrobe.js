@@ -7,7 +7,7 @@ import { collide } from '../../world/physics.js';
 import { onZoneAction } from '../../world/zones.js';
 import { avatarDo, avatarStop } from '../../characters/animator.js';
 import { PALETAS } from '../../characters/catalog/paletas.js';
-import { PIEL, PRENDA, PRENDAS, SLOTS } from '../../characters/catalog/prendas.js';
+import { PIEL, PRENDA, PRENDAS, SLOTS, SLOTS_OPCIONALES } from '../../characters/catalog/prendas.js';
 import { LOOK_NINA } from '../../characters/catalog/personajes.js';
 import { fixLook } from '../../characters/looks.js';
 import { factoryColor, ponerPrenda, quitarPrenda, recolorear } from '../../characters/wardrobe.js';
@@ -21,10 +21,10 @@ import { optsHTML } from '../widgets.js';
 const panel = $('#wardrobePanel'), tabsEl = $('#wardrobeTabs'), body = $('#wardrobeBody');
 const TABS = [
   { id: 'pelo', label: 'Pelo', slot: 'pelo' }, { id: 'arriba', label: 'Arriba', slot: 'torso' },
-  { id: 'abajo', label: 'Abajo', slot: 'piernas' }, { id: 'zapatos', label: 'Zapatos', slot: 'pies' },
+  { id: 'chaqueta', label: 'Chaqueta', slot: 'abrigo', sin: 'Sin chaqueta' }, { id: 'abajo', label: 'Abajo', slot: 'piernas' }, { id: 'zapatos', label: 'Zapatos', slot: 'pies' },
   { id: 'piel', label: 'Piel' },
 ];
-const NOMBRE_CANAL = { principal: 'Color', panel: 'Color de los detalles' };
+const NOMBRE_CANAL = { principal: 'Color', panel: 'Color de los detalles', detalles: 'Color de los bordes' };
 let tab = 'arriba';
 const copia = o => JSON.parse(JSON.stringify(o));
 
@@ -44,7 +44,9 @@ function render() {
     h = '<h3>Color de piel</h3>' + swatches(PALETAS.piel, look.piel, factoryColor(PIEL.mats[0]), 'data-k="piel"');
   } else {
     const sel = look.prendas[T.slot], P = sel && PRENDA[sel.id];
-    h = '<h3>Prenda</h3>' + optsHTML(PRENDAS.filter(p => p.slot === T.slot).map(p => ({ id: p.id, name: p.nombre, ic: p.ic })), sel && sel.id, 'prenda');
+    const opciones = PRENDAS.filter(p => p.slot === T.slot).map(p => ({ id: p.id, name: p.nombre, ic: p.ic }));
+    if (SLOTS_OPCIONALES.includes(T.slot)) opciones.unshift({ id: '', name: T.sin || 'Nada', ic: '🚫' });   // puede quedar vacío
+    h = '<h3>Prenda</h3>' + optsHTML(opciones, sel ? sel.id : '', 'prenda');
     if (P) {
       for (const [canal, C] of Object.entries(P.canales))
         h += `<h3>${NOMBRE_CANAL[canal] || canal}</h3>` + swatches(PALETAS[C.paleta], sel.colores && sel.colores[canal], factoryColor(C.mats[0]), `data-k="color" data-canal="${canal}"`);
@@ -76,7 +78,7 @@ body.addEventListener('click', e => {
   const look = copia(player.look), slot = (TABS.find(t => t.id === tab) || {}).slot, k = b.dataset.k, v = b.dataset.v;
   const sel = slot && look.prendas[slot];
   if (k === 'piel') look.piel = v || null;
-  else if (k === 'prenda') { if (sel && sel.id === v) return; look.prendas[slot] = { id: v }; }
+  else if (k === 'prenda') { if ((sel ? sel.id : '') === v) return; if (v) look.prendas[slot] = { id: v }; else delete look.prendas[slot]; }
   else if (k === 'color' && sel) { sel.colores = sel.colores || {}; if (v) sel.colores[b.dataset.canal] = v; else delete sel.colores[b.dataset.canal]; }
   else if (k.startsWith('extra:') && sel) { sel.extras = sel.extras || {}; sel.extras[k.slice(6)] = v === 'si'; }
   cambiarLook(look);

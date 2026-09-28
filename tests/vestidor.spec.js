@@ -50,6 +50,30 @@ test('cambiar colores, la mariposa y la piel, y que quede guardado', async ({ pa
   expect(await visible(page, 'Top_Emblem')).toBe(false);
 });
 
+test('cambiar de prenda: pelo largo, chaqueta y falda; y sacarse la chaqueta', async ({ page, jugar }) => {
+  await jugar();
+  const puestas = () => page.evaluate(() => Object.fromEntries(Object.entries(window.__juego.player.ch.prendas).map(([s, p]) => [s, p.id])));
+  const tab = t => page.locator(`#wardrobeTabs [data-tab="${t}"]`).click();
+  await abrirVestidor(page);
+  await tab('pelo'); await muestra(page, 'data-k="prenda"][data-v="pelo_largo"').click();
+  await tab('chaqueta');
+  await expect(muestra(page, 'data-k="prenda"][data-v=""')).toHaveClass(/\bon\b/);   // de entrada, sin chaqueta
+  await muestra(page, 'data-k="prenda"][data-v="chaqueta"').click();
+  await muestra(page, 'data-canal="detalles"][data-v="#4FB6F5"').click();
+  await tab('abajo'); await muestra(page, 'data-k="prenda"][data-v="falda_tableada"').click();
+  await expect.poll(puestas).toEqual({ pelo: 'pelo_largo', torso: 'peto', abrigo: 'chaqueta', piernas: 'falda_tableada', pies: 'zapatillas' });
+  expect(await color(page, 'Chaqueta_Detalle')).toBe('#4fb6f5');
+  // el pelo largo hace sombra (como el moño); la chaqueta no
+  expect(await page.evaluate(() => window.__juego.player.ch.prendas.pelo.partes.some(o => { let s = false; o.traverse(x => { if (x.isMesh && x.castShadow) s = true; }); return s; }))).toBe(true);
+
+  await tab('chaqueta'); await muestra(page, 'data-k="prenda"][data-v=""').click();
+  await expect.poll(async () => (await puestas()).abrigo).toBeUndefined();
+  await page.locator('#wardrobeDone').click();
+  const guardado = await page.evaluate(() => JSON.parse(localStorage.getItem('ciudadArcoiris.v2')));
+  expect(guardado.nina.look.prendas).toMatchObject({ pelo: { id: 'pelo_largo' }, piernas: { id: 'falda_tableada' } });
+  expect(guardado.nina.look.prendas.abrigo).toBeUndefined();
+});
+
 test('Sorpréndeme y Original', async ({ page, jugar }) => {
   await jugar();
   const deFabrica = await color(page, 'Cotton_Charcoal');
