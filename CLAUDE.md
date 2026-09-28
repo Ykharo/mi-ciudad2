@@ -20,7 +20,6 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
 - `assets/modelos/avatar_vestido.glb` — modelo de Nina (2,1 MB). No editar a mano. `assets/` es el publicDir de Vite.
 - `tools/vite-embed-assets.js` — incrusta los modelos en la versión de un solo archivo.
 - `tests/` — Playwright: humo, capturas de referencia (`tests/capturas/`), sin red. Checklist manual en `tests/checklist_manual.md`.
-- `fuente/` — versión anterior (`juego_fuente.html` + `armar_juego.py`): ya no se edita; se borra al cerrar la etapa 1.
 - `juego_actual/ciudad-arcoiris-nina.html` — el juego armado antiguo (3 MB, modelo incrustado).
   **No leer este archivo**: es código + un bloque base64 enorme. Tampoco leer `dist/`.
 

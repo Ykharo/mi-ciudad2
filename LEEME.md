@@ -28,4 +28,5 @@ Requiere Node (una vez: `npm install`).
 - `assets/modelos/avatar_vestido.glb` — el modelo de Nina (esqueleto, 11 animaciones, ropa, caras).
 - `herramientas_avatar/` — scripts Python que generaron el modelo (ropa, animaciones, expresiones) y atlas de la cara.
 - `PLAN.md` — plan de la reestructuración y en qué etapa vamos. `CLAUDE.md` — contexto para Claude Code.
-- `fuente/` y `juego_actual/` — la versión anterior (un solo HTML armado con Python). Ya no se edita.
+- `juego_actual/` — la versión anterior (un solo HTML armado con Python), de referencia. Ya no se edita.
+  La versión anterior del código fuente (`fuente/`) se borró al cerrar la etapa 1; está en la historia de Git.

@@ -20,7 +20,10 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
   La 11 (Python) se deja para la etapa 6. La prueba en el iPad real queda para más adelante (decisión 10).
 - Hay una carpeta `mi-ciudad/` dentro del proyecto con un repositorio vacío (sólo `.gitattributes`,
   remoto `Ykharo/mi-ciudad`): parece un intento anterior de GitHub Desktop. No se versiona; se puede borrar.
-- **Etapa 1b lista** (falta: probar en el navegador, commit y, si se quiere, borrar `fuente/` — decisión 12).
+- **Etapa 1 terminada** (salvo la prueba en el iPad real, pendiente). Siguiente: etapa 2.
+- **Etapa 1b terminada**: probada en el navegador del PC y guardada en el commit "Etapa 1b: separar en módulos".
+  Después se borró `fuente/` (decisión 12): `juego_fuente.html`, `armar_juego.py` y la copia de
+  `avatar_vestido.glb` (idéntica a `assets/modelos/`). Quedan en la historia de Git.
   - `src/main.js` se separó en 50 módulos (+ `core/state.js` y `engine/three.js`) con una herramienta de un solo uso
     que usa análisis de alcance (espree + eslint-scope): mismas funciones, mismos cuerpos, importaciones calculadas.
   - A `core/state.js` pasaron sólo los `let` que se reasignan desde otro módulo: `mode`, `clock`, `currentZone`,
