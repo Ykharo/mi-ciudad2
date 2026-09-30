@@ -74,6 +74,41 @@ test('cambiar de prenda: pelo largo, chaqueta y falda; y sacarse la chaqueta', a
   expect(guardado.nina.look.prendas.abrigo).toBeUndefined();
 });
 
+test('accesorios: varios a la vez, la gorra esconde el moño, y se guardan', async ({ page, jugar }) => {
+  await jugar();
+  const puestas = () => page.evaluate(() => Object.fromEntries(Object.entries(window.__juego.player.ch.prendas).map(([s, p]) => [s, p.id])));
+  const topeVisible = () => page.evaluate(() => { let v = null; window.__juego.player.ch.model.traverse(o => { if (o.name === 'Pelo_Moño_Tope') v = o.visible; }); return v; });
+  const acc = id => muestra(page, `data-k="accesorio"][data-v="${id}"`);
+  await abrirVestidor(page);
+  await page.locator('#wardrobeTabs [data-tab="accesorios"]').click();
+  expect(await topeVisible()).toBe(true);
+  for (const id of ['gorra', 'lentes', 'audifonos', 'mochila']) { await acc(id).click(); await expect(acc(id)).toHaveClass(/\bon\b/); }
+  await expect.poll(puestas).toMatchObject({ pelo: 'mono', cabeza: 'gorra', cara: 'lentes', cuello: 'audifonos', espalda: 'mochila' });
+  expect(await topeVisible()).toBe(false);   // el moño queda bajo la gorra
+  // colores y extras de cada accesorio, en la misma pestaña
+  await muestra(page, 'data-slot="cabeza"][data-canal="visera"][data-v="#4FB6F5"').click();
+  expect(await color(page, 'Gorra_Visera')).toBe('#4fb6f5');
+  await muestra(page, 'data-slot="cabeza"][data-k="extra:Gorra_Estrella"][data-v="no"').click();
+  expect(await visible(page, 'Gorra_Estrella')).toBe(false);
+  await muestra(page, 'data-slot="espalda"][data-canal="correas"][data-v="#FF4F5E"').click();
+  expect(await color(page, 'Mochila_Correa')).toBe('#ff4f5e');
+  // se sacan tocándolos otra vez; sin gorra vuelve el moño
+  await acc('gorra').click(); await acc('lentes').click();
+  await expect.poll(async () => (await puestas()).cabeza).toBeUndefined();
+  expect((await puestas()).cara).toBeUndefined();
+  expect(await topeVisible()).toBe(true);
+  await page.locator('#wardrobeDone').click();
+
+  const guardado = await page.evaluate(() => JSON.parse(localStorage.getItem('ciudadArcoiris.v2')));
+  expect(guardado.nina.look.prendas).toMatchObject({ cuello: { id: 'audifonos' }, espalda: { id: 'mochila', colores: { correas: '#FF4F5E' } } });
+  expect(guardado.nina.look.prendas.cabeza).toBeUndefined();
+  await page.reload();
+  await expect(page.locator('#btnPlay')).toHaveText('¡A jugar!', { timeout: 60_000 });
+  await page.locator('#btnPlay').click();
+  await expect.poll(puestas).toMatchObject({ cuello: 'audifonos', espalda: 'mochila' });
+  expect(await color(page, 'Mochila_Correa')).toBe('#ff4f5e');
+});
+
 test('Sorpréndeme y Original', async ({ page, jugar }) => {
   await jugar();
   const deFabrica = await color(page, 'Cotton_Charcoal');

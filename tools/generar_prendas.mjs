@@ -7,8 +7,12 @@ import { PRENDA } from '../src/characters/catalog/prendas.js';
 import * as falda from './prendas/falda.mjs';
 import * as chaqueta from './prendas/chaqueta.mjs';
 import * as peloLargo from './prendas/pelo_largo.mjs';
+import * as gorra from './prendas/gorra.mjs';
+import * as lentes from './prendas/lentes.mjs';
+import * as audifonos from './prendas/audifonos.mjs';
+import * as mochila from './prendas/mochila.mjs';
 
-const GENERADORES = [falda, chaqueta, peloLargo];
+const GENERADORES = [falda, chaqueta, peloLargo, gorra, lentes, audifonos, mochila];
 
 // materiales que el catálogo conoce para una prenda (canales, derivados, extras y fijos)
 const declarados = P => [...Object.values(P.canales || {}).flatMap(c => c.mats), ...Object.keys(P.derivados || {}),

@@ -80,10 +80,21 @@ function detachPrenda(c, slot) {
   delete c.prendas[slot];
 }
 
+// Esconde las partes que tapan las prendas puestas (`oculta` en el catálogo: la gorra esconde el tope del moño) y
+// vuelve a mostrar las que ya nada tapa. Se esconde el objeto (es de cada personaje), no el material (compartido).
+function applyOcultas(c) {
+  const ocultas = new Set(Object.values(c.prendas).flatMap(p => (PRENDA[p.id] && PRENDA[p.id].oculta) || []));
+  const antes = c.ocultas || new Set();
+  if (!ocultas.size && !antes.size) return;
+  c.model.traverse(o => { if (ocultas.has(o.name) || antes.has(o.name)) o.visible = !ocultas.has(o.name); });
+  c.ocultas = ocultas;
+}
+
 // Viste a un personaje recién creado con las prendas de su look (tienen que estar cargadas: loadPrendas).
 // Se visten en el orden de SLOTS (el orden no cambia el dibujo: se comprobó con las capturas en la etapa 4).
 function dress(c, look) {
   for (const slot of SLOTS) { const sel = look && look.prendas && look.prendas[slot]; if (sel) attachPrenda(c, slot, sel.id); }
+  applyOcultas(c);
   applyLook(c, look);
 }
 
@@ -111,11 +122,13 @@ async function ponerPrenda(c, slot, sel) {
   await loadGLB('prenda:' + sel.id);
   c.look.prendas[slot] = sel;
   attachPrenda(c, slot, sel.id);
+  applyOcultas(c);
   applyLook(c, c.look);
 }
 function quitarPrenda(c, slot) {
   delete c.look.prendas[slot];
   detachPrenda(c, slot);
+  applyOcultas(c);
 }
 function recolorear(c, look) { c.look = look; applyLook(c, look); }
 

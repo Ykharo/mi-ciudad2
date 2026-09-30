@@ -2,6 +2,7 @@
 // Un personaje con selector de animación y de prenda por espacio del cuerpo, para revisar cada prenda en cada pose.
 // También se maneja por la dirección, para fotografiar poses desde las pruebas:
 //   ?anim=split&t=1.2&vista=frente|lado|atras|arriba&look=fabrica|azar&seed=7&sin=pelo&con=piernas:falda_tableada
+//   &dist=1.6&mira=1.8   (cámara más cerca, mirando a esa altura en metros: para revisar la cabeza y los accesorios)
 import { THREE } from '../engine/three.js';
 import { seeded } from '../core/math.js';
 import { SUN_OFF, camera, fill, renderer, scene, sun } from '../engine/renderer.js';
@@ -27,7 +28,8 @@ let ch = makeAvatar(look);
 
 // cámara: órbita arrastrando, rueda para acercar
 const VISTAS = { frente: 0, lado: Math.PI / 2, atras: Math.PI, arriba: 0.6 };
-const orb = { yaw: VISTAS[q.get('vista')] ?? 0.4, pitch: q.get('vista') === 'arriba' ? 0.9 : 0.15, dist: 4.2 };
+const orb = { yaw: VISTAS[q.get('vista')] ?? 0.4, pitch: q.get('vista') === 'arriba' ? 0.9 : 0.15, dist: +(q.get('dist') || 4.2) };
+const mira = q.get('mira') == null ? null : +q.get('mira');
 let drag = null;
 renderer.domElement.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY]; });
 addEventListener('pointerup', () => { drag = null; });
@@ -80,7 +82,7 @@ function frame(now) {
   const t = +pausaEl.value, quieto = t > 0 || pausa != null;
   if (quieto && ch.sp) { ch.sp.a.time = t; ch.sp.w = 1; }
   updateAvatar(ch, quieto ? 0 : dt, +velEl.value, null);
-  const cy = 0.9 * ch.k / 1.4;
+  const cy = mira ?? 0.9 * ch.k / 1.4;
   camera.position.set(Math.sin(orb.yaw) * Math.cos(orb.pitch) * orb.dist, cy + Math.sin(orb.pitch) * orb.dist, Math.cos(orb.yaw) * Math.cos(orb.pitch) * orb.dist);
   camera.lookAt(0, cy, 0);
   fill.position.set(camera.position.x, camera.position.y + 3, camera.position.z); fill.target.position.set(0, cy, 0); fill.intensity = 0.3;

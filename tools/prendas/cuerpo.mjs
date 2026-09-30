@@ -46,9 +46,7 @@ export async function cargarCuerpo() {
   const rayMesh = (src, filtro) => {
     const idx = [];
     for (let t = 0; t < src.I.length; t += 3) if (!filtro || [0, 1, 2].every(k => filtro(src.I[t + k]))) idx.push(src.I[t], src.I[t + 1], src.I[t + 2]);
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(src.P), 3)); g.setIndex(idx);
-    return new THREE.Mesh(g, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
+    return mallaRayos(src.P, idx);
   };
   const partes = nombres => rayMesh(body, i => nombres.includes(DOM[i]));
   const C = {
@@ -61,6 +59,37 @@ export async function cargarCuerpo() {
     partes,
   };
   return C;
+}
+
+// Malla de three.js para lanzar rayos: posiciones planas [x, y, z, …] + índices de triángulos.
+export function mallaRayos(P, I) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(P), 3)); g.setIndex(Array.from(I));
+  return new THREE.Mesh(g, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
+}
+
+// El moño del peinado "Moño alto" (vestir_avatar.py: bun_dir 72° hacia atrás, 0,072 sobre la cabeza). Sus piezas
+// (el moño, las lazadas, el coletero y el mechón que cae de él) son el "tope" del peinado, que se esconde bajo la
+// gorra: tools/separar_glb.mjs las aparta en su propia malla (Pelo_Moño_Tope).
+// (Las piezas del moño tienen su centro a 0,101 o menos; el casquete del peinado, a 0,118: el radio va entremedio.)
+export const CENTRO_MOÑO = v3(0, 1.57, -0.09), RADIO_MOÑO = 0.11;
+// Piezas sueltas de una malla (triángulos conectados; los vértices en la misma posición se sueldan) cuyo centro queda
+// a menos de `radio` de `centro`. Devuelve una marca (0/1) por triángulo.
+export function piezasCerca(P, I, centro, radio) {
+  const nV = P.length / 3, padre = Int32Array.from({ length: nV }, (_, i) => i);
+  const raiz = i => { while (padre[i] !== i) i = padre[i] = padre[padre[i]]; return i; };
+  const unir = (a, b) => { a = raiz(a); b = raiz(b); if (a !== b) padre[a] = b; };
+  const misma = new Map();
+  for (let i = 0; i < nV; i++) {
+    const k = `${P[i * 3].toFixed(5)},${P[i * 3 + 1].toFixed(5)},${P[i * 3 + 2].toFixed(5)}`;
+    if (misma.has(k)) unir(i, misma.get(k)); else misma.set(k, i);
+  }
+  for (let t = 0; t < I.length; t += 3) { unir(I[t], I[t + 1]); unir(I[t], I[t + 2]); }
+  const suma = new Map();
+  for (const i of I) { const r = raiz(i), s = suma.get(r) || suma.set(r, [0, 0, 0, 0]).get(r); s[0] += P[i * 3]; s[1] += P[i * 3 + 1]; s[2] += P[i * 3 + 2]; s[3]++; }
+  const cerca = new Set();
+  for (const [r, s] of suma) if (Math.hypot(s[0] / s[3] - centro.x, s[1] / s[3] - centro.y, s[2] / s[3] - centro.z) < radio) cerca.add(r);
+  return Uint8Array.from({ length: I.length / 3 }, (_, t) => (cerca.has(raiz(I[t * 3])) ? 1 : 0));
 }
 
 // Distancia desde `o` hasta la superficie de `mesh` en la dirección `d` (primer choque), o null.
@@ -143,6 +172,72 @@ export function orientar(V, F, dentro) {
   }
   return s < 0 ? F.map(f => [...f].reverse()) : F;
 }
+// Como orientar(), pero cara por cara: `dentro(f, j)` da un punto interior para la cara f (sirve para sólidos cerrados,
+// donde cada cara sabe hacia dónde queda su centro).
+export function orientarCaras(V, F, dentro) {
+  const e1 = new THREE.Vector3(), e2 = new THREE.Vector3(), c = new THREE.Vector3();
+  return F.map((f, j) => {
+    const n = e1.subVectors(V[f[1]], V[f[0]]).cross(e2.subVectors(V[f[2]], V[f[0]]));
+    c.set(0, 0, 0); f.forEach(i => c.add(V[i])); c.divideScalar(f.length);
+    return n.dot(c.sub(dentro(f, j))) < 0 ? [...f].reverse() : f;
+  });
+}
+
+// Accesorios (sólidos cerrados, sin cascara). Todos agregan a la malla `m` con el material `mat`.
+//
+// Tubo a lo largo de una línea de puntos: anillo si `cerrado`, si no con tapas. La sección es una elipse de radio
+// `radio` (número o función del índice del punto) aplanada en la dirección `ref` (por defecto, hacia arriba).
+export function tubo(m, pts, radio, mat, { cerrado = false, lados = 8, aplanar = 1, ref = v3(0, 1, 0) } = {}) {
+  const n = pts.length, V = [], F = [], rad = typeof radio === 'function' ? radio : () => radio;
+  pts.forEach((p, i) => {
+    const t = (cerrado ? pts[(i + 1) % n].clone().sub(pts[(i - 1 + n) % n]) : pts[Math.min(i + 1, n - 1)].clone().sub(pts[Math.max(i - 1, 0)])).normalize();
+    let b = ref.clone().addScaledVector(t, -ref.dot(t));
+    if (b.lengthSq() < 1e-8) b = Math.abs(t.x) < 0.9 ? v3(1, 0, 0) : v3(0, 0, 1);
+    b.normalize();
+    const u = new THREE.Vector3().crossVectors(t, b);
+    for (let k = 0; k < lados; k++) {
+      const a = 2 * Math.PI * k / lados;
+      V.push(p.clone().addScaledVector(u, Math.cos(a) * rad(i)).addScaledVector(b, Math.sin(a) * rad(i) * aplanar));
+    }
+  });
+  F.push(...grilla(n, lados, true));
+  const centro = [];   // punto del eje de cada cara (para orientarlas)
+  F.forEach(f => centro.push(pts[Math.floor(f[0] / lados)].clone().lerp(pts[Math.floor(f[1] / lados)], 0.5)));
+  if (cerrado) for (let k = 0; k < lados; k++) { F.push([(n - 1) * lados + k, k, (k + 1) % lados, (n - 1) * lados + (k + 1) % lados]); centro.push(pts[0].clone().lerp(pts[n - 1], 0.5)); }
+  else for (const [ext, vec] of [[0, 1], [n - 1, n - 2]]) {
+    const c = V.length; V.push(pts[ext].clone());
+    for (let k = 0; k < lados; k++) { F.push([c, ext * lados + k, ext * lados + (k + 1) % lados]); centro.push(pts[vec]); }
+  }
+  m.add(V, orientarCaras(V, F, (f, j) => centro[j]), mat);
+}
+// Sólido de revolución alrededor de `eje` (que pasa por `centro`): perfil = [[radio, altura], …] de abajo arriba,
+// con radio 0 en las puntas para que quede cerrado. Tiene que ser convexo (se orienta hacia el centro).
+export function revolucion(m, perfil, centro, eje, mat, lados = 20) {
+  const e = eje.clone().normalize(), a = Math.abs(e.y) < 0.9 ? v3(0, 1, 0) : v3(1, 0, 0);
+  const u = new THREE.Vector3().crossVectors(e, a).normalize(), w = new THREE.Vector3().crossVectors(e, u);
+  const V = [];
+  for (const [r, h] of perfil) for (let k = 0; k < lados; k++) {
+    const t = 2 * Math.PI * k / lados;
+    V.push(centro.clone().addScaledVector(e, h).addScaledVector(u, Math.cos(t) * r).addScaledVector(w, Math.sin(t) * r));
+  }
+  const hm = (perfil[0][1] + perfil[perfil.length - 1][1]) / 2, medio = centro.clone().addScaledVector(e, hm);
+  const F = grilla(perfil.length, lados, true);
+  m.add(V, orientarCaras(V, F, () => medio), mat);
+}
+// Caja de esquinas redondeadas (superelipsoide): `semi` = medio ancho, alto y fondo; `redondez` 0 = caja, 1 = esfera.
+export function caja(m, centro, semi, mat, redondez = 0.3, filas = 14, cols = 28) {
+  const f = (s, e) => Math.sign(s) * Math.abs(s) ** e, V = [];
+  for (let r = 0; r <= filas; r++) {
+    const th = -Math.PI / 2 + Math.PI * r / filas;
+    for (let k = 0; k < cols; k++) {
+      const ph = 2 * Math.PI * k / cols;
+      V.push(v3(semi.x * f(Math.cos(th), redondez) * f(Math.cos(ph), redondez), semi.y * f(Math.sin(th), redondez),
+        semi.z * f(Math.cos(th), redondez) * f(Math.sin(ph), redondez)).add(centro));
+    }
+  }
+  m.add(V, orientarCaras(V, grilla(filas + 1, cols, true), () => centro), mat);
+}
+
 // Superficie con grosor (como el modificador Solidify): exterior, interior y bordes.
 export function cascara(m, V, F, grosor, matFuera, matDentro = matFuera, matBorde = matFuera, uv, pesos, afuera) {
   const N = afuera || normales(V, F);

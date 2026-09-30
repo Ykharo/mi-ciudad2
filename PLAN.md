@@ -3,7 +3,7 @@
 Este documento propone cómo reorganizar el proyecto para que pueda seguir creciendo (ropa, personajes, lugares)
 sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún archivo existente.
 
-## Dónde quedamos (28-09-2026)
+## Dónde quedamos (30-09-2026)
 
 - El proyecto se movió de OneDrive a `C:\proyectos\mi-ciudad`. La copia de OneDrive queda sólo como respaldo;
   no se trabaja ahí.
@@ -20,7 +20,9 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
   La 11 (Python) se deja para la etapa 6. La prueba en el iPad real queda para más adelante (decisión 10).
 - Hay una carpeta `mi-ciudad/` dentro del proyecto con un repositorio vacío (sólo `.gitattributes`,
   remoto `Ykharo/mi-ciudad`): parece un intento anterior de GitHub Desktop. No se versiona; se puede borrar.
-- **Etapa 6 lista** (falta: probarla en el navegador y commit). Prendas de la hoja de referencia
+- **Etapa 6: prendas nuevas listas**, probadas en el navegador y guardadas en el commit `9cdc8f6`
+  ("segunda ropa hecha 6 done"). **La etapa no está cerrada**: faltan las regiones de `Body_Base` (los accesorios
+  rígidos ya están, sin commit: ver los últimos puntos de esta etapa). Prendas de la hoja de referencia
   (`referencias/ropa/hoja_de_referencia_nina.png`): **falda tableada**, **chaqueta** y **pelo largo**.
   - Decisión 11: en vez de Python/Blender, un generador en Node: `node tools/generar_prendas.mjs [id…]`. Cada prenda
     es un archivo en `tools/prendas/` (`falda.mjs`, `chaqueta.mjs`, `pelo_largo.mjs`) que mide el cuerpo de Nina con
@@ -40,8 +42,44 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
     se guarda). Captura del Vestidor regenerada (cambian las pestañas). 120/120.
   - Revisadas en el probador (`?con=pelo:pelo_largo,abrigo:chaqueta,piernas:falda_tableada`) en 12 poses. Con los
     brazos arriba (wave) el brazo puede cruzar el mechón de adelante; es aceptable por ahora.
-  - Quedan de la etapa 6 original: separar `Body_Base` en regiones ocultables y un accesorio rígido. Los moños (lazos)
-    del pelo de la referencia, para más adelante.
+  - **Accesorios rígidos hechos (30-09-2026, falta probarlos en el navegador y commit)**, de la hoja del personaje
+    nuevo (`referencias/ropa/hoja_personaje_nuevo.png`): **gorra** (visera hacia atrás, 6 paños, estrella), **lentes**
+    (redondos, no están en la hoja), **audífonos** (al cuello) y **mochila** (bolsillo con mariposa, correas). 22–65 KB c/u.
+    - Decidido: el personaje nuevo usará el cuerpo de Nina, más bajita (escala ~0,85, cabeza algo más grande); en el
+      Vestidor los accesorios van en **una pestaña con varios a la vez**; se empezó por los accesorios.
+    - En vez de `attachToBone` (3.5), cada accesorio es una prenda skinneada con todos los pesos en un hueso (HeadBone
+      para gorra y lentes, Chest para audífonos y mochila): es rígido igual, y usa todo lo que ya existía (catálogo,
+      colores, extras, guardado, generador y validador). La gorra sigue el tamaño de la cabeza (`cabeza` del look).
+    - Espacios nuevos, todos opcionales: `cabeza`, `cara`, `cuello`, `espalda` (`SLOTS_ACCESORIOS`). Dos accesorios del
+      mismo espacio se reemplazan solos. Pestaña **Accesorios**: se prenden y apagan tocándolos; debajo, colores y
+      extras de cada uno puesto ("Gorra: Color de la visera", "Mochila: Mariposa"…).
+    - Nuevo en el catálogo: `oculta: [nombre de malla]` esconde partes de otras prendas mientras está puesta
+      (`applyOcultas`; se esconde el objeto del personaje, no el material compartido). La gorra esconde
+      `Pelo_Moño_Tope`: `separar_glb.mjs` ahora aparta el moño, sus lazadas, el coletero y su mechón en esa malla
+      (piezas conectadas cuyo centro queda a < 0,11 m del moño; ojo: con 0,12 entraba el casquete). Sólo cambió
+      `mono.glb` (155 → 162 KB); el resto salió idéntico byte a byte.
+    - La copa de la gorra se ajusta con rayos a la cabeza, las orejas, el moño (sin tope) y el pelo largo: el pelo sale
+      por debajo. Si se agrega un peinado, hay que regenerar la gorra.
+    - Encontrado: la luz del juego aclara tanto lo que mira hacia arriba que un rosado pálido se ve blanco (hasta un gris
+      `#999` se veía blanco en la copa). La estrella usa un rosado intenso.
+    - `cuerpo.mjs`: `tubo`, `revolucion`, `caja` (sólidos cerrados), `orientarCaras`, `mallaRayos`, `piezasCerca`.
+      Probador: `&dist=1.5&mira=1.8` para ver de cerca.
+    - Revisados en el probador con moño y con pelo largo + chaqueta, de frente, de lado y de atrás, y en 8 poses. En
+      `lie` y `candle` la mochila toca el suelo (acostada de espalda), aceptable. Los mechones de adelante del pelo
+      largo tapan en parte los audífonos.
+    - Prueba nueva (los 4 a la vez, la gorra esconde el moño y al sacarla vuelve, colores y extras, guardado y
+      recarga). `UUID_APARTE`: capturas 1–7 idénticas antes y después; la 8 sólo cambia en la fila de pestañas.
+      Capturas regeneradas (los objetos nuevos del moño mueven a los vecinos, y está la pestaña nueva). Chromium (dev,
+      web, archivo único): **77/77**. Archivo único: 3.615 KB.
+    - **WebKit no arranca en este PC** (30-09-2026): el `Playwright.exe` de WebKit termina al lanzarse con código
+      `0xC0E90002` (Windows lo bloquea), incluso en la prueba de humo y fuera del entorno aislado. El 28-09 corría.
+      Probablemente sea el Control inteligente de aplicaciones o el antivirus; revisar la seguridad de Windows o
+      reinstalar con `npx playwright install webkit`. Hasta entonces las pruebas de iPad (proyectos `-ipad`) no corren.
+  - **Pendiente para cerrar la etapa 6**: separar `Body_Base` en regiones ocultables. El mecanismo ya existe (`oculta`
+    por nombre de malla); falta partir `Body_Base` en `separar_glb.mjs` (torso, brazos, piernas, pies) y marcar qué
+    esconde cada prenda. Los moños (lazos) del pelo de la referencia quedan para más adelante.
+  - Siguiente del personaje nuevo (etapa 7): chaqueta oversize con capucha, top corto, pantalón cargo ancho con cadena,
+    zapatillas de plataforma, peinados lacio largo y trenzas, y el personaje en `PERSONAJES`.
 - **Mejora (después de la etapa 5): joystick con zona lenta y zona rápida.** Pedido: más recorrido para caminar y
   manejar despacio. El joystick pasó de 156 a 200 px (164 en pantallas chicas); mientras la perilla está entera
   adentro del círculo punteado es lento (Nina camina 0,5–1,3 m/s; el auto va a 12–27 % de su máximo y retrocede

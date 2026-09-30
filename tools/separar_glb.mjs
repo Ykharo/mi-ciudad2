@@ -15,9 +15,10 @@
 // con sus propias matrices (wardrobe.js), no con las de la base.
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
-import { cloneDocument, prune, quantize } from '@gltf-transform/functions';
+import { cloneDocument, compactPrimitive, prune, quantize } from '@gltf-transform/functions';
 import { mkdirSync, statSync } from 'node:fs';
 import { PRENDAS } from '../src/characters/catalog/prendas.js';
+import { CENTRO_MOÑO, RADIO_MOÑO, piezasCerca } from './prendas/cuerpo.mjs';
 
 const ENTRADA = 'herramientas_avatar/avatar_vestido.glb';
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
@@ -33,6 +34,7 @@ for (const n of todasLasPrendas) if (!nodos(original).some(x => x.getName() === 
 async function separar(quedan, conAnimaciones, salida) {
   const doc = cloneDocument(original);
   for (const n of nodos(doc)) if (n.getMesh() && !quedan.includes(n.getName())) n.dispose();
+  apartarTopeMoño(doc);
   // (los muestreadores y canales hay que soltarlos a mano: si no, sus datos se quedan en el archivo)
   if (!conAnimaciones) for (const a of doc.getRoot().listAnimations()) { a.listChannels().forEach(c => c.dispose()); a.listSamplers().forEach(s => s.dispose()); a.dispose(); }
   // keepLeaves: los huesos de las puntas (manos, pies, cabeza) no tienen hijos, pero son parte del esqueleto
@@ -43,6 +45,28 @@ async function separar(quedan, conAnimaciones, salida) {
   await io.write(salida, doc);
   const mallas = doc.getRoot().listMeshes().map(m => m.getName()).join(', ');
   console.log(`${salida.padEnd(40)} ${kb(salida).padStart(8)}   ${mallas}${conAnimaciones ? ` + ${doc.getRoot().listAnimations().length} animaciones` : ''}`);
+}
+
+// El tope del moño (el moño en sí, sus lazadas, el coletero y el mechón que cae de él) pasa a su propia malla,
+// Pelo_Moño_Tope, con los mismos materiales: así la gorra lo puede esconder (catálogo: `oculta`).
+function apartarTopeMoño(doc) {
+  const nodo = nodos(doc).find(n => n.getName() === 'Pelo_Moño');
+  if (!nodo) return;
+  const tope = doc.createMesh('Pelo_Moño_Tope');
+  for (const p of nodo.getMesh().listPrimitives()) {
+    const idx = p.getIndices(), I = idx.getArray(), marca = piezasCerca(p.getAttribute('POSITION').getArray(), I, CENTRO_MOÑO, RADIO_MOÑO);
+    const quedan = [], van = [];
+    for (let t = 0; t < I.length; t += 3) (marca[t / 3] ? van : quedan).push(I[t], I[t + 1], I[t + 2]);
+    if (!van.length) continue;
+    const q = p.clone();
+    p.setIndices(doc.createAccessor().setType('SCALAR').setArray(new I.constructor(quedan)).setBuffer(idx.getBuffer()));
+    q.setIndices(doc.createAccessor().setType('SCALAR').setArray(new I.constructor(van)).setBuffer(idx.getBuffer()));
+    tope.addPrimitive(q);
+    compactPrimitive(p); compactPrimitive(q);   // cada una se queda sólo con sus vértices
+    console.log(`  tope del moño: ${van.length / 3} de ${I.length / 3} triángulos de ${p.getMaterial().getName()}`);
+  }
+  const n = doc.createNode('Pelo_Moño_Tope').setMesh(tope).setSkin(nodo.getSkin());
+  (nodo.getParentNode() || doc.getRoot().listScenes()[0]).addChild(n);
 }
 
 mkdirSync('assets/modelos/prendas', { recursive: true });

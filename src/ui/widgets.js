@@ -1,8 +1,10 @@
 // Piezas de HTML para los paneles.
 import { svgI } from '../core/svg.js';
 
-function optsHTML(list, cur, key) {
-  return '<div class="opts">' + list.map(s => `<button class="opt${s.id === cur ? ' on' : ''}" data-k="${key}" data-v="${s.id}">${s.ic ? `<span class="ic">${s.ic}</span>` : ''}<span>${s.name}</span></button>`).join('') + '</div>';
+// cur: el id elegido, o una lista si se puede elegir más de uno; attrs: atributos que se agregan a cada botón
+function optsHTML(list, cur, key, attrs = '') {
+  const on = id => (Array.isArray(cur) ? cur.includes(id) : id === cur);
+  return '<div class="opts">' + list.map(s => `<button class="opt${on(s.id) ? ' on' : ''}"${attrs ? ' ' + attrs : ''} data-k="${key}" data-v="${s.id}">${s.ic ? `<span class="ic">${s.ic}</span>` : ''}<span>${s.name}</span></button>`).join('') + '</div>';
 }
 function swHTML(list, cur, key) {
   return '<div class="sws">' + list.map((c, i) => {
