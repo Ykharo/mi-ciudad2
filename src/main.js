@@ -23,6 +23,7 @@ import './world/places/boutique.js';
 import './world/places/shelter.js';
 import './world/places/icecream.js';
 import './world/places/park.js';
+import { cartelListo } from './world/places/cartel.js';
 import { carFitsAt, spawnCar } from './cars/fleet.js';
 import { buildCity } from './world/city.js';
 import { cullAvatars, loadCharacters, makeAvatar } from './characters/avatar.js';
@@ -38,6 +39,8 @@ import { SPAWNS } from './world/places/carshop.js';
 import { MAX_CARS, addPet, cam, ownedCars, player } from './game/actors.js';
 import { loadSave, save } from './game/save.js';
 import { cargarPersonajes } from './game/personajes.js';
+import { crearEspectador, updateEspectador } from './game/cartel.js';
+import { PERSONAJES } from './characters/catalog/personajes.js';
 import { updatePlayer } from './game/player.js';
 import { spawnNPCs, updateNPCs } from './game/npcs.js';
 import { followChain } from './pets/follow.js';
@@ -68,6 +71,7 @@ function frame(now) {
   if (state.mode === 'drive') followChain(player.pets.filter(p => !p.riding), player.pos, dt, state.clock, driving.hl + 1.3);
   else followChain(player.pets, player.pos, dt, state.clock, 1.7);
   updateNPCs(dt, state.clock);
+  updateEspectador(dt);
   updatePreview(dt, state.clock);
   updateZones();
   for (const f of animated) f(state.clock, dt);
@@ -90,8 +94,11 @@ async function boot() {
   sky = buildSky(); buildClouds(); buildCity();
   const saved = loadSave();
   cargarPersonajes(saved);   // con quién se juega y el look de cada uno
-  await loadCharacters([player.look]);   // la base y las prendas del personaje y de los vecinos
+  // la base y las prendas del personaje, de los vecinos y del espectador del cartel (la amiga o el amigo); y la imagen
+  // del cartel
+  await Promise.all([loadCharacters([player.look, PERSONAJES.amiga.look, PERSONAJES.amigo.look]), cartelListo]);
   player.ch = makeAvatar(player.look);
+  crearEspectador();
   const pets = saved ? (saved.pets || []) : [{ kind: 'perro', color: '#E9B77A', name: 'Toby' }];
   pets.slice(0, MAX_PETS).forEach(p => { if (PET_KINDS.some(k => k.id === p.kind)) addPet(p.kind, p.color || '#E9B77A', String(p.name || 'Toby').slice(0, 12)); });
   // your own cars, parked where you left them

@@ -47,7 +47,7 @@ test('menú Acción', async ({ page, jugar }) => {
   await btn.click();
   await expect(menu).toBeVisible();
   await expect(btn).toHaveAttribute('aria-expanded', 'true');
-  await expect(menu.locator('[data-act]')).toHaveCount(9);
+  await expect(menu.locator('[data-act]')).toHaveCount(18);   // 9 acciones y 9 bailes
   await menu.locator('[data-act="dance"]').click();
   await expect(menu).toBeHidden();
   // al reabrir, "Bailar" aparece marcado

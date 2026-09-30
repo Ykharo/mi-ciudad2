@@ -72,6 +72,25 @@ test('cada personaje guarda su propio look; "Original" lo deja como es él', asy
   expect((await jugador(page)).prendas.pelo).not.toBe('mono');
 });
 
+test('el menú Acción tiene todos los bailes y funcionan', async ({ page, jugar }) => {
+  await jugar();
+  // cada acción del menú tiene su animación en el modelo (los bailes se hornean en nina_base.glb)
+  await page.locator('#btnAct').click();
+  const ids = await page.locator('#actMenu [data-act]').evaluateAll(bs => bs.map(b => b.dataset.act));
+  expect(ids).toEqual(expect.arrayContaining(['aura', 'seis_siete', 'sigma', 'take_l', 'siuu', 'griddy', 'spin', 'fresh', 'floss']));
+  const faltan = await page.evaluate(l => l.filter(id => id !== 'stop' && !window.__juego.player.ch.act[id]), ids);
+  expect(faltan).toEqual([]);
+  // elegir uno lo pone en marcha; la mirada sigma cambia de cara con el tiempo
+  await page.locator('#actMenu [data-act="sigma"]').click();
+  await expect.poll(() => page.evaluate(() => window.__juego.player.ch.sp && window.__juego.player.ch.sp.name)).toBe('sigma');
+  await expect.poll(() => page.evaluate(() => window.__juego.player.ch.face), { timeout: 5000 }).toBe('enojada');
+  // un baile en bucle sigue hasta que la jugadora se mueve
+  await page.locator('#btnAct').click();
+  await page.locator('#actMenu [data-act="floss"]').click();
+  await page.waitForTimeout(2500);
+  expect(await page.evaluate(() => window.__juego.player.ch.sp && window.__juego.player.ch.sp.name)).toBe('floss');
+});
+
 test('manejando no se cambia de personaje', async ({ page, jugar }) => {
   await jugar();
   await subirAlAuto(page);

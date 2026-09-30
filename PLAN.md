@@ -208,6 +208,47 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
     sobre la frente (se subió adelante); los mechones se afinaban muy pronto y parecían palitos; donde dos quedaban a
     la misma altura aparecían manchas (z-fighting): cada capa va un poco más afuera que la de abajo, como tejas.
     Gorra, jockey y audífonos grandes regenerados. Comparado con la hoja en el comparador (con y sin jockey).
+  - **Bailes de "farmear aura"** (pedido: Pacu Jalur, Six Seven, mirada sigma). En el menú 🎬 Acción: "Farmear aura"
+    😎, "Six Seven" 🤲 y "Mirada sigma" 🗿. Sin Python con numpy/mathutils en este PC, así que se llevó a Node lo de
+    `reanimar_avatar.py` que hace falta (`tools/animaciones/pose.mjs`: poses, IK de dos huesos para pies y brazos,
+    curvas `K`); validado rehaciendo "wave" y comparándola con la guardada: diferencia máxima 0,03°. Los bailes
+    (`tools/animaciones/bailes.mjs`) se hornean en `nina_base.glb` desde `separar_glb.mjs` (14 animaciones; 969 →
+    1.070 KB): aura (4,4 s, en bucle: una mano sale rodando del pecho y barre hacia el lado, después la otra; las dos
+    giran frente al pecho; apunta adelante; cadera, rodillas y cabeza al ritmo), seis_siete (2,4 s, en bucle: manos
+    con las palmas arriba subiendo y bajando alternadas, hombros encogidos) y sigma (4,5 s, una vez: mira a un lado,
+    gira lento de frente con el mentón arriba, asiente). `AUTO_FACE` acepta caras que cambian con el tiempo
+    (`[[segundo, cara], …]`): la sigma se pone seria (ceño de "enojada") y termina con un guiño. Revisados por el
+    usuario: ok.
+  - **Seis bailes más** (pedido: Take the L, Siuuu, Griddy, Spin, Fresh, Floss), en el mismo archivo y en el menú:
+    take_l (2,4 s, bucle: mano en L en la sien por IK del brazo hasta la cabeza, saltitos sobre un pie y la otra
+    pierna pateando al lado; con la muñeca más al centro el antebrazo tapaba un ojo), siuu (3,8 s: carrerita, salto
+    con media vuelta, cae abierto con los brazos abajo y afuera y la cara de grito, sostiene y completa la vuelta; en
+    el juego queda mirando a la cámara), griddy (2,4 s, bucle: taloneos adelante alternados con brazos bombeando),
+    spin (1,8 s: vuelta completa en punta de pie con los brazos abiertos, "¡ta-da!" y guiño), fresh (2,4 s, bucle:
+    antebrazos cruzando frente a la cintura con golpe de muñeca, cadera al otro lado) y floss (2 s, bucle). Los que
+    giran rotan la cadera y los pies con ella. Revisados en el probador cuadro a cuadro (de frente y de lado).
+    `nina_base.glb`: 20 animaciones, 1.203 KB. Con `UUID_APARTE`, capturas con y sin bailes idénticas
+    (`SIN_BAILES=1 node tools/separar_glb.mjs` arma la base sin ellos); capturas regeneradas. Prueba nueva: cada
+    acción del menú tiene su animación, la sigma cambia de cara, un baile en bucle sigue hasta moverse.
+    Floss corregido (pedido: una mano por delante y la otra por detrás del cuerpo): los brazos van juntos hacia un
+    lado, uno cruzando por delante de la cadera y el otro detrás del cuerpo, y al volver pasan por el costado de la
+    cadera cambiando de adelante a atrás (antes el de atrás sólo se abría al costado y parecían los dos adelante).
+    El menú Acción tiene ahora 18 opciones (dos columnas de 9 filas, cabe en 720 px de alto): si molesta, se podría
+    separar en "Acciones" y "Bailes". Chromium: 89 + 3 que fallaron porque la prueba de humo contaba 9 opciones en
+    el menú (actualizada a 18: pasa en dev, web y archivo único) → **92/92**.
+  - **Cartel de la competencia de farmear aura** (pedido: cartel publicitario con la imagen y un personaje mirándolo).
+    `world/places/cartel.js`: letrero de 3,8 × 5,7 m sobre dos patas, con marco, bordes morados y corona dorada, en la
+    esquina de la Boutique (8,6; −10,2) mirando hacia la calle: se ve apenas empieza el juego. La imagen
+    (`src/assets/imagenes/cartel_aura.jpg`, 768 × 1152, 196 KB; el original en `referencias/carteles/`) se importa
+    desde el código: en la versión web es un archivo aparte y en la de un solo archivo queda incrustada. Material sin
+    sombreado (se ve con sus colores). `main.js` espera que cargue antes de "¡A jugar!" (así las capturas la ven).
+    - Animación nueva `mirar_cartel` (8 s, bucle; en `bailes.mjs`, no está en el menú): levanta la vista al título y
+      lo recorre de lado a lado, baja al medio y lo recorre, lee la franja de abajo por partes con pausitas, mano al
+      mentón, asiente y vuelve arriba. Cara: sorpresa con el título, feliz al final.
+    - `game/cartel.js`: un espectador frente al cartel leyéndolo en bucle: la amiga, o el amigo si la jugadora es la
+      amiga (cambia al cambiar de personaje). Zona "👀 Mirar el cartel": la jugadora se da vuelta hacia el cartel, lo
+      lee (hasta moverse) y sale el aviso "¡Competencia de farmear aura! Sábado 24 de mayo, 16:00 hrs".
+    - Prueba nueva en `lugares.spec.js`. Capturas regeneradas (el cartel se ve en varias). `window.__juego.espectador()`.
   - Siguiente: la ropa de la niña (chaqueta oversize con mariposas, top corto, pantalón ancho con cadena, zapatillas
     de plataforma, pelo ondulado largo con mechas; lacio y trenzas), el pelo largo desordenado del niño, y los nombres.
     Los peinados nuevos: sumarlos a `queTapa` (gorra.mjs) y regenerar gorra, jockey y audífonos grandes.

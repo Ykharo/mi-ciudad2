@@ -19,6 +19,7 @@ import { cloneDocument, compactPrimitive, prune, quantize } from '@gltf-transfor
 import { mkdirSync, statSync } from 'node:fs';
 import { PRENDAS } from '../src/characters/catalog/prendas.js';
 import { CENTRO_MOÑO, RADIO_MOÑO, agregarFormas, cargarCuerpo, formasCabeza, juntarFormas, piezasCerca } from './prendas/cuerpo.mjs';
+import { agregarBailes } from './animaciones/bailes.mjs';
 
 const ENTRADA = 'herramientas_avatar/avatar_vestido.glb';
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
@@ -37,6 +38,8 @@ async function separar(quedan, conAnimaciones, salida) {
   for (const n of nodos(doc)) if (n.getMesh() && !quedan.includes(n.getName())) n.dispose();
   for (const a of APARTAR) apartar(doc, a);
   agregarFormas(doc, FORMAS);   // formas de cabeza (cuerpo.mjs): a la cabeza, las orejas y el moño
+  // los bailes nuevos (tools/animaciones/bailes.mjs), junto a las 11 de siempre (SIN_BAILES=1: sin ellos, para comparar)
+  if (conAnimaciones && !process.env.SIN_BAILES) agregarBailes(doc);
   // (los muestreadores y canales hay que soltarlos a mano: si no, sus datos se quedan en el archivo)
   if (!conAnimaciones) for (const a of doc.getRoot().listAnimations()) { a.listChannels().forEach(c => c.dispose()); a.listSamplers().forEach(s => s.dispose()); a.dispose(); }
   // keepLeaves: los huesos de las puntas (manos, pies, cabeza) no tienen hijos, pero son parte del esqueleto

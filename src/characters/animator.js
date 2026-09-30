@@ -21,6 +21,14 @@ function avatarStop(c, instant) {
   if (instant) { c.sp.a.setEffectiveWeight(0); c.sp.a.stop(); } else c.fade.push({ a: c.sp.a, w: c.sp.w });
   c.sp = null;
 }
+// la cara de una animación en el momento en que va (AUTO_FACE: una cara, o [[segundo, cara], …])
+function caraDe(sp) {
+  const f = AUTO_FACE[sp.name];
+  if (!Array.isArray(f)) return f;
+  let cara = f[0][1];
+  for (const [t, c] of f) if (sp.a.time >= t) cara = c;
+  return cara;
+}
 function avatarBusy(c, names) { return !!c.sp && (!names || names.includes(c.sp.name)); }
 function updateAvatar(c, dt, speed, faceWanted) {
   const sp = c.sp;
@@ -46,8 +54,8 @@ function updateAvatar(c, dt, speed, faceWanted) {
   if (c.sp) c.sp.a.setEffectiveWeight(sw / norm);
   c.fade.forEach(f => f.a.setEffectiveWeight(f.w / norm));
   c.mixer.update(dt);
-  // cara: la que pide el juego, o la de la animación, y parpadeo
-  const want = faceWanted || (c.sp && AUTO_FACE[c.sp.name]) || (rk > 0.6 ? 'feliz' : 'normal');
+  // cara: la que pide el juego, o la de la animación (que puede cambiar con el tiempo), y parpadeo
+  const want = faceWanted || (c.sp && caraDe(c.sp)) || (rk > 0.6 ? 'feliz' : 'normal');
   if (c.blinkOn > 0) { c.blinkOn -= dt; if (c.blinkOn <= 0) setFace(c, c.face); }
   else if ((c.blinkT -= dt) <= 0) { c.blinkT = 1.8 + Math.random() * 3.2; if (BLINKS.has(want)) { c.blinkOn = 0.11; setFace(c, want); } }
   if (want !== c.face) setFace(c, want);

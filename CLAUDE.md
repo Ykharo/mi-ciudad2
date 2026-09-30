@@ -24,6 +24,9 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
   - `main.js` importa todos los módulos en el orden original de las secciones: ese orden define el arranque.
   - Ganchos de prueba `window.__juego` (state, player, npcs, cars, `teleport(x, z)`): sólo en desarrollo o con `?test`.
 - `src/styles/juego.css` — estilos.
+- Imágenes del juego en `src/assets/imagenes/` (se importan desde el código: archivo aparte en la web, incrustadas en
+  el archivo único). Cartel de la competencia de farmear aura: `world/places/cartel.js` (letrero + zona "Mirar el
+  cartel") y `game/cartel.js` (espectador que lo lee con la animación `mirar_cartel`); `main.js` espera la imagen.
 - `src/assets/loader.js` + `manifest.js` — `loadGLB(id)`: lee cada modelo (bloque base64 incrustado o `fetch`),
   lo decodifica (texturas como imágenes `data:`, colores a sRGB) y lo guarda. Ids: `nina_base`, `prenda:<id>`.
 - `assets/modelos/nina_base.glb` (esqueleto, cuerpo, cabeza, cara, 11 animaciones) y `assets/modelos/prendas/<id>.glb`
@@ -82,7 +85,7 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
 - `npm run build:web` → `dist/web/` (GitHub Pages, se publica solo con GitHub Actions al hacer push a main).
 - `npm run build` → `dist/unico/ciudad-arcoiris.html` (un solo archivo, abre con doble clic).
 - `npm run lint` — ESLint, incluidas las reglas de capas y ciclos.
-- `npm test` — lint + arma ambas versiones + todas las pruebas (~10 min, 145 pruebas). Las capturas deben salir
+- `npm test` — lint + arma ambas versiones + todas las pruebas (~10 min, 150 pruebas). Las capturas deben salir
   iguales; sólo se regeneran (`npm run test:capturas`) cuando un cambio visible es a propósito.
   Ojo: Three.js r149 usa `Math.random` para los UUID, así que crear más o menos materiales/geometrías mueve a los
   vecinos en las capturas aunque nada se dibuje distinto. Para comprobar que el dibujo no cambió:
@@ -106,6 +109,11 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
   enojada (0,1), guiño (1,1). Se cambia con `map.offset.set(col*0.25, fila*0.5)`. Parpadeo = ojos de (1,0).
 - 11 animaciones: idle, walk (0,47 m/s), run (1,75 m/s), jump, wave, sit, lie, dance, split,
   walk_back (−0,32 m/s), candle. Sólo el hueso Hips tiene traslación (en Y/Z), no hay root motion.
+  Más 9 bailes (aura, seis_siete, sigma, take_l, siuu, griddy, spin, fresh, floss) armados en Node:
+  `tools/animaciones/pose.mjs` (las utilidades de `reanimar_avatar.py` en JavaScript: poses, IK de pies y brazos,
+  curvas `K`; validado contra "wave") y `tools/animaciones/bailes.mjs`; `separar_glb.mjs` los hornea en
+  `nina_base.glb` (`SIN_BAILES=1` para armarla sin ellos). En el menú Acción: `characters/catalog/acciones.js`
+  (`AUTO_FACE` puede cambiar la cara con el tiempo: `[[segundo, cara], …]`).
 - Las texturas incrustadas se cargan como imágenes `data:` (no `blob:`) porque el visor donde se publica
   bloquea `fetch(blob:)` en algunos navegadores (Safari iPad). Mantener ese truco o servir los PNG aparte.
 

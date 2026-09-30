@@ -9,6 +9,7 @@ import { buildGround } from './ground.js';
 import { flowers, tree } from './nature.js';
 import { HOUSE_STYLES, house } from './houses.js';
 import { boutique } from './places/boutique.js';
+import { cartel } from './places/cartel.js';
 import { shelter } from './places/shelter.js';
 import { iceCreamShop } from './places/icecream.js';
 import { park } from './places/park.js';
@@ -19,6 +20,7 @@ import { carShop } from './places/carshop.js';
 function buildCity() {
   buildGround();
   boutique(20, -17); addArea('Boutique Arcoíris', 5.5, 34.5, -34.5, -5.5);
+  cartel();   // el cartel de la competencia de farmear aura, en la esquina de la Boutique
   shelter(15, 17); addArea('Refugio de Mascotas', 5.5, 34.5, 5.5, 34.5);
   iceCreamShop(-26, 15); addArea('Heladería', -34.5, -5.5, 5.5, 21);
   park(-20, -20); addArea('Parque Central', -34.5, -5.5, -34.5, -5.5);

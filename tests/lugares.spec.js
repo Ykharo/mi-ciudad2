@@ -118,3 +118,22 @@ test('subirse a un auto de la calle con E', async ({ page, jugar }) => {
   await page.keyboard.press('e');
   await expect.poll(() => modo(page)).toBe('play');
 });
+
+test('el cartel de la competencia: alguien lo lee y la jugadora también lo puede mirar', async ({ page, jugar }) => {
+  await jugar();
+  // el espectador (la amiga, porque se juega con Nina) está leyendo el cartel
+  const espectador = () => page.evaluate(() => { const e = window.__juego.espectador(); return { anim: e.sp && e.sp.name, look: e.look.prendas.cabeza.id }; });
+  expect(await espectador()).toEqual({ anim: 'mirar_cartel', look: 'gorra' });
+  await ir(page, 8.7, -5.5);
+  await accion(page, '👀 Mirar el cartel');
+  await expect(page.locator('#toast')).toContainText('Competencia de farmear aura');
+  await expect.poll(() => page.evaluate(() => window.__juego.player.ch.sp && window.__juego.player.ch.sp.name)).toBe('mirar_cartel');
+  // mirando hacia el cartel (está en 8,6; -10,2)
+  const f = await page.evaluate(() => { const p = window.__juego.player; return Math.atan2(8.6 - p.pos.x, -10.2 - p.pos.z) - p.facing; });
+  expect(Math.abs(Math.atan2(Math.sin(f), Math.cos(f)))).toBeLessThan(0.05);
+  expect(await modo(page)).toBe('play');
+  // si la jugadora se pone a la amiga, el que lee el cartel pasa a ser el amigo
+  await page.locator('#btnChar').click();
+  await page.locator('#charMenu [data-personaje="amiga"]').click();
+  await expect.poll(async () => (await espectador()).look).toBe('jockey');
+});
