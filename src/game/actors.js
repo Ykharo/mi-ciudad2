@@ -9,8 +9,9 @@ import { DEFAULT_CAR, fixCarSpec } from '../cars/catalog.js';
 state.mode = 'intro'; // intro | play | pets | shop | wardrobe | drive
 const ownedCars = [], MAX_CARS = 4;
 state.lastCar = null; state.shopSpec = fixCarSpec(DEFAULT_CAR);
-// look: cómo se ve Nina (JSON, ver characters/catalog/personajes.js); ch: su personaje en la escena
-const player = { look: null, ch: null, pos: new THREE.Vector3(9, 0, -1.5), vel: new THREE.Vector3(), facing: Math.PI * 0.8, vy: 0, y: 0, air: false, speed01: 0, happy: 0, bonk: 0, iceTime: 0, seat: null, pets: [] };
+// personaje: con quién se juega ('nina', 'amiga', 'amigo'); looks: el look de cada uno (game/personajes.js);
+// look: el del que se está usando (JSON, ver characters/catalog/personajes.js); ch: su personaje en la escena
+const player = { personaje: 'nina', looks: {}, look: null, ch: null, pos: new THREE.Vector3(9, 0, -1.5), vel: new THREE.Vector3(), facing: Math.PI * 0.8, vy: 0, y: 0, air: false, speed01: 0, happy: 0, bonk: 0, iceTime: 0, seat: null, pets: [] };
 // dragging: hay un dedo o el mouse arrastrando la cámara (la cámara del auto no se endereza sola mientras tanto)
 const cam = { yaw: 0.35, pitch: 0.36, dist: 11.5, look: new THREE.Vector3(), pos: new THREE.Vector3(), menuYaw: 0, dragging: false };
 // jx, jy: la palanca (dirección × cuánto se empuja, 0–1). Con el joystick, hasta INPUT_LENTO es la zona lenta

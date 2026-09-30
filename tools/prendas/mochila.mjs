@@ -1,7 +1,7 @@
 // Mochila (referencias/ropa/hoja_personaje_nuevo.png, "Mochila"): cuerpo de esquinas redondeadas, bolsillo con una
 // mariposa, manilla arriba y dos correas que pasan sobre los hombros y bajan por el pecho. Accesorio rígido: todo pesa
 // en Chest. Queda separada de la espalda lo justo para no tocar la chaqueta; el pelo largo cae por dentro de ella.
-import { Malla, caja, cascara, grilla, lerp, orientar, rayoDesdeAfuera, tubo, v3 } from './cuerpo.mjs';
+import { FIGURAS, Malla, caja, calcomania, cascara, grilla, lerp, orientar, rayoDesdeAfuera, tubo, v3 } from './cuerpo.mjs';
 
 export const ID = 'mochila';
 const SEP = 0.029;                            // de la espalda a la cara de adelante de la mochila
@@ -19,7 +19,8 @@ export function construir(C) {
   // bolsillo de afuera y la mariposa encima
   const cb = v3(0, Y - 0.045, centro.z - SEMI.z - 0.012), sb = v3(0.078, 0.06, 0.028);
   caja(m, cb, sb, 'Mochila_Bolsillo', 0.3);
-  mariposa(m, v3(0, cb.y + 0.004, cb.z - sb.z - 0.0015));
+  const cm = v3(0, cb.y + 0.004, cb.z - sb.z - 0.0015);   // mirando hacia atrás (-z)
+  calcomania(m, FIGURAS.mariposa(), (x, y) => v3(x, y, 0).add(cm), cm.clone().add(v3(0, 0, 1)), 0.003, 'Mochila_Mariposa');
   // manilla
   const arriba = centro.y + SEMI.y - 0.006;
   tubo(m, Array.from({ length: 9 }, (_, i) => { const a = Math.PI * i / 8; return v3(-0.035 * Math.cos(a), arriba + 0.028 * Math.sin(a), centro.z + 0.012); }), 0.006, 'Mochila_Correa', { lados: 6 });
@@ -37,25 +38,6 @@ export function construir(C) {
       Mochila_Mariposa: { color: '#E3C8FF', rugosidad: 0.6 },
     },
   };
-}
-
-// mariposa plana mirando hacia atrás (-z), en `c`
-function mariposa(m, c) {
-  const V = [], F = [];
-  const ala = (cx, cy, rx, ry, giro, n = 14) => {
-    const o = V.length; V.push(v3(cx, cy, 0).add(c));
-    for (let k = 0; k < n; k++) {
-      const a = 2 * Math.PI * k / n, x = rx * Math.cos(a), y = ry * Math.sin(a);
-      V.push(v3(cx + x * Math.cos(giro) - y * Math.sin(giro), cy + x * Math.sin(giro) + y * Math.cos(giro), 0).add(c));
-      F.push([o, o + 1 + k, o + 1 + (k + 1) % n]);
-    }
-  };
-  for (const s of [1, -1]) {
-    ala(s * 0.019, 0.011, 0.019, 0.014, s * 0.45);
-    ala(s * 0.013, -0.013, 0.012, 0.010, -s * 0.5);
-  }
-  ala(0, 0, 0.0035, 0.019, 0, 8);
-  cascara(m, V, orientar(V, F, () => c.clone().add(v3(0, 0, 1))), 0.003, 'Mochila_Mariposa');
 }
 
 // correa: una cinta que sigue el torso a CORREA_SOBRE de la piel

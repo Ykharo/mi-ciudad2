@@ -6,6 +6,7 @@
 //   'menu'   (abierto)              se abrió o cerró un panel (mascotas, tienda)
 //   'auto'   ('subir' | 'bajar', auto)
 //   'motor'  (velocidad, tono)      cada cuadro mientras se maneja
+//   'personaje' (id)                se cambió el personaje con que se juega
 const listeners = new Map();
 
 export function on(name, fn) {

@@ -14,6 +14,127 @@ export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const smooth = u => { u = clamp(u, 0, 1); return u * u * (3 - 2 * u); };
 export const lerp = (a, b, t) => a + (b - a) * t;
 export const v3 = (x, y, z) => new THREE.Vector3(x, y, z);
+export const CENTRO_CABEZA = v3(0, 1.327, -0.011);   // como en vestir_avatar.py
+
+// Formas de cabeza (morph targets; el look elige cuánto de cada una: `formas` en catalog/personajes.js). Cada una es
+// un desplazamiento que depende SÓLO de la dirección desde el centro de la cabeza: así la cabeza y todo lo que va
+// encima en esa dirección (pelo, gorros, lentes, audífonos) se corren lo mismo y no se atraviesan. Se agregan solas
+// a toda malla que alcancen (agregarFormas, en separar_glb.mjs y escribir.mjs). Los nombres tienen que coincidir con
+// FORMAS_CABEZA de src/characters/catalog/personajes.js.
+//
+// redonda: cabeza más redonda de perfil (referencias/ropa/hoja_personaje_nino.png, vista lateral: casi una esfera, la
+// nuca baja en curva hasta el cuello). La de Nina es corta de adelante hacia atrás (0,27 m contra 0,36 de alto), con
+// la parte de atrás plana y una esquina arriba atrás. En cada dirección, la cabeza "se infla" lo que le falta para
+// llegar a un elipsoide un poco detrás y sobre el centro de la cabeza: la parte de atrás queda como un solo arco desde
+// la coronilla hasta la nuca (0,32 m de profundidad), y de arriba, redonda. No toca la cara ni los costados.
+// Se ajustó dibujando el contorno de perfil y de arriba antes y después. Intentos anteriores: empujar un tanto fijo por
+// dirección dejaba un escalón sobre la nuca; un elipsoide chico o cortado bajo los -30° dejaba un bulto con una
+// muesca abajo (como una bolsa colgando de la nuca).
+const ELIPSOIDE = { centro: v3(0, 0.025, -0.025), semi: v3(0.16, 0.16, 0.155) };   // centro: desde el centro de la cabeza
+const SUAVE = 0.025;   // ancho de la transición donde el elipsoide cruza la cabeza (m): más ancho, sin quiebres
+export function formasCabeza(C, E = ELIPSOIDE, suave = SUAVE) {
+  // radio de la cabeza por dirección, en una grilla (azimut y elevación cada 5°), para no lanzar rayos por vértice
+  const NA = 72, NE = 37, R = new Float32Array(NA * NE);
+  const dir = (az, el) => v3(Math.cos(el) * Math.sin(az), Math.sin(el), Math.cos(el) * Math.cos(az));
+  for (let e = 0; e < NE; e++) for (let a = 0; a < NA; a++) R[e * NA + a] = rayo(C.mallaCabeza, CENTRO_CABEZA, dir(2 * Math.PI * a / NA, Math.PI * (e / (NE - 1) - 0.5))) ?? 0.15;
+  const radio = u => {
+    const fa = ((Math.atan2(u.x, u.z) / (2 * Math.PI) + 1) % 1) * NA, fe = (Math.asin(clamp(u.y, -1, 1)) / Math.PI + 0.5) * (NE - 1);
+    const a0 = Math.floor(fa) % NA, a1 = (a0 + 1) % NA, e0 = Math.min(Math.floor(fe), NE - 2), ta = fa - Math.floor(fa), te = fe - e0;
+    return lerp(lerp(R[e0 * NA + a0], R[e0 * NA + a1], ta), lerp(R[(e0 + 1) * NA + a0], R[(e0 + 1) * NA + a1], ta), te);
+  };
+  // distancia desde el centro de la cabeza hasta el elipsoide, en la dirección u
+  const elipsoide = u => {
+    const { centro: c, semi: s } = E, o = c.clone().negate();
+    const A = (u.x / s.x) ** 2 + (u.y / s.y) ** 2 + (u.z / s.z) ** 2;
+    const B = 2 * (o.x * u.x / s.x ** 2 + o.y * u.y / s.y ** 2 + o.z * u.z / s.z ** 2);
+    const K = (o.x / s.x) ** 2 + (o.y / s.y) ** 2 + (o.z / s.z) ** 2 - 1;
+    return (-B + Math.sqrt(B * B - 4 * A * K)) / (2 * A);
+  };
+  const positiva = (d, k = suave) => (d <= -k ? 0 : d >= k ? d : (d + k) ** 2 / (4 * k));   // max(0, d) sin quiebre
+  return {
+    redonda: u => {
+      const el = Math.asin(clamp(u.y, -1, 1)) * 180 / Math.PI;
+      // resguardos (el elipsoide ya queda por dentro ahí): nada adelante, ni bajo la nuca, donde está la ropa del
+      // cuello (la capucha del polerón)
+      const w = smooth((0.3 - u.z) / 0.5) * smooth((el + 62) / 12);
+      return w <= 0 ? v3(0, 0, 0) : u.clone().multiplyScalar(w * positiva(elipsoide(u) - radio(u)));
+    },
+  };
+}
+// Agrega las formas de cabeza (formasCabeza) como morph targets (posición y normal) a las mallas de un documento que
+// se alcancen a mover (más de 1,5 mm: lo que apenas se roza, como la capucha del polerón, no carga los datos de la
+// forma). La normal nueva sale de la derivada del desplazamiento.
+export function agregarFormas(doc, formas) {
+  const deformar = (nombre, p) => {
+    const d = p.clone().sub(CENTRO_CABEZA), r = d.length();
+    return r < 1e-6 ? p.clone() : p.clone().add(formas[nombre](d.divideScalar(r)));
+  };
+  const buf = doc.getRoot().listBuffers()[0], h = 1e-4, J = new THREE.Matrix3(), n = new THREE.Vector3();
+  const hechos = new Map();   // accesor de posiciones → cálculo (las primitivas de una malla suelen compartirlo)
+  // sólo las mallas que se usan (las de nodos descartados todavía están en el documento hasta el prune)
+  const usadas = new Set(doc.getRoot().listNodes().map(nd => nd.getMesh()).filter(Boolean));
+  for (const mesh of usadas) {
+    const calc = mesh.listPrimitives().map(prim => {
+      const pos = prim.getAttribute('POSITION');
+      if (hechos.has(pos)) return hechos.get(pos);
+      const P = pos.getArray(), N = prim.getAttribute('NORMAL')?.getArray();
+      const r = Object.fromEntries(Object.keys(formas).map(nombre => {
+        const dP = new Float32Array(P.length), dN = N && new Float32Array(N.length);
+        let max = 0;
+        for (let i = 0; i < P.length; i += 3) {
+          const p = v3(P[i], P[i + 1], P[i + 2]), q = deformar(nombre, p).sub(p);
+          dP.set([q.x, q.y, q.z], i); max = Math.max(max, q.length());
+          if (!N || q.lengthSq() < 1e-12) continue;
+          const col = e => deformar(nombre, p.clone().add(e)).sub(deformar(nombre, p.clone().sub(e))).divideScalar(2 * h);
+          const [a, b, c] = [col(v3(h, 0, 0)), col(v3(0, h, 0)), col(v3(0, 0, h))];
+          J.set(a.x, b.x, c.x, a.y, b.y, c.y, a.z, b.z, c.z).invert().transpose();
+          n.set(N[i], N[i + 1], N[i + 2]).applyMatrix3(J).normalize();
+          dN.set([n.x - N[i], n.y - N[i + 1], n.z - N[i + 2]], i);
+        }
+        return [nombre, { dP, dN, max }];
+      }));
+      hechos.set(pos, r);
+      return r;
+    });
+    const nombres = Object.keys(formas).filter(nombre => calc.some(c => c[nombre].max > 1.5e-3));
+    if (!nombres.length) continue;
+    const acc = new Map();   // un accesor por arreglo, aunque lo usen varias primitivas
+    const accesor = arr => acc.get(arr) || acc.set(arr, doc.createAccessor().setType('VEC3').setArray(arr).setBuffer(buf)).get(arr);
+    mesh.listPrimitives().forEach((prim, i) => {
+      for (const nombre of nombres) {
+        const t = doc.createPrimitiveTarget(nombre).setAttribute('POSITION', accesor(calc[i][nombre].dP));
+        if (calc[i][nombre].dN) t.setAttribute('NORMAL', accesor(calc[i][nombre].dN));
+        prim.addTarget(t);
+      }
+    });
+    mesh.setWeights(nombres.map(() => 0)).setExtras({ ...mesh.getExtras(), targetNames: nombres });
+  }
+}
+// Después de cuantizar: quantize() copia los datos de cada forma para cada primitiva (material) de la malla, y
+// dedup() no mira las formas. Esto vuelve a juntar las copias iguales. Además, los datos de una forma que casi no
+// mueve la malla (la capucha del polerón, un peinado del que sólo se mueve la parte de atrás) se guardan "sparse":
+// sólo los vértices que se mueven.
+export function juntarFormas(doc) {
+  for (const a of doc.getRoot().listAccessors()) {
+    if (!a.listParents().some(p => p.propertyType === 'PrimitiveTarget')) continue;
+    const arr = a.getArray(), n = a.getCount(), k = a.getElementSize();
+    let movidos = 0;
+    for (let i = 0; i < n; i++) for (let j = 0; j < k; j++) if (arr[i * k + j] !== 0) { movidos++; break; }
+    a.setSparse(movidos < n / 3);
+  }
+  const igual = (a, b) => a.getCount() === b.getCount() && a.getType() === b.getType() && a.getComponentType() === b.getComponentType()
+    && a.getNormalized() === b.getNormalized() && Buffer.from(a.getArray().buffer, a.getArray().byteOffset, a.getArray().byteLength)
+      .equals(Buffer.from(b.getArray().buffer, b.getArray().byteOffset, b.getArray().byteLength));
+  for (const mesh of doc.getRoot().listMeshes()) {
+    const vistos = [];
+    for (const prim of mesh.listPrimitives()) for (const t of prim.listTargets()) for (const s of t.listSemantics()) {
+      const a = t.getAttribute(s), b = vistos.find(x => x !== a && igual(x, a));
+      if (!b) { vistos.push(a); continue; }
+      t.setAttribute(s, b);
+      if (a.listParents().every(p => p.propertyType === 'Root')) a.dispose();
+    }
+  }
+}
 
 // Lee el modelo original (sin cuantizar) y prepara el cuerpo para medirlo.
 export async function cargarCuerpo() {
@@ -51,7 +172,7 @@ export async function cargarCuerpo() {
   const partes = nombres => rayMesh(body, i => nombres.includes(DOM[i]));
   const C = {
     doc, skin, JOINTS, body, head, DOM, huesos,
-    HC: v3(0, 1.327, -0.011),   // centro de la cabeza (como en vestir_avatar.py)
+    HC: CENTRO_CABEZA.clone(),
     mallaCuerpo: rayMesh(body), mallaCabeza: rayMesh(head),
     mallaOrejas: rayMesh(juntar(malla('Ear_-1'), malla('Ear_1'))),
     mallaTorso: partes(['Hips', 'Spine', 'Chest', 'Neck']),
@@ -236,6 +357,32 @@ export function caja(m, centro, semi, mat, redondez = 0.3, filas = 14, cols = 28
     }
   }
   m.add(V, orientarCaras(V, grilla(filas + 1, cols, true), () => centro), mat);
+}
+
+// Figuras planas para calcomanías (unidades: metros), como abanicos: [{ c: [x, y], borde: [[x, y], …] }].
+export const FIGURAS = {
+  estrella: (r = 0.031, ri = 0.013) => [{ c: [0, 0], borde: Array.from({ length: 10 }, (_, k) => {
+    const a = Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? ri : r; return [Math.cos(a) * rr, Math.sin(a) * rr];
+  }) }],
+  // cuatro alas y el cuerpo (como la mariposa del peto)
+  mariposa: (k = 1) => {
+    const ala = (cx, cy, rx, ry, giro, n = 14) => ({ c: [cx * k, cy * k], borde: Array.from({ length: n }, (_, i) => {
+      const a = 2 * Math.PI * i / n, x = rx * Math.cos(a), y = ry * Math.sin(a);
+      return [(cx + x * Math.cos(giro) - y * Math.sin(giro)) * k, (cy + x * Math.sin(giro) + y * Math.cos(giro)) * k];
+    }) });
+    return [ala(0.019, 0.011, 0.019, 0.014, 0.45), ala(-0.019, 0.011, 0.019, 0.014, -0.45),
+      ala(0.013, -0.013, 0.012, 0.010, -0.5), ala(-0.013, -0.013, 0.012, 0.010, 0.5), ala(0, 0, 0.0035, 0.019, 0, 8)];
+  },
+};
+// Pega una figura como calcomanía con grosor: `lugar(x, y)` da el punto 3D de cada punto de la figura (sobre una
+// superficie), `dentro` es un punto del lado de la superficie (el grosor va hacia allá).
+export function calcomania(m, figura, lugar, dentro, grosor, mat) {
+  const V = [], F = [];
+  for (const { c, borde } of figura) {
+    const o = V.length; V.push(lugar(...c));
+    borde.forEach((p, i) => { V.push(lugar(...p)); F.push([o, o + 1 + i, o + 1 + (i + 1) % borde.length]); });
+  }
+  cascara(m, V, orientar(V, F, () => dentro), grosor, mat);
 }
 
 // Superficie con grosor (como el modificador Solidify): exterior, interior y bordes.

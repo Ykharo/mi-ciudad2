@@ -16,7 +16,9 @@
   <div id="hud">
     <div id="place"><span class="dot"></span><span id="placeName">Calle Arcoíris</span></div>
     <div id="topright">
+      <button id="btnChar" class="toy round" aria-haspopup="true" aria-expanded="false" aria-controls="charMenu" hidden></button>
       <button id="btnMusic" class="toy round" aria-label="Música">🎵</button>
+      <div id="charMenu" role="menu" hidden></div>
     </div>
     <div id="joy" aria-label="Mover"><span id="joyHint">¡Mueve aquí!</span><div id="joySpeed" aria-live="off"><b>0</b><span>km/h</span></div><div id="joyKnob"></div></div>
     <div id="actions">
@@ -74,6 +76,7 @@
     <div class="card">
       <h1>Ciudad Arcoíris</h1>
       <p class="sub">Pasea por la ciudad con Nina, baila, adopta mascotas y diseña tu propio auto.</p>
+      <div id="startChars" hidden></div>
       <button id="btnPlay" class="toy pink" disabled>Construyendo la ciudad…</button>
       <ul class="how">
         <li><b>🕹</b>Círculo: caminar</li>

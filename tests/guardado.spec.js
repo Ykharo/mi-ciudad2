@@ -36,6 +36,26 @@ test('una partida v1 se migra a v2 sin perder nada', async ({ page, jugar }) => 
   await expect(page.locator('#petPanel .mypet b')).toHaveText(['Nube', 'Chispa']);
 });
 
+test('la forma de cabeza del look se aplica a la cabeza y a lo que va sobre ella', async ({ page, jugar }) => {
+  await sembrar(page, 'ciudadArcoiris.v2', {
+    version: 2,
+    nina: { look: { formas: { redonda: 1, cuadrada: 1 }, prendas: { pelo: { id: 'pelo_largo' }, torso: { id: 'peto' }, piernas: { id: 'pantalon_cargo' }, pies: { id: 'zapatillas' }, cabeza: { id: 'jockey' }, orejas: { id: 'audifonos_grandes' } } } },
+  });
+  await jugar();
+  // formas que no existen se descartan
+  expect(await page.evaluate(() => window.__juego.player.look.formas)).toEqual({ redonda: 1 });
+  // cuánto de la forma "redonda" tiene cada malla que la lleva (por su nombre o el de su grupo)
+  const redonda = await page.evaluate(() => {
+    const r = {};
+    window.__juego.player.ch.model.traverse(o => {
+      if (!o.morphTargetDictionary || !('redonda' in o.morphTargetDictionary)) return;
+      r[o.name] = r[o.parent.name] = o.morphTargetInfluences[o.morphTargetDictionary.redonda];
+    });
+    return r;
+  });
+  expect(redonda).toMatchObject({ Head_Base: 1, Pelo_Largo: 1, Acc_Jockey: 1, Acc_AudifonosGrandes: 1 });
+});
+
 test('un guardado dañado no rompe el juego', async ({ page, jugar }) => {
   await sembrar(page, 'ciudadArcoiris.v2', {
     version: 2,

@@ -49,6 +49,13 @@ function makeAvatar(look) {
   avatars.push(c);
   return c;
 }
+// saca a un personaje de la escena (al cambiar de personaje jugable). La geometría y los materiales son compartidos:
+// no se liberan.
+function removeAvatar(c) {
+  c.mixer.stopAllAction();
+  scene.remove(c.root);
+  const i = avatars.indexOf(c); if (i >= 0) avatars.splice(i, 1);
+}
 // no dibujar a quien queda fuera de la cámara (las mallas con huesos no se recortan solas)
 const _frus = new THREE.Frustum(), _pm = new THREE.Matrix4(), _bs = new THREE.Sphere(), _wp = new THREE.Vector3();
 function cullAvatars() {
@@ -59,4 +66,4 @@ function cullAvatars() {
   }
 }
 
-export { NINA, NINA_SCALE, cullAvatars, loadCharacters, makeAvatar };
+export { NINA, NINA_SCALE, cullAvatars, loadCharacters, makeAvatar, removeAvatar };

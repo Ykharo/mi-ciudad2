@@ -2,8 +2,8 @@
 import { THREE } from '../engine/three.js';
 import { shade, tint } from '../engine/materials.js';
 import { PALETAS } from './catalog/paletas.js';
-import { PIEL, PRENDA, SLOTS } from './catalog/prendas.js';
-import { LOOK_NINA, VECINOS } from './catalog/personajes.js';
+import { PIEL, PRENDA, SLOTS, SLOTS_OPCIONALES } from './catalog/prendas.js';
+import { FORMAS_CABEZA, LOOK_NINA, VECINOS } from './catalog/personajes.js';
 
 const dark = hex => new THREE.Color(hex).getHSL({}).l < 0.3;
 // reglas de los derivados (ver catalog/prendas.js)
@@ -52,15 +52,25 @@ function randomLook(r = Math.random) {
   return look;
 }
 
-// Valida un look guardado contra el catálogo (como fixCarSpec con los autos): lo que no calza vuelve a lo de fábrica.
+// Valida un look guardado contra el catálogo (como fixCarSpec con los autos): lo que no calza vuelve a lo de fábrica
+// (`defecto`: el look del personaje, Nina si no se dice). Un espacio opcional que el look guardado no tiene queda
+// vacío (se sacó la chaqueta), aunque el personaje venga con algo ahí.
 const HEX = /^#[0-9a-f]{6}$/i;
 const enRango = (v, a, b, def) => typeof v === 'number' && v >= a && v <= b ? v : def;
-function fixLook(l) {
-  const r = JSON.parse(JSON.stringify(LOOK_NINA));
+function fixLook(l, defecto = LOOK_NINA) {
+  const r = JSON.parse(JSON.stringify(defecto));
   if (!l || typeof l !== 'object') return r;
-  if (HEX.test(l.piel)) r.piel = l.piel;
-  r.escala = enRango(l.escala, 0.8, 1.2, 1);
-  r.cabeza = enRango(l.cabeza, 0.85, 1.15, 1);
+  r.piel = HEX.test(l.piel) ? l.piel : null;
+  r.escala = enRango(l.escala, 0.8, 1.2, r.escala);
+  r.cabeza = enRango(l.cabeza, 0.85, 1.15, r.cabeza);
+  if (l.formas && typeof l.formas === 'object') {
+    delete r.formas;
+    for (const f of FORMAS_CABEZA) {
+      const v = enRango(l.formas[f], 0, 1, 0);
+      if (v) (r.formas = r.formas || {})[f] = v;
+    }
+  }
+  if (l.prendas && typeof l.prendas === 'object') for (const slot of SLOTS_OPCIONALES) if (!l.prendas[slot]) delete r.prendas[slot];
   for (const slot of SLOTS) {
     const sel = l.prendas && l.prendas[slot], P = sel && PRENDA[sel.id];
     if (!P || P.slot !== slot) continue;   // se queda la de fábrica

@@ -15,6 +15,9 @@ Hojas que ya están aquí:
 - `hoja_personaje_nuevo.png`: personaje nuevo (etapa 7). Hechos: gorra, audífonos, mochila (y lentes, que no están en la
   hoja). Faltan: chaqueta oversize con capucha, top corto, pantalón cargo ancho con cadena, zapatillas de plataforma,
   peinados lacio largo y trenzas, clip de estrella, celular y botella.
+- `hoja_personaje_nino.png`: segundo personaje nuevo (etapa 7), cabeza más redonda de perfil. Hechos: forma de cabeza
+  `redonda`, jockey, audífonos grandes (sobre el gorro), pelo corto, polerón con capucha y franjas, pantalón de buzo
+  con franjas, guantes sin dedos; la mochila ya estaba. Falta: pelo largo desordenado.
 
 Nina es *low-poly* estilo juguete: los detalles finos (volados, encajes, pliegues) se simplifican en formas suaves.
 Los estampados sencillos (lunares, una estrella, un logo) se pueden poner como texturas pequeñas.

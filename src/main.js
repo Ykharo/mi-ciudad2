@@ -26,7 +26,6 @@ import './world/places/park.js';
 import { carFitsAt, spawnCar } from './cars/fleet.js';
 import { buildCity } from './world/city.js';
 import { cullAvatars, loadCharacters, makeAvatar } from './characters/avatar.js';
-import { fixLook } from './characters/looks.js';
 import './characters/face.js';
 import './characters/animator.js';
 import './characters/props.js';
@@ -38,6 +37,7 @@ import './cars/models.js';
 import { SPAWNS } from './world/places/carshop.js';
 import { MAX_CARS, addPet, cam, ownedCars, player } from './game/actors.js';
 import { loadSave, save } from './game/save.js';
+import { cargarPersonajes } from './game/personajes.js';
 import { updatePlayer } from './game/player.js';
 import { spawnNPCs, updateNPCs } from './game/npcs.js';
 import { followChain } from './pets/follow.js';
@@ -56,6 +56,7 @@ import './game/modes.js';
 import { MAX_PETS, updatePreview } from './ui/panels/pets.js';
 import { refreshTT } from './ui/panels/shop.js';
 import './ui/panels/wardrobe.js';
+import { mostrarPersonajes } from './ui/personajes.js';
 import { installTestHooks } from './debug/hooks.js';
 
 let last = performance.now(), placeT = 0;
@@ -88,8 +89,8 @@ async function boot() {
   try { await Promise.race([document.fonts ? document.fonts.load('800 40px "Baloo 2"') : null, new Promise(r => setTimeout(r, 1500))]); } catch (e) { }
   sky = buildSky(); buildClouds(); buildCity();
   const saved = loadSave();
-  player.look = fixLook(saved && saved.nina && saved.nina.look);
-  await loadCharacters([player.look]);   // la base y las prendas de Nina y de los vecinos
+  cargarPersonajes(saved);   // con quién se juega y el look de cada uno
+  await loadCharacters([player.look]);   // la base y las prendas del personaje y de los vecinos
   player.ch = makeAvatar(player.look);
   const pets = saved ? (saved.pets || []) : [{ kind: 'perro', color: '#E9B77A', name: 'Toby' }];
   pets.slice(0, MAX_PETS).forEach(p => { if (PET_KINDS.some(k => k.id === p.kind)) addPet(p.kind, p.color || '#E9B77A', String(p.name || 'Toby').slice(0, 12)); });
@@ -113,6 +114,7 @@ async function boot() {
   resize();
   cam.look.set(player.pos.x, 1.6, player.pos.z); cam.pos.set(player.pos.x + 8, 7, player.pos.z + 8);
   requestAnimationFrame(t => { last = t; frame(t); });
+  mostrarPersonajes();
   const play = $('#btnPlay'); play.disabled = false; play.textContent = '¡A jugar!';
   play.addEventListener('click', () => {
     initAudio(); if (state.musicOn) startMusic();

@@ -9,7 +9,7 @@ import { lookMaterials } from './looks.js';
 // La sombra la hacen el cuerpo, la cabeza y las prendas marcadas con `sombra` en el catálogo (el pelo); la ropa
 // pegada al cuerpo no hace falta: la mitad de trabajo. (Hasta la etapa 4 esto iba por nombre de malla y el pelo
 // nunca calzó: Three.js llama a sus mallas Pelo_Moño_1..3, una por material.)
-const SHADOW_PARTS = new Set(['Body_Base', 'Head_Base']);
+const SHADOW_PARTS = new Set(['Body_Base', 'Body_Brazos', 'Body_Piernas', 'Body_Pies', 'Head_Base']);
 function setupMesh(o, sombra = SHADOW_PARTS.has(o.name)) {
   o.frustumCulled = false;
   o.castShadow = sombra;
@@ -29,9 +29,23 @@ function sharedMat(m, color, hidden) {
   return n;
 }
 const srcMat = new WeakMap();   // malla del personaje → material original del modelo
+// Una parte del cuerpo escondida bajo la ropa sigue haciendo su sombra (la ropa pegada no hace sombra): se dibuja
+// con este material, que no pinta nada (la sombra usa su propio material de profundidad).
+const FANTASMA = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
+FANTASMA.name = 'Fantasma';
 
-// Pone a cada malla del personaje el material que le toca según el look (colores y extras escondidos).
+// Partes que esconden las prendas puestas (`oculta` en el catálogo): las regiones del cuerpo bajo la ropa que las tapa
+// entera (PLAN.md 3.7), el tope del moño bajo la gorra, las orejas bajo el pelo largo.
+function ocultasPor(c) {
+  return new Set(Object.values(c.prendas).flatMap(p => (PRENDA[p.id] && PRENDA[p.id].oculta) || []));
+}
+
+// Pone a cada malla del personaje el material que le toca según el look (colores y extras escondidos), la forma de
+// cabeza, y esconde lo que tapan sus prendas. Se esconde el objeto (es de cada personaje), no el material (compartido); las partes del
+// cuerpo, con FANTASMA.
 function applyLook(c, look) {
+  const ocultas = ocultasPor(c), antes = c.ocultas || new Set();
+  c.ocultas = ocultas;
   const { colors, hidden } = lookMaterials(look);
   const faces = c.faceMats || (c.faceMats = new Map());
   const pick = m => {
@@ -43,11 +57,18 @@ function applyLook(c, look) {
     c.mats[m.name] = n;
     return n;
   };
+  // la parte escondida (o que ya no lo está) a la que pertenece una malla: la malla misma o su grupo (una parte de
+  // varios materiales es un grupo con una malla por material)
+  const parte = o => [o.name, o.parent && o.parent.name].find(n => ocultas.has(n) || antes.has(n));
   c.model.traverse(o => {
     if (!o.isMesh) return;
     if (!srcMat.has(o)) srcMat.set(o, o.material);
-    const src = srcMat.get(o);
+    // formas de cabeza del look (la cabeza y lo que va sobre ella las tienen como morph targets)
+    if (o.morphTargetDictionary) for (const [f, i] of Object.entries(o.morphTargetDictionary)) o.morphTargetInfluences[i] = (look && look.formas && look.formas[f]) || 0;
+    const src = srcMat.get(o), n = parte(o);
+    if (n && ocultas.has(n) && SHADOW_PARTS.has(n)) { o.material = FANTASMA; o.visible = true; return; }
     o.material = Array.isArray(src) ? src.map(pick) : pick(src);
+    if (n) o.visible = !ocultas.has(n);
   });
 }
 
@@ -80,21 +101,10 @@ function detachPrenda(c, slot) {
   delete c.prendas[slot];
 }
 
-// Esconde las partes que tapan las prendas puestas (`oculta` en el catálogo: la gorra esconde el tope del moño) y
-// vuelve a mostrar las que ya nada tapa. Se esconde el objeto (es de cada personaje), no el material (compartido).
-function applyOcultas(c) {
-  const ocultas = new Set(Object.values(c.prendas).flatMap(p => (PRENDA[p.id] && PRENDA[p.id].oculta) || []));
-  const antes = c.ocultas || new Set();
-  if (!ocultas.size && !antes.size) return;
-  c.model.traverse(o => { if (ocultas.has(o.name) || antes.has(o.name)) o.visible = !ocultas.has(o.name); });
-  c.ocultas = ocultas;
-}
-
 // Viste a un personaje recién creado con las prendas de su look (tienen que estar cargadas: loadPrendas).
 // Se visten en el orden de SLOTS (el orden no cambia el dibujo: se comprobó con las capturas en la etapa 4).
 function dress(c, look) {
   for (const slot of SLOTS) { const sel = look && look.prendas && look.prendas[slot]; if (sel) attachPrenda(c, slot, sel.id); }
-  applyOcultas(c);
   applyLook(c, look);
 }
 
@@ -122,13 +132,12 @@ async function ponerPrenda(c, slot, sel) {
   await loadGLB('prenda:' + sel.id);
   c.look.prendas[slot] = sel;
   attachPrenda(c, slot, sel.id);
-  applyOcultas(c);
   applyLook(c, c.look);
 }
 function quitarPrenda(c, slot) {
   delete c.look.prendas[slot];
   detachPrenda(c, slot);
-  applyOcultas(c);
+  applyLook(c, c.look);
 }
 function recolorear(c, look) { c.look = look; applyLook(c, look); }
 

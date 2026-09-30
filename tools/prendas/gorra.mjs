@@ -1,11 +1,13 @@
-// Gorra con visera hacia atrás, como la lleva el personaje de referencias/ropa/hoja_personaje_nuevo.png: copa de
-// 6 paños con costuras, botón arriba, visera y una estrella al costado. Accesorio rígido: todo pesa en HeadBone
-// (sigue a la cabeza y a su tamaño).
+// Gorras: copa de 6 paños con costuras, botón arriba, visera y una calcomanía. Accesorios rígidos: todo pesa en
+// HeadBone (siguen a la cabeza y a su tamaño).
+//   gorra   visera hacia atrás y estrella al costado, como la lleva la niña de referencias/ropa/hoja_personaje_nuevo.png
+//   jockey  (jockey.mjs) visera adelante y mariposa al frente, como el niño de referencias/ropa/hoja_personaje_nino.png
 // La copa envuelve la cabeza y los peinados (el moño sin su tope, que se esconde con la gorra, y el pelo largo): así
-// el pelo sale por debajo sin atravesarla.
+// el pelo sale por debajo sin atravesarla. Si se agrega un peinado, hay que sumarlo en queTapa y regenerar.
 import * as THREE from 'three';
-import { CENTRO_MOÑO, Malla, RADIO_MOÑO, cascara, grilla, lerp, mallaRayos, orientar, piezasCerca, rayoDesdeAfuera, revolucion, v3 } from './cuerpo.mjs';
+import { CENTRO_MOÑO, FIGURAS, Malla, RADIO_MOÑO, calcomania, cascara, grilla, lerp, mallaRayos, orientar, piezasCerca, rayoDesdeAfuera, revolucion, v3 } from './cuerpo.mjs';
 import * as peloLargo from './pelo_largo.mjs';
+import * as peloCorto from './pelo_corto.mjs';
 
 export const ID = 'gorra';
 const rad = g => g * Math.PI / 180;
@@ -19,8 +21,9 @@ function borde(phi) {
   return rad(lerp(BE[k], BE[k + 1], (a - BA[k]) / (BA[k + 1] - BA[k])));
 }
 
-// lo que la copa tiene que tapar: cabeza, orejas, el moño sin su tope y el pelo largo
-function queTapa(C) {
+// lo que la copa tiene que tapar: cabeza, orejas, el moño sin su tope, el pelo largo y el corto (mallas para rayos)
+export function queTapa(C) {
+  if (C.peinados) return C.peinados;
   const mallas = [C.mallaCabeza, C.mallaOrejas];
   const moño = C.doc.getRoot().listMeshes().find(x => x.getName() === 'Pelo_Moño');
   for (const p of moño.listPrimitives()) {
@@ -28,12 +31,16 @@ function queTapa(C) {
     const idx = []; for (let t = 0; t < I.length; t += 3) if (!tope[t / 3]) idx.push(I[t], I[t + 1], I[t + 2]);
     mallas.push(mallaRayos(P, idx));
   }
-  const largo = peloLargo.construir(C).mallas[0].malla;
-  mallas.push(mallaRayos(largo.V.flatMap(v => [v.x, v.y, v.z]), largo.F.flat()));
-  return mallas;
+  for (const peinado of [peloLargo, peloCorto]) {
+    const p = peinado.construir(C).mallas[0].malla;
+    mallas.push(mallaRayos(p.V.flatMap(v => [v.x, v.y, v.z]), p.F.flat()));
+  }
+  return (C.peinados = mallas);
 }
 
-export function construir(C) {
+// visera: 'atras' | 'adelante'; figura: nombre en FIGURAS; lugar: [phi, el] en grados; M: nombres de material
+// { tela, costura, visera, figura }
+export function construirGorra(C, { visera, figura, lugar, M }) {
   const m = new Malla(), HC = C.HC, tapar = queTapa(C);
   const alcance = d => Math.max(...tapar.map(x => rayoDesdeAfuera(x, HC, d, 0.6) ?? 0));
   // radio de lo que hay debajo en una grilla (fila 0 = el borde, la última cerca de la coronilla)
@@ -53,40 +60,42 @@ export function construir(C) {
   const G = grilla(NR, NP, true);
   for (let k = 0; k < NP; k++) G.push([(NR - 1) * NP + (k + 1) % NP, (NR - 1) * NP + k, top]);
   const f0 = m.F.length;
-  cascara(m, V, orientar(V, G, () => HC), 0.006, 'Gorra_Tela', 'Gorra_Costura', 'Gorra_Tela');
+  cascara(m, V, orientar(V, G, () => HC), 0.006, M.tela, M.costura, M.tela);
   // costuras de los 6 paños (las caras de afuera van primero, 2 triángulos por cuadrilátero)
-  for (let q = NP; q < (NR - 1) * NP; q++) if (q % NP % (NP / 6) === 0) m.M[f0 + 2 * q] = m.M[f0 + 2 * q + 1] = 'Gorra_Costura';
+  for (let q = NP; q < (NR - 1) * NP; q++) if (q % NP % (NP / 6) === 0) m.M[f0 + 2 * q] = m.M[f0 + 2 * q + 1] = M.costura;
 
   // botón de arriba
-  revolucion(m, [[0, -0.004], [0.014, -0.004], [0.016, 0.002], [0.012, 0.008], [0, 0.009]], V[top], v3(0, 1, 0), 'Gorra_Visera', 16);
+  revolucion(m, [[0, -0.004], [0.014, -0.004], [0.016, 0.002], [0.012, 0.008], [0, 0.009]], V[top], v3(0, 1, 0), M.visera, 16);
 
-  // visera hacia atrás: sale del borde de la copa, recta hacia afuera y un poco hacia abajo, con forma de D
-  const cols = [], lado = 7;
-  for (let k = NP / 2 - lado; k <= NP / 2 + lado; k++) cols.push(k);
-  const Vv = [], filas = 7;
+  // visera: sale del borde de la copa, recta hacia afuera y un poco hacia abajo, con forma de D. Adelante es más
+  // larga y más curva (como un jockey); atrás, más corta.
+  const adelante = visera === 'adelante', centro = adelante ? 0 : NP / 2, lado = 7;
+  const cols = []; for (let k = centro - lado; k <= centro + lado; k++) cols.push((k + NP) % NP);
+  const Vv = [], filas = 7, largoMax = adelante ? 0.118 : 0.105, baja = adelante ? 13 : 9, curva = adelante ? 0.03 : 0.022;
   for (let s = 0; s < filas; s++) cols.forEach((k, j) => {
     const u = (j / (cols.length - 1)) * 2 - 1, base = V[k].clone().addScaledVector(dirs[k], -0.004);
-    const out = v3(dirs[k].x, 0, dirs[k].z).normalize(), t = s / (filas - 1), largo = 0.105 * Math.sqrt(Math.max(0.02, 1 - 0.85 * u * u));
-    Vv.push(base.addScaledVector(out, largo * t).add(v3(0, -Math.tan(rad(9)) * largo * t - 0.022 * u * u * t, 0)));
+    const out = v3(dirs[k].x, 0, dirs[k].z).normalize(), t = s / (filas - 1), largo = largoMax * Math.sqrt(Math.max(0.02, 1 - 0.85 * u * u));
+    Vv.push(base.addScaledVector(out, largo * t).add(v3(0, -Math.tan(rad(baja)) * largo * t - curva * u * u * t, 0)));
   });
-  cascara(m, Vv, orientar(Vv, grilla(filas, cols.length, false), i => Vv[i].clone().add(v3(0, -1, 0))), 0.007, 'Gorra_Visera', 'Gorra_Visera', 'Gorra_Visera');
+  cascara(m, Vv, orientar(Vv, grilla(filas, cols.length, false), i => Vv[i].clone().add(v3(0, -1, 0))), 0.007, M.visera, M.visera, M.visera);
 
-  // estrella al costado de la copa (a la derecha de quien mira de frente)
+  // calcomanía sobre la copa
   const copa = mallaRayos(V.flatMap(v => [v.x, v.y, v.z]), G.flatMap(f => (f.length === 4 ? [f[0], f[1], f[2], f[0], f[2], f[3]] : f)));
-  const sobreCopa = (d, alto) => d.clone().multiplyScalar((rayoDesdeAfuera(copa, HC, d, 0.6) ?? rTop) + alto).add(HC);
-  const n = sph(rad(58), rad(38)), t1 = new THREE.Vector3().crossVectors(v3(0, 1, 0), n).normalize(), t2 = new THREE.Vector3().crossVectors(n, t1);
-  const Ve = [sobreCopa(n, 0.004)];
-  for (let k = 0; k < 10; k++) {
-    const a = Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? 0.013 : 0.031;
-    const p = HC.clone().addScaledVector(n, 0.2).addScaledVector(t1, Math.cos(a) * r).addScaledVector(t2, Math.sin(a) * r);
-    Ve.push(sobreCopa(p.sub(HC).normalize(), 0.004));
-  }
-  const Fe = Array.from({ length: 10 }, (_, k) => [0, 1 + k, 1 + (k + 1) % 10]);
-  cascara(m, Ve, orientar(Ve, Fe, () => HC), 0.004, 'Gorra_Estrella', 'Gorra_Estrella', 'Gorra_Estrella');
+  const n = sph(rad(lugar[0]), rad(lugar[1])), t1 = new THREE.Vector3().crossVectors(v3(0, 1, 0), n).normalize(), t2 = new THREE.Vector3().crossVectors(n, t1);
+  const sobreCopa = (x, y) => {
+    const d = HC.clone().addScaledVector(n, 0.2).addScaledVector(t1, x).addScaledVector(t2, y).sub(HC).normalize();
+    return d.multiplyScalar((rayoDesdeAfuera(copa, HC, d, 0.6) ?? rTop) + 0.004).add(HC);
+  };
+  calcomania(m, FIGURAS[figura](), sobreCopa, HC, 0.004, M.figura);
 
   m.pesos = m.V.map(() => [['HeadBone', 1]]);
+  return m;
+}
+
+export function construir(C) {
+  const M = { tela: 'Gorra_Tela', costura: 'Gorra_Costura', visera: 'Gorra_Visera', figura: 'Gorra_Estrella' };
   return {
-    mallas: [{ nombre: 'Acc_Gorra', malla: m }],
+    mallas: [{ nombre: 'Acc_Gorra', malla: construirGorra(C, { visera: 'atras', figura: 'estrella', lugar: [58, 38], M }) }],
     materiales: {
       Gorra_Tela: { color: '#FFF1F6', rugosidad: 0.8 },
       Gorra_Costura: { color: '#EFC6D8', rugosidad: 0.85 },

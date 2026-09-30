@@ -5,24 +5,56 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Probador de prendas — Ciudad Arcoíris</title>
 <style>
-  html, body { height: 100%; margin: 0; background: #DDF3FF; font: 600 14px/1.3 system-ui, sans-serif; color: #26315C; }
+  html, body { height: 100%; margin: 0; background: #DDF3FF; font: 600 14px/1.3 system-ui, sans-serif; color: #26315C; overflow: hidden; }
   #c { display: block; width: 100%; height: 100%; }
   #panel { position: fixed; top: 10px; left: 10px; width: 250px; max-height: calc(100% - 20px); overflow: auto; background: #fffdf8;
-    border-radius: 14px; padding: 10px 12px; box-shadow: 0 6px 20px rgba(38,49,92,.2); }
-  #panel h1 { font-size: 16px; margin: 0 0 6px; }
+    border-radius: 14px; padding: 10px 12px; box-shadow: 0 6px 20px rgba(38,49,92,.2); z-index: 3; box-sizing: border-box; }
+  #panel h1 { font-size: 16px; margin: 0 0 6px; display: flex; justify-content: space-between; align-items: center; }
+  #panel h2 { font-size: 14px; margin: 14px 0 2px; padding-top: 8px; border-top: 2px solid #EEE7F2; }
   #panel label { display: block; margin: 8px 0 2px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #6B7199; }
-  #panel select, #panel input[type=range] { width: 100%; }
+  #panel label:has(input[type=checkbox]) { text-transform: none; letter-spacing: 0; font-size: 13px; color: #26315C; }
+  #panel select, #panel input[type=range], #panel input[type=file] { width: 100%; box-sizing: border-box; }
   #panel button { margin: 8px 4px 0 0; }
-  #info { font-size: 12px; color: #6B7199; margin-top: 8px; }
+  #panel button.on { background: #FFD23F; }
+  #panel fieldset { margin: 8px 0 0; border: 2px solid #EEE7F2; border-radius: 10px; padding: 2px 8px 8px; }
+  #panel legend { font-size: 12px; color: #6B7199; }
+  #info, .ayuda { font-size: 12px; color: #6B7199; margin-top: 8px; }
+  .ayuda:not(:empty) { background: #FFF6D6; border-radius: 8px; padding: 6px 8px; color: #26315C; }
+  #abrirPanel { position: fixed; top: 10px; left: 10px; z-index: 3; }
+  /* capas de referencia: no reciben el mouse (la cámara sigue funcionando); al ajustar, se captura en la ventana */
+  .ref-caja { position: fixed; overflow: hidden; pointer-events: none; z-index: 1; }
+  .ref-lamina { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .ref-img { display: block; width: 100%; height: 100%; user-select: none; }
+  body.ref-activa .ref-caja { outline: 2px dashed #FF6FAE; outline-offset: -2px; cursor: move; }
+  body.ref-activa { cursor: move; }
+  /* líneas guía: cada 10 % del alto, y una vertical al centro de cada vista */
+  body.guias .ref-caja::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(90deg, transparent calc(50% - 1px), rgba(255,79,94,.6) calc(50% - 1px), rgba(255,79,94,.6) calc(50% + 1px), transparent calc(50% + 1px)),
+      repeating-linear-gradient(180deg, transparent 0 calc(10% - 1px), rgba(79,125,191,.45) calc(10% - 1px) 10%); }
+  .rotulo { position: fixed; z-index: 2; font-size: 12px; background: rgba(255,253,248,.85); border-radius: 8px; padding: 2px 8px; pointer-events: none; }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
+<button id="abrirPanel" hidden>▶ Panel (P)</button>
 <div id="panel">
-  <h1>Probador</h1>
+  <h1>Probador <button id="cerrarPanel" title="Ocultar el panel (tecla P)">◀</button></h1>
   <label for="anim">Animación</label><select id="anim"></select>
   <label for="vel">Velocidad al caminar (m/s)</label><input id="vel" type="range" min="0" max="5" step="0.1" value="0">
   <label for="pausa">Pausar en (segundos)</label><input id="pausa" type="range" min="0" max="1" step="0.01" value="0">
+  <label><input id="reposo" type="checkbox"> Pose de reposo (sin animación)</label>
+  <h2>Vista</h2>
+  <label for="modo">Modo</label>
+  <select id="modo"><option value="libre">Libre (arrastrar para girar)</option><option value="doble">Dos vistas lado a lado</option></select>
+  <div id="dobleOps" hidden>
+    <label for="vistaIzq">Izquierda</label><select id="vistaIzq"></select>
+    <label for="vistaDer">Derecha</label><select id="vistaDer"></select>
+  </div>
+  <label><input id="orto" type="checkbox"> Casi sin perspectiva (como las hojas)</label>
+  <button id="encCuerpo">Encuadrar cuerpo</button><button id="encCabeza">Encuadrar cabeza</button>
+  <div class="ayuda" id="vistaAyuda"></div>
+  <div id="refs"></div>
+  <h2>Personaje</h2>
   <div id="prendas"></div>
   <button id="azar">Colores al azar</button><button id="fabrica">Nina de fábrica</button>
   <div id="info"></div>

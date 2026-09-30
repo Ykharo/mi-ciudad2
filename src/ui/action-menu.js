@@ -3,16 +3,17 @@ import { state } from '../core/state.js';
 import { on } from '../core/events.js';
 import { avatarDo, avatarStop } from '../characters/animator.js';
 import { ACTIONS } from '../characters/catalog/acciones.js';
+import { PERSONAJES } from '../characters/catalog/personajes.js';
 import { input, player } from '../game/actors.js';
 import { standUp } from '../game/player.js';
 import { greetAround } from '../game/npcs.js';
 import { sfx } from '../audio/audio.js';
-import { $ } from './dom.js';
+import { $, esc } from './dom.js';
 
 const btnAct = $('#btnAct'), actMenu = $('#actMenu');
 function renderActMenu() {
   const cur = player.ch && player.ch.sp ? player.ch.sp.name : '';
-  actMenu.innerHTML = '<h4>¿Qué hace Nina?</h4>' + ACTIONS.map(a =>
+  actMenu.innerHTML = `<h4>¿Qué hace ${esc(PERSONAJES[player.personaje].nombre)}?</h4>` + ACTIONS.map(a =>
     `<button class="act${a.id === cur ? ' on' : ''}" role="menuitem" data-act="${a.id}"><span class="em">${a.ic}</span>${a.name}</button>`).join('');
 }
 function setActMenu(open) {

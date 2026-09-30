@@ -21,8 +21,8 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
 - Hay una carpeta `mi-ciudad/` dentro del proyecto con un repositorio vacío (sólo `.gitattributes`,
   remoto `Ykharo/mi-ciudad`): parece un intento anterior de GitHub Desktop. No se versiona; se puede borrar.
 - **Etapa 6: prendas nuevas listas**, probadas en el navegador y guardadas en el commit `9cdc8f6`
-  ("segunda ropa hecha 6 done"). **La etapa no está cerrada**: faltan las regiones de `Body_Base` (los accesorios
-  rígidos ya están, sin commit: ver los últimos puntos de esta etapa). Prendas de la hoja de referencia
+  ("segunda ropa hecha 6 done"). Después se agregaron los accesorios rígidos (con commit) y las regiones de
+  `Body_Base` (sin commit todavía): ver los últimos puntos de esta etapa. Prendas de la hoja de referencia
   (`referencias/ropa/hoja_de_referencia_nina.png`): **falda tableada**, **chaqueta** y **pelo largo**.
   - Decisión 11: en vez de Python/Blender, un generador en Node: `node tools/generar_prendas.mjs [id…]`. Cada prenda
     es un archivo en `tools/prendas/` (`falda.mjs`, `chaqueta.mjs`, `pelo_largo.mjs`) que mide el cuerpo de Nina con
@@ -42,7 +42,7 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
     se guarda). Captura del Vestidor regenerada (cambian las pestañas). 120/120.
   - Revisadas en el probador (`?con=pelo:pelo_largo,abrigo:chaqueta,piernas:falda_tableada`) en 12 poses. Con los
     brazos arriba (wave) el brazo puede cruzar el mechón de adelante; es aceptable por ahora.
-  - **Accesorios rígidos hechos (30-09-2026, falta probarlos en el navegador y commit)**, de la hoja del personaje
+  - **Accesorios rígidos hechos (30-09-2026)**, probados en el navegador y en un commit, de la hoja del personaje
     nuevo (`referencias/ropa/hoja_personaje_nuevo.png`): **gorra** (visera hacia atrás, 6 paños, estrella), **lentes**
     (redondos, no están en la hoja), **audífonos** (al cuello) y **mochila** (bolsillo con mariposa, correas). 22–65 KB c/u.
     - Decidido: el personaje nuevo usará el cuerpo de Nina, más bajita (escala ~0,85, cabeza algo más grande); en el
@@ -75,11 +75,142 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
       `0xC0E90002` (Windows lo bloquea), incluso en la prueba de humo y fuera del entorno aislado. El 28-09 corría.
       Probablemente sea el Control inteligente de aplicaciones o el antivirus; revisar la seguridad de Windows o
       reinstalar con `npx playwright install webkit`. Hasta entonces las pruebas de iPad (proyectos `-ipad`) no corren.
-  - **Pendiente para cerrar la etapa 6**: separar `Body_Base` en regiones ocultables. El mecanismo ya existe (`oculta`
-    por nombre de malla); falta partir `Body_Base` en `separar_glb.mjs` (torso, brazos, piernas, pies) y marcar qué
-    esconde cada prenda. Los moños (lazos) del pelo de la referencia quedan para más adelante.
-  - Siguiente del personaje nuevo (etapa 7): chaqueta oversize con capucha, top corto, pantalón cargo ancho con cadena,
-    zapatillas de plataforma, peinados lacio largo y trenzas, y el personaje en `PERSONAJES`.
+  - **Regiones de `Body_Base` hechas (30-09-2026, falta probar en el navegador y commit): con esto la etapa 6 queda
+    completa.** `separar_glb.mjs` tiene ahora una tabla `APARTAR` (partes que pasan a su propia malla, en orden) y
+    parte el cuerpo por el hueso que más pesa en cada vértice (un triángulo va a la región si sus 3 vértices son de
+    ella): `Body_Pies` (1.028 triángulos; llegan a 0,183 m, la zapatilla a 0,184), `Body_Piernas` (1.816: cadera,
+    muslos, canillas y tobillos; la cadera llega a 0,837 m, la cintura del pantalón a 0,856) y `Body_Brazos` (873:
+    brazo y antebrazo, sin las manos). `Body_Base` queda con el torso, el cuello y las manos. El torso no se separó:
+    ninguna prenda lo tapa entero (el peto es corto, la chaqueta es abierta). `nina_base.glb` 942 → 953 KB.
+    - Qué esconde cada prenda (`oculta`): pantalón → piernas, zapatillas → pies, chaqueta → brazos, pelo largo → orejas,
+      gorra → tope del moño. La falda no esconde nada (deja ver las piernas).
+    - Problema resuelto: en r149 lo escondido con `visible = false` tampoco hace sombra (y las capas de la cámara no
+      sirven: la pasada de sombras usa las de la cámara principal). Una parte del cuerpo escondida recibe el material
+      `FANTASMA` (`colorWrite` y `depthWrite` apagados): no pinta nada pero sigue haciendo su sombra, así la ropa pegada
+      sigue sin hacer sombra (el pantalón tiene 19 mil vértices). Las partes de prendas (tope del moño, orejas) sí se
+      esconden del todo. Todo pasa en `applyLook` (se llama también al quitar una prenda).
+    - Con `UUID_APARTE`, capturas con y sin esconder: idénticas (el dibujo y las sombras no cambian). Capturas de
+      referencia regeneradas (hay más objetos: los vecinos se mueven). Revisado en el probador en 8 poses, de fábrica
+      y con pelo largo + chaqueta + falda: sin hoyos en tobillos ni mangas.
+    - La prueba de cambiar prendas revisa además qué se ve de cada parte del cuerpo (se ve / escondida / fantasma).
+      Chromium (dev, web, archivo único): **77/77**. WebKit sigue sin arrancar (las 48 de iPad fallan al lanzar el
+      navegador, código `0xC0E90002`).
+  - Los moños (lazos) del pelo de la referencia quedan para más adelante.
+- **Etapa 7 empezada (30-09-2026, falta probar en el navegador y commit): dos personajes nuevos.** Con el cuerpo de
+  Nina y compartiendo la ropa: la niña de `referencias/ropa/hoja_personaje_nuevo.png` (1,40 m) y el niño de
+  `referencias/ropa/hoja_personaje_nino.png` (1,35 m; la cabeza "no tan plana, más redondeada" de perfil y los
+  audífonos grandes puestos sobre el jockey). Decidido: se empezó por la cabeza y los audífonos; la forma de cabeza es
+  del personaje, no se elige en el Vestidor.
+  - **Forma de cabeza `redonda`** (morph target). En el look: `formas: { redonda: 0..1 }` (lista en
+    `FORMAS_CABEZA`, `catalog/personajes.js`; `fixLook` descarta las que no existen). La cabeza de Nina es ancha pero
+    corta de adelante hacia atrás (0,35 × 0,27 m) y plana atrás. La forma infla la cabeza, en cada dirección desde su
+    centro, lo que le falta para llegar a un elipsoide que envuelve la parte de atrás (+3 cm a la altura de las
+    orejas, nada desde los 45° hacia arriba, ni en la cara ni en la coronilla). Primer intento (empujar un tanto fijo
+    por dirección): dejaba un escalón sobre la nuca.
+  - El desplazamiento depende sólo de la dirección desde el centro de la cabeza: la cabeza y todo lo que va encima en
+    esa dirección se corren lo mismo. Por eso **toda malla que alcanza a moverse lleva la forma** (cabeza, orejas,
+    moño, pelo largo, gorra, jockey, lentes, audífonos grandes): `agregarFormas` en `separar_glb.mjs` y `escribir.mjs`,
+    con la normal nueva calculada con la derivada. Así cualquier peinado o gorro sirve para las dos cabezas, sin
+    versiones aparte. `applyLook` pone la influencia en cada malla.
+  - Tropiezos: (1) las mallas de nodos descartados seguían en el documento, recibían la forma y el prune ya no las
+    sacaba (los .glb crecieron al triple): sólo se procesan las mallas que cuelgan de un nodo. (2) quantize copia los
+    datos de la forma para cada material y `dedup` no mira las formas: `juntarFormas` los vuelve a juntar.
+    Tamaños: base 953 → 975 KB, moño 162 → 236, pelo largo 163 → 236, gorra 65 → 92, lentes 22 → 29.
+  - **Jockey** (espacio `cabeza`, 101 KB): la misma copa que la gorra (`construirGorra` en `gorra.mjs`, que ahora
+    recibe visera adelante/atrás, figura y materiales) con visera adelante y mariposa al frente; negro. Colores: tela,
+    visera, mariposa; la mariposa se puede quitar. Esconde el tope del moño.
+  - **Audífonos grandes** (espacio nuevo `orejas`, 43 KB): auriculares sobre las orejas y cintillo ancho sobre la
+    cabeza, calzados por fuera de todo lo que puede ir en ella (cabeza, orejas, peinados, gorra y jockey): se pueden
+    llevar con cualquier gorro. Sin gorro, el cintillo queda un poco sobre el pelo. Los de antes pasan a llamarse
+    "Audífonos al cuello".
+  - Figuras para calcomanías en `cuerpo.mjs` (`FIGURAS.estrella/mariposa`, `calcomania`): las usan la gorra, el jockey
+    y la mochila. Probador: `&forma=redonda:1`.
+  - Revisado en el probador: perfil plano y redondo sin pelo, con moño, con pelo largo + gorra, con jockey +
+    audífonos grandes (+ mochila); de frente, de lado y de atrás. El cintillo pasa por delante del moño.
+  - Con `UUID_APARTE`: capturas con los modelos del último commit y con los nuevos (regiones + formas en 0),
+    idénticas. Capturas de referencia regeneradas. Pruebas nuevas: forma de cabeza guardada (se aplica a cabeza,
+    orejas, pelo, jockey y audífonos; una forma desconocida se descarta) y jockey + audífonos grandes en la de
+    accesorios. Chromium (dev, web, archivo único): **80/80** (WebKit sigue bloqueado). Archivo único: 4.010 KB
+    (3.615 antes de las regiones y las formas).
+  - **Personajes jugables** (decidido: jugables; nombres provisorios "Amiga" y "Amigo", se cambian en el catálogo).
+    `PERSONAJES` y `ORDEN_PERSONAJES` en `catalog/personajes.js`: Nina, Amiga (escala 0,86, cabeza 1,06) y Amigo
+    (0,83, 1,08, `formas.redonda`), cada uno con su look de fábrica.
+    - Se elige en la pantalla de inicio ("¿Con quién juegas?", cambia al personaje de fondo al instante) y jugando con
+      el botón redondo de arriba (junto a la música; muestra al personaje actual y abre un menú como el de Acción).
+      Manejando no: avisa "Bájate del auto para cambiar de personaje".
+    - `game/personajes.js`: `cargarPersonajes(saved)` y `cambiarPersonaje(id)` (arma al nuevo en el mismo lugar, le
+      pasa el helado, saca al anterior con `removeAvatar`, guarda). `player.personaje` y `player.looks` (el de cada
+      uno); `player.look` sigue siendo el del que se usa. Evento nuevo `personaje`.
+    - Guardado v2 ampliado sin romper lo anterior: `jugador` y `personajes: { amiga: { look }, amigo: { look } }`; Nina
+      sigue en `nina.look`. `fixLook(look, defecto)`: lo que no calza vuelve al look del personaje (no al de Nina) y un
+      espacio opcional que el look guardado no tiene queda vacío aunque el personaje venga con algo ahí.
+    - El Vestidor viste al que se usa y "Original" lo deja como es él. El menú de Acción dice "¿Qué hace Amigo?".
+    - Tropiezo: el servidor de Vite quedó con una versión a medio editar de `save.js` (comentario nuevo, cuerpo
+      viejo) y las pruebas fallaban sin sentido: se reinició el servidor.
+    - Pruebas nuevas (`tests/personajes.spec.js`, en todos los proyectos): elegir al empezar y jugando, se recuerda
+      al recargar, no quedan personajes de más; cada uno guarda su look y "Original" lo respeta; manejando no se cambia.
+    - Capturas regeneradas: el botón nuevo arriba (y la fila en la portada); se revisó que sólo cambie esa zona.
+  - **Ropa del niño**, todo en `tools/prendas/`:
+    - `pelo_corto` (primera versión, 119 KB; después se rehízo con mechones, ver más abajo): casquete con volumen y
+      puntas cada 4 columnas; flequillo sobre las cejas, tapa la parte de arriba de las orejas, hasta la nuca. Sumado a `queTapa`: gorra, jockey y audífonos grandes
+      regenerados para calzar por fuera de él.
+    - `poleron` (230 KB, espacio `abrigo`): `chaqueta.mjs` ahora exporta `cuerpoAbrigo`/`mangaAbrigo` con opciones
+      (abierto o cerrado, holgura, largo, franjas, `hombroCaido`); la chaqueta salió idéntica byte a byte. Cerrado,
+      holgado, hasta la cadera, dos franjas en las mangas, capucha caída (dos `caja`), cierre y mariposa en el pecho.
+      Las mangas holgadas asomaban una punta sobre el hombro: se afina el comienzo de la manga.
+    - `buzo` (247 KB, `piernas`): una pieza de cadera hasta la entrepierna y un tubo holgado por pierna que parte
+      dentro de ella; pretina, basta recogida sobre la zapatilla, dos franjas al costado, mariposa en el muslo.
+      Esconde las piernas. Revisado sentado, en split, acostado, en la vela y saltando.
+    - `guantes` (40 KB, espacio nuevo `manos`): funda de la muñeca a los nudillos con puño; el radio se engorda con
+      el máximo de los vecinos (con un promedio asomaban el pulgar y los nudillos).
+    - La forma "redonda" ya no alcanza nada bajo la nuca (la capucha del polerón la recibía y pesaba 343 KB).
+    - Zapatillas: las de siempre, azul oscuro con detalles blancos.
+    - Chromium (dev, web, archivo único): **89/89** (WebKit sigue bloqueado). Archivo único: **4.979 KB** (4.010
+      antes de la ropa del niño): cada prenda nueva pesa 40–250 KB y el archivo único las lleva todas en base64.
+      Si molesta, se podrían comprimir los modelos (por ejemplo con meshopt, que Three.js r149 sabe leer con su
+      decodificador); el archivo único tiene que seguir llevándolo todo, porque abre sin red.
+  - **Cabeza redonda corregida** (pedido: comparar con la vista lateral de la hoja; "no tiene forma natural"). En la
+    hoja, de perfil la cabeza es casi una esfera y la nuca baja en curva hasta el cuello. La versión anterior dejaba un
+    bulto arriba atrás con una muesca abajo, como una bolsa colgando de la nuca. Se ajustó dibujando el contorno de
+    perfil y de arriba (antes y después) y fotografiando de costado exacto (cámara alineada al hueso de la cabeza, casi
+    sin perspectiva: probador `&fov=6&dist=14`, `window.__probador.orb`):
+    - elipsoide objetivo un poco detrás y sobre el centro de la cabeza (centro (0; 0,025; −0,025), semiejes
+      0,16 × 0,16 × 0,155), transición más ancha (2,5 cm): la parte de atrás es un solo arco de la coronilla a la nuca
+      (profundidad 0,27 → 0,32 m); de arriba, redonda sin ensanchar los costados (con 0,172 de ancho se ensanchaban
+      detrás de las orejas; con 0,15 la nuca quedaba en punta). Resguardos: nada adelante ni bajo −62° (la ropa del
+      cuello). Las orejas ya no se mueven.
+    - La forma sólo se guarda en mallas que se mueven más de 1,5 mm, y "sparse" (sólo los vértices que se mueven)
+      cuando mueve menos de un tercio: polerón 343 → 236 KB, lentes 29 → 23, moño 236 → 225.
+    - Chromium: 86/89; las 3 que fallaron eran las capturas (las orejas ya no llevan forma: cambia la cantidad de
+      objetos y se mueven vecinos; el diff mostró sólo vecinos). Capturas regeneradas; pasan en dev, web y archivo
+      único: **89/89**. Archivo único: 4.951 KB.
+  - **Comparador de referencias en el probador** (pedido: ver las vistas frontal y lateral de las hojas, superponerlas
+    con transparencia y ajustar posición y tamaño). `src/debug/referencias.js` + cambios en `probador.js/html`:
+    - Modo "Dos vistas lado a lado": izquierda y derecha elegibles (frente, lado mirando a la derecha o a la izquierda,
+      atrás, tres cuartos), mirando derecho, "casi sin perspectiva" (fov 6°). Rueda: acercar; arrastrar: subir o bajar.
+      "Pose de reposo" (los huesos como vienen en el modelo, sin animación). "Encuadrar cuerpo/cabeza": el cuerpo o la
+      cabeza ocupan el 90 % del alto, igual que los recortes de las hojas, así la referencia queda casi calzada.
+    - Referencias: hoja de `referencias/ropa/` (o cualquier imagen), una capa por vista: recorte listo por hoja,
+      transparencia, "Diferencia" (lo que coincide queda oscuro), reflejar, mostrar/ocultar, líneas guía; mover
+      arrastrando y agrandar con la rueda alrededor del mouse (botón 🖐 o Mayús), flechas de a 1 px (Mayús: 10);
+      "Alinear con 4 toques" (dos puntos en la referencia y los mismos en el modelo: escala y posición exactas). El
+      ajuste se guarda por hoja y vista en el navegador. Las vistas quedan a la derecha del panel; P lo oculta.
+    - Tropiezos: el panel es `position: fixed` y su `offsetParent` siempre es null (las vistas quedaban debajo); la
+      mezcla "diferencia" tiene que ir en la caja de la capa, no en la imagen (se mezclaba consigo misma).
+    - Primera observación con la hoja del niño: el amigo tiene la cabeza bastante más grande respecto al cuerpo que
+      el de la referencia.
+  - **Pelo corto rehecho con mechones** (pedido: más desordenado, como la hoja; con más vértices). Antes era un
+    casquete con puntas en el borde ("de tazón"). Ahora: casquete oscuro de base + ~60 mechones sueltos, cada uno una
+    mecha con volumen (sección de lente, ancha casi todo el largo y en punta al final) que sigue la curva de la cabeza
+    y se levanta en la punta, con giro. Capas: coronilla (12), medio (16), abajo (20, puntas bajo el borde sobre las
+    orejas y la nuca) y flequillo en dos capas (20, los del centro tapan las cejas y llegan justo sobre los ojos).
+    Azar con semilla fija. 7.000 vértices, 357 KB. Tropiezos: el borde del casquete se veía como una franja recta
+    sobre la frente (se subió adelante); los mechones se afinaban muy pronto y parecían palitos; donde dos quedaban a
+    la misma altura aparecían manchas (z-fighting): cada capa va un poco más afuera que la de abajo, como tejas.
+    Gorra, jockey y audífonos grandes regenerados. Comparado con la hoja en el comparador (con y sin jockey).
+  - Siguiente: la ropa de la niña (chaqueta oversize con mariposas, top corto, pantalón ancho con cadena, zapatillas
+    de plataforma, pelo ondulado largo con mechas; lacio y trenzas), el pelo largo desordenado del niño, y los nombres.
+    Los peinados nuevos: sumarlos a `queTapa` (gorra.mjs) y regenerar gorra, jockey y audífonos grandes.
 - **Mejora (después de la etapa 5): joystick con zona lenta y zona rápida.** Pedido: más recorrido para caminar y
   manejar despacio. El joystick pasó de 156 a 200 px (164 en pantallas chicas); mientras la perilla está entera
   adentro del círculo punteado es lento (Nina camina 0,5–1,3 m/s; el auto va a 12–27 % de su máximo y retrocede

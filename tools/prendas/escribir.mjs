@@ -4,7 +4,7 @@
 import { cloneDocument, prune, quantize } from '@gltf-transform/functions';
 import { statSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
-import { io, normales } from './cuerpo.mjs';
+import { agregarFormas, formasCabeza, io, juntarFormas, normales } from './cuerpo.mjs';
 
 const TOPE_KB = 450;
 const lineal = hex => { const c = parseInt(hex.slice(1), 16); return [c >> 16, (c >> 8) & 255, c & 255].map(v => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); };
@@ -66,13 +66,16 @@ export async function escribirPrenda(C, id, mallas, materiales, declarados) {
   }
   if (JOINTS.length !== 17) errores.push(`el esqueleto tiene ${JOINTS.length} huesos (se esperaban 17)`);
   if (errores.length) throw new Error(`La prenda ${id} no pasó la validación:\n  ` + [...new Set(errores)].slice(0, 20).join('\n  '));
+  agregarFormas(doc, C.formas || (C.formas = formasCabeza(C)));   // formas de cabeza, si la prenda llega a la cabeza
   await doc.transform(
     prune({ keepLeaves: true, keepAttributes: true, keepExtras: true }),
     quantize({ quantizePosition: 14, quantizeNormal: 10, quantizeWeight: 8, quantizeTexcoord: 12 }),
   );
   const salida = `assets/modelos/prendas/${id}.glb`;
+  juntarFormas(doc);
   await io.write(salida, doc);
   const kb = statSync(salida).size / 1024, nV = mallas.reduce((a, x) => a + x.malla.V.length, 0);
-  console.log(`${salida.padEnd(44)} ${kb.toFixed(0).padStart(5)} KB  ${nV} vértices  ${Object.keys(materiales).join(', ')}`);
+  const formas = [...new Set(root.listMeshes().flatMap(m => (m.getExtras().targetNames || [])))];
+  console.log(`${salida.padEnd(44)} ${kb.toFixed(0).padStart(5)} KB  ${nV} vértices  ${Object.keys(materiales).join(', ')}${formas.length ? '  formas: ' + formas.join(', ') : ''}`);
   if (kb > TOPE_KB) throw new Error(`${id} pesa ${kb.toFixed(0)} KB (tope ${TOPE_KB} KB)`);
 }

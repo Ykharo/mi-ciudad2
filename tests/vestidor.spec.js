@@ -54,6 +54,15 @@ test('cambiar de prenda: pelo largo, chaqueta y falda; y sacarse la chaqueta', a
   await jugar();
   const puestas = () => page.evaluate(() => Object.fromEntries(Object.entries(window.__juego.player.ch.prendas).map(([s, p]) => [s, p.id])));
   const tab = t => page.locator(`#wardrobeTabs [data-tab="${t}"]`).click();
+  // cómo se ve cada parte del cuerpo: 'si', 'no' o 'fantasma' (escondida bajo la ropa, pero con su sombra)
+  const partes = () => page.evaluate(() => {
+    const r = {};
+    window.__juego.player.ch.model.traverse(o => {
+      if (/^(Body_|Ear_-?1$)/.test(o.name)) r[o.name] = !o.visible ? 'no' : o.material.name === 'Fantasma' ? (o.castShadow ? 'fantasma' : 'fantasma sin sombra') : 'si';
+    });
+    return r;
+  });
+  expect(await partes()).toEqual({ 'Ear_-1': 'si', Ear_1: 'si', Body_Base: 'si', Body_Brazos: 'si', Body_Piernas: 'fantasma', Body_Pies: 'fantasma' });
   await abrirVestidor(page);
   await tab('pelo'); await muestra(page, 'data-k="prenda"][data-v="pelo_largo"').click();
   await tab('chaqueta');
@@ -63,11 +72,14 @@ test('cambiar de prenda: pelo largo, chaqueta y falda; y sacarse la chaqueta', a
   await tab('abajo'); await muestra(page, 'data-k="prenda"][data-v="falda_tableada"').click();
   await expect.poll(puestas).toEqual({ pelo: 'pelo_largo', torso: 'peto', abrigo: 'chaqueta', piernas: 'falda_tableada', pies: 'zapatillas' });
   expect(await color(page, 'Chaqueta_Detalle')).toBe('#4fb6f5');
+  // con falda las piernas se ven; la chaqueta tapa los brazos y el pelo largo, las orejas
+  expect(await partes()).toEqual({ 'Ear_-1': 'no', Ear_1: 'no', Body_Base: 'si', Body_Brazos: 'fantasma', Body_Piernas: 'si', Body_Pies: 'fantasma' });
   // el pelo largo hace sombra (como el moño); la chaqueta no
   expect(await page.evaluate(() => window.__juego.player.ch.prendas.pelo.partes.some(o => { let s = false; o.traverse(x => { if (x.isMesh && x.castShadow) s = true; }); return s; }))).toBe(true);
 
   await tab('chaqueta'); await muestra(page, 'data-k="prenda"][data-v=""').click();
   await expect.poll(async () => (await puestas()).abrigo).toBeUndefined();
+  expect((await partes()).Body_Brazos).toBe('si');
   await page.locator('#wardrobeDone').click();
   const guardado = await page.evaluate(() => JSON.parse(localStorage.getItem('ciudadArcoiris.v2')));
   expect(guardado.nina.look.prendas).toMatchObject({ pelo: { id: 'pelo_largo' }, piernas: { id: 'falda_tableada' } });
@@ -77,7 +89,12 @@ test('cambiar de prenda: pelo largo, chaqueta y falda; y sacarse la chaqueta', a
 test('accesorios: varios a la vez, la gorra esconde el moño, y se guardan', async ({ page, jugar }) => {
   await jugar();
   const puestas = () => page.evaluate(() => Object.fromEntries(Object.entries(window.__juego.player.ch.prendas).map(([s, p]) => [s, p.id])));
-  const topeVisible = () => page.evaluate(() => { let v = null; window.__juego.player.ch.model.traverse(o => { if (o.name === 'Pelo_Moño_Tope') v = o.visible; }); return v; });
+  // ¿se dibuja algo del tope del moño? (el grupo y alguna de sus mallas visibles)
+  const topeVisible = () => page.evaluate(() => {
+    let v = null;
+    window.__juego.player.ch.model.traverse(o => { if (o.name === 'Pelo_Moño_Tope') { v = false; o.traverse(x => { if (x.isMesh && x.visible && o.visible) v = true; }); } });
+    return v;
+  });
   const acc = id => muestra(page, `data-k="accesorio"][data-v="${id}"`);
   await abrirVestidor(page);
   await page.locator('#wardrobeTabs [data-tab="accesorios"]').click();
@@ -92,8 +109,14 @@ test('accesorios: varios a la vez, la gorra esconde el moño, y se guardan', asy
   expect(await visible(page, 'Gorra_Estrella')).toBe(false);
   await muestra(page, 'data-slot="espalda"][data-canal="correas"][data-v="#FF4F5E"').click();
   expect(await color(page, 'Mochila_Correa')).toBe('#ff4f5e');
-  // se sacan tocándolos otra vez; sin gorra vuelve el moño
-  await acc('gorra').click(); await acc('lentes').click();
+  // el jockey va en el mismo lugar que la gorra (la reemplaza); los audífonos grandes van encima de cualquiera
+  await acc('jockey').click(); await acc('audifonos_grandes').click();
+  await expect.poll(puestas).toMatchObject({ cabeza: 'jockey', orejas: 'audifonos_grandes', cuello: 'audifonos' });
+  await expect(acc('gorra')).not.toHaveClass(/\bon\b/);
+  expect(await topeVisible()).toBe(false);
+  await acc('audifonos_grandes').click();
+  // se sacan tocándolos otra vez; sin gorro vuelve el moño
+  await acc('jockey').click(); await acc('lentes').click();
   await expect.poll(async () => (await puestas()).cabeza).toBeUndefined();
   expect((await puestas()).cara).toBeUndefined();
   expect(await topeVisible()).toBe(true);

@@ -9,7 +9,7 @@ import { onZoneAction } from '../../world/zones.js';
 import { avatarDo, avatarStop } from '../../characters/animator.js';
 import { PALETAS } from '../../characters/catalog/paletas.js';
 import { PIEL, PRENDA, PRENDAS, SLOTS, SLOTS_ACCESORIOS, SLOTS_OPCIONALES } from '../../characters/catalog/prendas.js';
-import { LOOK_NINA } from '../../characters/catalog/personajes.js';
+import { PERSONAJES } from '../../characters/catalog/personajes.js';
 import { fixLook } from '../../characters/looks.js';
 import { factoryColor, ponerPrenda, quitarPrenda, recolorear } from '../../characters/wardrobe.js';
 import { player } from '../../game/actors.js';
@@ -29,6 +29,7 @@ const TABS = [
 const NOMBRE_CANAL = {
   principal: 'Color', panel: 'Color de los detalles', detalles: 'Color de los bordes',
   visera: 'Color de la visera', almohadillas: 'Color de las almohadillas', correas: 'Color de las correas',
+  mariposa: 'Color de la mariposa', franjas: 'Color de las franjas',
 };
 let tab = 'arriba';
 const copia = o => JSON.parse(JSON.stringify(o));
@@ -75,7 +76,7 @@ function render() {
 
 // Aplica un look nuevo a Nina: cambia las prendas que cambiaron, los colores, y lo guarda.
 async function cambiarLook(nuevo) {
-  const look = fixLook(nuevo), ch = player.ch;
+  const look = fixLook(nuevo, PERSONAJES[player.personaje].look), ch = player.ch;
   for (const slot of SLOTS) {
     const antes = player.look.prendas[slot], ahora = look.prendas[slot];
     if ((antes && antes.id) === (ahora && ahora.id)) continue;
@@ -111,7 +112,8 @@ $('#btnLookRandom').addEventListener('click', () => {
   cambiarLook(look);
   avatarDo(player.ch, 'wave', { start: 0.05 });
 });
-$('#btnLookOriginal').addEventListener('click', () => cambiarLook(copia(LOOK_NINA)));
+// Original: el personaje como es él (Nina de fábrica, o la amiga o el amigo como vienen)
+$('#btnLookOriginal').addEventListener('click', () => cambiarLook(copia(PERSONAJES[player.personaje].look)));
 
 function openWardrobe(z) {
   if (state.mode !== 'play') return;
