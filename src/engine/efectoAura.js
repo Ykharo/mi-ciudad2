@@ -5,6 +5,7 @@
 //   const a = efectoAura(padre, { color: 'dorado' | 'celeste', alto: 3 })   // padre: el grupo del personaje (lo sigue)
 //   a.update(dt) cada cuadro → false cuando terminó (y ya se sacó del padre)
 import { THREE } from './three.js';
+import { anchoDigitos, dibujarDigitos } from './digitos.js';
 
 const COLORES = {
   // (colores saturados y oscuros: con brillo aditivo se aclaran solos; claros, quemaban al personaje en blanco)
@@ -60,6 +61,23 @@ export function estrellaAura() {
   const halo = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.3), new THREE.MeshBasicMaterial({ map: texChispa, color: 0xFFD66B, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending }));
   halo.position.z = -0.06; g.add(halo); g.userData.halo = halo;
   g.traverse(o => { o.castShadow = false; o.receiveShadow = false; });
+  return g;
+}
+
+// El cartel del jurado con el puntaje: una paleta blanca de borde dorado, con el número en dígitos de calculadora
+// sobre una pantallita oscura (por los dos lados). Mide ~0,7 × 0,32 m. El grupo mira hacia +z.
+export function cartelPuntos(puntos) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 220; const x = c.getContext('2d');
+  // (sin ctx.roundRect: no está en Safari 14/15)
+  const redondo = (X, Y, w, h, r) => { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); };
+  x.fillStyle = '#FFFFFF'; redondo(6, 6, 500, 208, 40); x.fill();
+  x.lineWidth = 12; x.strokeStyle = '#FFC83D'; x.stroke();
+  x.fillStyle = '#1C1630'; redondo(30, 30, 452, 160, 22); x.fill();
+  const texto = String(Math.round(puntos)), cifras = 4, alto = 110;
+  dibujarDigitos(x, texto, { x: 256 - anchoDigitos(cifras, alto) / 2, y: 55, alto, color: '#FFD23F', cifras });
+  const tex = new THREE.CanvasTexture(c), mat = new THREE.MeshBasicMaterial({ map: tex });
+  const g = new THREE.Group();
+  for (const s of [1, -1]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.3), mat); m.position.z = s * 0.006; m.rotation.y = s > 0 ? 0 : Math.PI; g.add(m); }
   return g;
 }
 

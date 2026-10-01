@@ -5,6 +5,31 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Puntos en la pantalla, carteles del jurado y Auras de los vecinos (01-10-2026)
+
+- Pedido: en la pantalla, el puntaje acumulado de cada uno con números de calculadora, sólo en el extremo de arriba de
+  cada barra, y los nombres; las barras suben para mostrar quién va ganando (escala de colores); al final los jueces
+  muestran en carteles el mismo total; puntos coherentes (si un Aura vale 1000…); el rival y los vecinos también sacan
+  Aura al azar.
+- **Puntos** (`game/aura.js`): cada movimiento vale `BAILE` 500; un Aura, `AURA` +1000; si fue rápido, `RAPIDO` hasta
+  +500 (la jugadora: Código Aura al primer intento con más de la mitad del tiempo +500, con menos +250). Máximo 2000 por
+  movimiento y 6000 por competencia (`MAX_PUNTOS`, el tope de las barras). Los vecinos sacan Aura con probabilidad 0,45
+  (`PROB_AURA`), a veces rápida. Gana quien suma más; si empatan, la jugadora. Se acabaron las notas del 5 al 10.
+- **Pantalla gigante** (`places/escenario_aura.js`): `ESCENARIO.medidor = { puntos, nombres, activo, max }`. Cada
+  barra (8 segmentos, de rosado a violeta) sube según los puntos (el segmento de la punta se enciende de a poco; el de
+  quien baila titila); arriba, una pantallita oscura con el puntaje en **dígitos de siete segmentos** que cuenta hacia
+  arriba (cian a la izquierda, rosado a la derecha), y abajo el nombre. `engine/digitos.js`: `dibujarDigitos` dibuja
+  los segmentos en un canvas (con los apagados tenues detrás, como una calculadora).
+- **Aura de un vecino** (en `bailar`, a la mitad del baile): el aura sube por él (dorada si fue rápida), dice
+  "✨ ¡AURA! +1000 pts", un juez alza la estrella y el público aplaude (3,2 s, sin cámara lenta).
+- **Jurado al final**: "¡El jurado está sumando!" y, para cada concursante, los tres jueces se paran en sus sillas y
+  alzan un cartel (`cartelPuntos` en `engine/efectoAura.js`: paleta blanca con borde dorado y el total en dígitos
+  amarillos) con el mismo total de la pantalla.
+- Jueces que alzan cosas: `alzar(juez, objeto, dur)` (varios a la vez) reemplaza a la celebración de uno solo;
+  `aplaudir(dur)` alarga el aplauso si ya estaba.
+- Capturas regeneradas (los objetos nuevos de la pantalla corren los números al azar: un vecino y unas gotas).
+  Chromium (dev y web): **91/91** (una corrida tuvo un error de Chromium al sacar una captura; repetida, bien).
+
 ## ¡Aura!: vuelta de 360° en cámara lenta, el jurado con la estrella y el público aplaudiendo (01-10-2026)
 
 - Pedido: al emitir un Aura, el giro "tipo Nintendo" subiendo y girando 360° en cámara lenta, viendo al jurado y al

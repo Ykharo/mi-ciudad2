@@ -42,7 +42,8 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
 - **Código Aura en la competencia (sin commit)**: en cada movimiento de la jugadora, un código de 3 palabras y el
   criptex 3D (`ui/criptex3d.js`, `ui/codigoAura.js`, `game/codigoAura.js`); acertar da aura, puntos y una vuelta de
   360° en cámara lenta, con un juez de pie alzando la estrella dorada con la "A" y el público aplaudiendo (también al
-  ganar). El prototipo sigue en `src/debug/criptex.html`. Falta: probar en el iPad,
+  ganar). Puntos coherentes (baile 500, Aura +1000, rápido +500) en la pantalla con dígitos de calculadora y nombres;
+  los vecinos también sacan Aura; al final los jueces alzan carteles con el total. El prototipo sigue en `src/debug/criptex.html`. Falta: probar en el iPad,
   el set de imágenes propio, la dificultad que se ajusta sola y el botón 🔊 de ayuda.
 
 **Competencia de aura (plan por etapas)**

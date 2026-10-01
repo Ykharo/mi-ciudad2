@@ -21,7 +21,7 @@ import { cam, player } from './actors.js';
 import { standUp } from './player.js';
 import { enterMenu, leaveMenu } from './modes.js';
 import { nuevoCodigo, revisar } from './codigoAura.js';
-import { efectoAura, estrellaAura } from '../engine/efectoAura.js';
+import { cartelPuntos, efectoAura, estrellaAura } from '../engine/efectoAura.js';
 import { scene } from '../engine/renderer.js';
 
 /* ---------- jurado, público y concursantes ---------- */
@@ -57,46 +57,63 @@ function sentar(c) {
   avatarDo(c, 'sit', { start: 9, instant: true, stopOnMove: false });
 }
 
-/* ---------- ¡se logró un Aura! ---------- */
-// Un juez se para de un salto sobre su silla y alza la estrella dorada con la "A"; el público aplaude. Dura `CELEBRA`
-// segundos de verdad (en cámara lenta, sus movimientos van lentos) y vuelven a sentarse.
+/* ---------- el jurado se para y alza algo (la estrella de un Aura, o el cartel con el puntaje) ---------- */
+// El juez salta a su silla y lo alza con los brazos estirados (`alzar_estrella`); dura `dur` segundos de verdad (en
+// cámara lenta, sus movimientos van lentos) y vuelve a sentarse. El objeto sigue entre sus manos.
 const CELEBRA = 6, SILLA = 0.68;   // alto del asiento de las sillas del jurado (world/places/escenario_aura.js)
-let celebra = null, estrella = null;
+const alzados = [];
 const _hl = new THREE.Vector3(), _hr = new THREE.Vector3();
-function celebrarAura() {
-  if (celebra) terminarCelebra();
-  const juez = sentados[Math.floor(Math.random() * 3)], p = juez.userData.puesto;
-  if (!estrella) { estrella = estrellaAura(); estrella.visible = false; scene.add(estrella); }
-  const y0 = juez.root.position.y;
+function alzar(juez, obj, dur, { escala = 1.6, alto = 0.4, quitar = null } = {}) {
+  const viejo = alzados.find(a => a.juez === juez);
+  if (viejo) bajar(viejo);
+  obj.visible = false; scene.add(obj);
   avatarDo(juez, 'alzar_estrella', { loop: true, stopOnMove: false });
-  sentados.slice(3).forEach((c, i) => avatarDo(c, 'aplaudir', { loop: true, stopOnMove: false, start: i * 0.13 }));
-  decir(juez, '¡AURA!', 2.2);
-  celebra = { t: 0, juez, p, y0 };
+  alzados.push({ juez, p: juez.userData.puesto, y0: juez.root.position.y, obj, dur, t: 0, s: 0, escala, alto, quitar });
 }
-function actualizarCelebra(dt, dl) {
-  const C = celebra; C.t += dt;
-  const { juez, p } = C, k = juez.k;
-  // el salto a la silla (0,35 s en tiempo del escenario: en cámara lenta se ve lento)
-  C.s = Math.min(1, (C.s || 0) + dl / 0.35);
-  const u = C.s, x0 = p.x + Math.sin(p.mira) * 0.10 * k, z0 = p.z + Math.cos(p.mira) * 0.10 * k;
-  juez.root.position.set(x0 + (p.x - x0) * u, C.y0 + (SILLA - C.y0) * u + Math.sin(Math.PI * u) * 0.35, z0 + (p.z - z0) * u);
-  // la estrella entre las manos, un poco más arriba, mirando hacia donde mira el juez
-  const b = juez.bones;
-  if (u > 0.6 && b.HandL && b.HandR) {
-    b.HandL.getWorldPosition(_hl); b.HandR.getWorldPosition(_hr);
-    estrella.position.copy(_hl).add(_hr).multiplyScalar(0.5); estrella.position.y += 0.4;
-    estrella.rotation.set(0, p.mira + Math.sin(C.t * 3) * 0.12, Math.sin(C.t * 2.3) * 0.08);
-    estrella.scale.setScalar(1.6 * Math.min(1, (u - 0.6) / 0.4 + 0.2));   // (grande: se ve desde la tarima)
-    estrella.userData.halo.material.opacity = 0.45 + 0.25 * Math.sin(C.t * 6);
-    estrella.visible = true;
+function actualizarAlzados(dt, dl) {
+  for (const A of [...alzados]) {
+    A.t += dt;
+    const { juez, p } = A, k = juez.k;
+    // el salto a la silla (0,35 s en tiempo del escenario: en cámara lenta se ve lento)
+    A.s = Math.min(1, A.s + dl / 0.35);
+    const u = A.s, x0 = p.x + Math.sin(p.mira) * 0.10 * k, z0 = p.z + Math.cos(p.mira) * 0.10 * k;
+    juez.root.position.set(x0 + (p.x - x0) * u, A.y0 + (SILLA - A.y0) * u + Math.sin(Math.PI * u) * 0.35, z0 + (p.z - z0) * u);
+    const b = juez.bones;
+    if (u > 0.6 && b.HandL && b.HandR) {
+      b.HandL.getWorldPosition(_hl); b.HandR.getWorldPosition(_hr);
+      A.obj.position.copy(_hl).add(_hr).multiplyScalar(0.5); A.obj.position.y += A.alto;
+      A.obj.rotation.set(0, p.mira + Math.sin(A.t * 3) * 0.12, Math.sin(A.t * 2.3) * 0.08);
+      A.obj.scale.setScalar(A.escala * Math.min(1, (u - 0.6) / 0.4 + 0.2));
+      if (A.obj.userData.halo) A.obj.userData.halo.material.opacity = 0.45 + 0.25 * Math.sin(A.t * 6);
+      A.obj.visible = true;
+    }
+    if (A.t >= A.dur) bajar(A);
   }
-  if (C.t >= CELEBRA) terminarCelebra();
 }
-function terminarCelebra() {
-  estrella.visible = false;
-  sentar(celebra.juez);
-  sentados.slice(3).forEach(sentar);
-  celebra = null;
+function bajar(A) {
+  A.obj.visible = false; scene.remove(A.obj);
+  if (A.quitar) A.quitar.call(A);
+  sentar(A.juez);
+  alzados.splice(alzados.indexOf(A), 1);
+}
+// el público aplaude `dur` segundos (si ya aplaudía, el aplauso se alarga)
+let aplauso = 0;
+function aplaudir(dur) {
+  if (aplauso <= 0) sentados.slice(3).forEach((c, i) => avatarDo(c, 'aplaudir', { loop: true, stopOnMove: false, start: i * 0.13 }));
+  aplauso = Math.max(aplauso, dur);
+}
+function actualizarAplauso(dt) { if (aplauso > 0 && (aplauso -= dt) <= 0) sentados.slice(3).forEach(sentar); }
+
+// ¡se logró un Aura!: un juez alza la estrella dorada con la "A" y el público aplaude
+let estrella = null;
+function celebrarAura(dur = CELEBRA) {
+  if (!estrella) estrella = estrellaAura();
+  const enUso = alzados.find(a => a.obj === estrella);
+  if (enUso) bajar(enUso);
+  const juez = sentados[Math.floor(Math.random() * 3)];
+  alzar(juez, estrella, dur);
+  decir(juez, '¡AURA!', Math.min(2.2, dur));
+  aplaudir(dur);
 }
 
 // sólo se anima a quien se ve (cullAvatars los esconde lejos o fuera de la cámara)
@@ -119,7 +136,7 @@ function updatePublico(dt) {
     if (q.ch.model.visible || show) updateAvatar(q.ch, dl * velocidad, q.vel, q.cara || null);
   }
   for (let i = auras.length - 1; i >= 0; i--) if (!auras[i].update(dl)) auras.splice(i, 1);
-  if (celebra) actualizarCelebra(dt, dl);
+  actualizarAlzados(dt, dl); actualizarAplauso(dt);
   globos.forEach(g => { g.t -= dt * velocidad; if (g.t <= 0) g.c.root.remove(g.s); });
   for (let i = globos.length - 1; i >= 0; i--) if (globos[i].t <= 0) globos.splice(i, 1);
 }
@@ -166,20 +183,43 @@ function caminar(q, x, z, vel = 1.6) {
 }
 function girar(q, mira, dur = 0.5) { return { dur, cada(dt) { q.facing = lerpAngle(q.facing, mira, 1 - Math.exp(-dt * 8)); } }; }
 function esperar(dur, inicio) { return { dur, inicio }; }
-// un movimiento: el baile (en bucle, al menos 3,5 s; si no, entero), su nombre en un globo y el aura que suma
-function bailar(q, id, k, puntos) {
+/* ---------- los puntos ---------- */
+// Cada movimiento vale BAILE; si sale un Aura, AURA más; y si fue rápido (sólo la jugadora: el Código Aura al primer
+// intento), hasta RAPIDO más. Máximo por movimiento: 2000; por competencia (3 movimientos): 6000 (MAX_PUNTOS, el tope de
+// las barras de la pantalla). Los vecinos (y el rival de la jugadora) sacan un Aura al azar (PROB_AURA), a veces rápida.
+const BAILE = 500, AURA = 1000, RAPIDO = 500, MAX_PUNTOS = 3 * (BAILE + AURA + RAPIDO), PROB_AURA = 0.45;
+const sortearMovimiento = () => {
+  if (Math.random() >= PROB_AURA) return { aura: 0, rapido: 0 };
+  return { aura: AURA, rapido: pick([0, 0, RAPIDO / 2, RAPIDO]) };
+};
+const valor = m => BAILE + m.aura + m.rapido;
+// cuánto suma a la barra de la pantalla (la barra sube sola hasta el valor, como contando)
+function sumar(k, pts) { ESCENARIO.medidor.puntos[k] += pts; }
+
+// un movimiento de un vecino: el baile (en bucle, al menos 3,5 s; si no, entero), su nombre en un globo; suma BAILE
+// al empezar y, si le toca, a la mitad saca un Aura: sube por él, el jurado alza la estrella y el público aplaude
+function bailar(q, id, k, mov) {
   const a = ACTIONS.find(x => x.id === id), clip = NINA.clips[id], largo = clip ? clip.duration : 3;
-  const dur = a.loop ? Math.max(3.5, Math.min(largo * 2, 5)) : Math.min(largo, 5);
-  let antes = 0;
+  const dur = Math.max(4, a.loop ? Math.min(largo * 2, 5) : Math.min(largo, 5));
+  let hecho = false;
   return {
     dur,
     inicio() {
-      avatarDo(q.ch, id, { loop: !!a.loop, stopOnMove: false });
-      decir(q.ch, `${a.ic} ${a.name}`, dur * 0.8);
-      antes = ESCENARIO.medidor.niveles[k]; ESCENARIO.medidor.activo = k;
+      avatarDo(q.ch, id, { loop: true, stopOnMove: false });
+      decir(q.ch, `${a.ic} ${a.name}`, dur * 0.45);
+      ESCENARIO.medidor.activo = k; sumar(k, BAILE);
       emit('sonido', 'pop');
     },
-    cada(dt, u) { ESCENARIO.medidor.niveles[k] = antes + puntos / 30 * Math.min(1, u * 1.5); },
+    cada(dt, u) {
+      if (hecho || !mov.aura || u < 0.45) return;
+      hecho = true;
+      const extra = mov.aura + mov.rapido;
+      sumar(k, extra);
+      auras.push(efectoAura(q.ch.root, { color: mov.rapido ? 'dorado' : 'celeste', alto: 3.2 }));
+      decir(q.ch, `✨ ¡AURA! +${extra} pts`, 2.4);
+      celebrarAura(3.2);
+      emit('sonido', 'adopt');
+    },
     fin() {
       avatarStop(q.ch);
       if (Math.random() < 0.8) decir(pick(sentados.slice(3)), pick(GRITOS), 2, true);
@@ -223,9 +263,9 @@ function relevo() {
   return pasos;
 }
 
-// puntos de cada movimiento: 6 a 10 (el aura de la pantalla: la suma sobre 30); sin empates entre los dos
-const puntuar = movs => movs.map(() => 6 + Math.round(Math.random() * 4));
-const total = t => t.puntos.reduce((a, b) => a + b, 0);
+// los movimientos de un vecino (si sacan Aura) y sus puntos; los de la jugadora se saben al terminar cada código
+const puntuar = movs => movs.map(sortearMovimiento);
+const total = t => t.mov.reduce((s, m) => s + (m ? valor(m) : 0), 0);
 // con la jugadora: qué toma de cámara va en cada paso (`toma`: un nombre, o una función del avance del paso)
 const con = (paso, toma, objetivo) => Object.assign(paso, { toma, objetivo });
 
@@ -233,8 +273,8 @@ const con = (paso, toma, objetivo) => Object.assign(paso, { toma, objetivo });
 // Mientras baila (en bucle), aparece un código de 3 palabras y el criptex (ui/codigoAura.js, con el evento 'aura':
 // 'codigo', 'reloj', 'acierto', 'error', 'tiempo', 'cerrar'); responde con responderCodigo(ids). Acertar: el aura sube
 // por ella (dorada si fue rápido), cámara lenta girando a su alrededor, y más puntos. Si se acaba el tiempo, se muestra
-// la respuesta y el movimiento vale lo base. Puntos del movimiento (como los de los vecinos, de 6 a 10): 5 base, +3 si
-// acierta, +2 si acierta al primer intento con más de la mitad del tiempo (+1 si le sobra algo).
+// la respuesta y el movimiento vale sólo BAILE. Puntos: BAILE al empezar; +AURA si acierta; +RAPIDO si acierta al
+// primer intento con más de la mitad del tiempo (+RAPIDO/2 si le sobra algo).
 const TIEMPO_CODIGO = 30, FIGURAS = 4;
 let reto = null;
 function retoAura(t, r) {
@@ -244,9 +284,9 @@ function retoAura(t, r) {
     toma: () => (reto && reto.lento ? 'lenta' : 'reto'), objetivo: q,
     inicio() {
       avatarDo(q.ch, id, { loop: true, stopOnMove: false });
-      ESCENARIO.medidor.activo = k;
+      ESCENARIO.medidor.activo = k; sumar(k, BAILE);
       const codigo = nuevoCodigo({ figuras: FIGURAS });
-      reto = { codigo, quedan: TIEMPO_CODIGO, intentos: 0, fin: false, lento: false, t, r, paso, antes: ESCENARIO.medidor.niveles[k] };
+      reto = { codigo, quedan: TIEMPO_CODIGO, intentos: 0, fin: false, lento: false, t, r, paso };
       emit('aura', { que: 'codigo', palabras: codigo.palabras, anillos: codigo.anillos, tiempo: TIEMPO_CODIGO });
     },
     cada(dt) {
@@ -271,11 +311,11 @@ function terminarReto(acerto) {
   const R = reto, { t, r, paso } = R, S = show;
   R.fin = true;
   const rapido = acerto && R.intentos === 1 && R.quedan > TIEMPO_CODIGO / 2;
-  const extra = acerto ? 3 + (R.intentos === 1 ? (rapido ? 2 : R.quedan > 0 ? 1 : 0) : 0) : 0;
-  t.puntos[r] = 5 + extra;
-  ESCENARIO.medidor.niveles[t.k] = R.antes + t.puntos[r] / 30;
+  const mov = { aura: acerto ? AURA : 0, rapido: acerto && R.intentos === 1 ? (rapido ? RAPIDO : RAPIDO / 2) : 0 };
+  t.mov[r] = mov;
+  sumar(t.k, mov.aura + mov.rapido);
   if (acerto) {
-    emit('aura', { que: 'acierto', puntos: `+${t.puntos[r] * 100} pts` });
+    emit('aura', { que: 'acierto', puntos: `+${mov.aura + mov.rapido} pts` });
     emit('sonido', 'adopt');
     auras.push(efectoAura(t.q.ch.root, { color: rapido ? 'dorado' : 'celeste', alto: 3.2 }));
     R.lento = true; camaraLenta(CELEBRA); celebrarAura();
@@ -288,12 +328,12 @@ function terminarReto(acerto) {
 }
 
 // La competencia en sí (para vecinos o con la jugadora): presentación, tres rondas por turnos (uno pasa al centro,
-// hace un movimiento y vuelve a su lugar; después el otro), las notas del jurado y quién gana. Agrega los pasos a `pasos`.
-// Los puntos de la jugadora se saben recién al terminar cada código: las notas y quién gana se calculan al votar.
+// hace un movimiento y vuelve a su lugar; después el otro), el puntaje final y quién gana. Agrega los pasos a `pasos`.
+// Los puntos se ven subir en las barras de la pantalla (ESCENARIO.medidor: puntos, nombres y quién baila); al final
+// los tres jueces alzan un cartel con el total de cada uno (el mismo de la pantalla) y gana quien suma más.
 function competir2(turnos, pasos, J) {
-  if (!J && total(turnos[0]) === total(turnos[1])) turnos[1].puntos[2] += turnos[1].puntos[2] < 10 ? 1 : -1;
   const C = ESCENARIO.centro;
-  ESCENARIO.medidor = { niveles: [0, 0], activo: -1 };
+  ESCENARIO.medidor = { puntos: [0, 0], nombres: turnos.map(t => t.q.nombre), activo: -1, max: MAX_PUNTOS };
   pasos.push(con(esperar(2.5, () => {
     emit('aviso', `🎤 ¡Comienza la competencia de aura! ${turnos[0].q.nombre} contra ${turnos[1].q.nombre}`);
     turnos.forEach(t => decir(t.q.ch, `¡Soy ${t.q.nombre}!`, 2.2));
@@ -303,26 +343,24 @@ function competir2(turnos, pasos, J) {
       const { q, k } = t, mia = q === J;
       pasos.push(con(esperar(0.8, () => emit('aviso', `✨ Ronda ${r + 1}: le toca a ${mia ? `ti (${q.nombre})` : q.nombre}`)), 'general'));
       pasos.push(con(caminar(q, C.x, C.z), mia ? 'cerca' : 'general', q), con(girar(q, C.mira, 0.4), mia ? 'cerca' : 'general', q));
-      pasos.push(mia ? retoAura(t, r) : con(bailar(q, t.movs[r], k, t.puntos[r]), 'general', q));
+      pasos.push(mia ? retoAura(t, r) : con(bailar(q, t.movs[r], k, t.mov[r]), 'general', q));
       if (r === 2) pasos.push(con(esperar(0.6, () => { avatarDo(q.ch, 'wave', { start: 0.1, stopOnMove: false }); decir(q.ch, '¡Gracias!', 1.5); }), mia ? 'cerca' : 'general', q));
       pasos.push(con(caminar(q, q.lado.x, q.lado.z), 'general'), con(girar(q, q.lado.mira, 0.4), 'general'));
     }
   }
-  // el jurado: cada juez levanta su nota (cerca del puntaje de cada uno, del 5 al 10)
-  const res = { notas: null, suma: null, G: null, P: null };
+  // el jurado: suma los puntos y, para cada concursante, los tres jueces alzan un cartel con su total
+  const res = { suma: null, G: null, P: null };
   pasos.push(con(esperar(1.5, () => {
-    ESCENARIO.medidor.activo = -1; emit('aviso', '🧑‍⚖️ ¡El jurado está votando!');
-    res.notas = turnos.map(t => sentados.slice(0, 3).map(() => Math.max(5, Math.min(10, Math.round(total(t) / 3 + (Math.random() * 2 - 1))))));
-    res.suma = res.notas.map(ns => ns.reduce((a, b) => a + b, 0));
-    // si el jurado empata, gana quien tiene más aura en la pantalla (y si también empatan, la jugadora)
-    const gana = res.suma[0] !== res.suma[1] ? (res.suma[0] > res.suma[1] ? 0 : 1)
-      : total(turnos[0]) !== total(turnos[1]) ? (total(turnos[0]) > total(turnos[1]) ? 0 : 1) : turnos.findIndex(t => t.q === J) >= 0 ? turnos.findIndex(t => t.q === J) : 0;
+    ESCENARIO.medidor.activo = -1; emit('aviso', '🧑‍⚖️ ¡El jurado está sumando!');
+    res.suma = turnos.map(total);
+    // si empatan, gana la jugadora (si está), si no el primero
+    const jg = turnos.findIndex(t => t.q === J);
+    const gana = res.suma[0] !== res.suma[1] ? (res.suma[0] > res.suma[1] ? 0 : 1) : jg >= 0 ? jg : 0;
     res.gana = gana; res.G = turnos[gana].q; res.P = turnos[1 - gana].q;
   }), 'jurado'));
-  // (en el globo sólo la nota, para que no se tapen; para quién es lo dice el aviso)
-  turnos.forEach((t, n) => pasos.push(con(esperar(3, () => {
-    sentados.slice(0, 3).forEach((j, i) => decir(j, `⭐ ${res.notas[n][i]}`, 2.8, true));
-    emit('aviso', `🧑‍⚖️ Notas para ${t.q.nombre}: ${res.notas[n].join(' · ')}`);
+  turnos.forEach((t, n) => pasos.push(con(esperar(3.4, () => {
+    sentados.slice(0, 3).forEach(j => alzar(j, cartelPuntos(res.suma[n]), 3.1, { escala: 1.15, alto: 0.32, quitar: function () { this.obj.traverse(o => { if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } if (o.geometry) o.geometry.dispose(); }); } }));
+    emit('aviso', `🧑‍⚖️ ${t.q.nombre}: ${res.suma[n]} puntos`);
     emit('sonido', 'pop');
   }), 'jurado')));
   // quién gana: si es la jugadora, en cámara lenta girando a su alrededor y con su aura dorada
@@ -355,7 +393,7 @@ function empezarCompetencia() {
   const turnos = concursantes.map((q, k) => {
     q.nombre = nombres[k];
     const movs = [...BAILES].sort(() => Math.random() - 0.5).slice(0, 3);
-    return { q, k, movs, puntos: puntuar(movs) };
+    return { q, k, movs, mov: puntuar(movs) };
   });
   show = { pasos, i: -1, t: 0, res: competir2(turnos, pasos) };
 }
@@ -414,7 +452,8 @@ function competir(movs) {
   pasos.push(con(juntos(girar(q1, q1.lado.mira, 0.5), girar(J, L[0].mira, 0.5)), 'general'));
   q1.nombre = pick(NOMBRES);
   const rivales = [...BAILES].sort(() => Math.random() - 0.5).slice(0, 3);
-  const info = competir2([{ q: J, k: 0, movs, puntos: puntuar(movs) }, { q: q1, k: 1, movs: rivales, puntos: puntuar(rivales) }], pasos, J);
+  // (los movimientos de la jugadora se llenan al terminar cada código)
+  const info = competir2([{ q: J, k: 0, movs, mov: [null, null, null] }, { q: q1, k: 1, movs: rivales, mov: puntuar(rivales) }], pasos, J);
   // al final: la jugadora baja de la tarima y llega otro vecino a su lugar
   pasos.push(con(esperar(0.3, () => cambiar(q0, 0)), 'general'));
   pasos.push(con(juntos(caminar(J, F.x, F.z, 2.2), caminar(q0, q0.lado.x, q0.lado.z, 2)), 'general'));

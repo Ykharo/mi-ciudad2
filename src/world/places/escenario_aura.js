@@ -16,6 +16,7 @@ import { makeSign } from '../../engine/textures.js';
 import { manzana } from '../layout.js';
 import { addPiso } from '../physics.js';
 import { ancla, definePlace } from '../place.js';
+import { anchoDigitos, dibujarDigitos } from '../../engine/digitos.js';
 import { cartelTextura } from './cartel.js';
 
 // en la Calle Mora, frente a la Plaza de Juegos, mirando hacia la calle
@@ -81,25 +82,65 @@ function escenario({ world, addObsRot, addZone, onFrame }) {
   [-1, 1].forEach(s => g.add(mesh(cyl(0.22, 0.26, 1.6, 10), marco, s * 4.6, 0.8, PZ)));
   const imagen = new THREE.Mesh(new THREE.PlaneGeometry(3.7, 5.5), new THREE.MeshBasicMaterial({ map: cartelTextura, color: 0xF2F2F2 }));
   imagen.position.set(0, 4.7, PZ + 0.27); g.add(imagen);
+  // A cada lado, una barra de 8 segmentos con escala de colores (del rosado de abajo al violeta de arriba), que sube
+  // según los puntos del concursante (ESCENARIO.medidor.puntos / max); arriba, su puntaje acumulado en dígitos de
+  // calculadora (contando hacia arriba), y abajo su nombre. Sin competencia, las barras suben y bajan solas.
   const medidores = new THREE.Group(); medidores.userData.dynamic = true; g.add(medidores);
-  const segmentos = [];
+  const N = 8, Y0 = 2.3, PASO = 0.56, ALTO_SEG = 0.46;
+  const ESCALA = ['#FF5E7E', '#FF7A59', '#FF9B4A', '#FFD23F', '#5BD66E', '#3DD6C8', '#4FB6F5', '#9B7BF3'];
+  const COLOR_NUM = ['#7CFFE0', '#FFB0E0'];
+  const segmentos = [], numeros = [], nombres = [];
+  const pantallita = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
   [-1, 1].forEach((s, k) => {
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < N; i++) {
       // apagado se ve oscuro; encendido brilla con su color (el brillo lo pone el onFrame de abajo)
-      const m = new THREE.MeshStandardMaterial({ color: '#2E2645', emissive: RAINBOW[Math.floor(i * 6 / 8)], emissiveIntensity: 0.1, roughness: 0.5 });
-      const seg = new THREE.Mesh(G('segAura', () => new THREE.BoxGeometry(1.5, 0.52, 0.1)), m);
-      seg.position.set(s * 3.6, 2.2 + i * 0.66, PZ + 0.3); medidores.add(seg); segmentos.push({ m, i, k });
+      const m = new THREE.MeshStandardMaterial({ color: '#2E2645', emissive: ESCALA[i], emissiveIntensity: 0.1, roughness: 0.5 });
+      const seg = new THREE.Mesh(G('segAura2', () => new THREE.BoxGeometry(1.5, ALTO_SEG, 0.1)), m);
+      seg.position.set(s * 3.6, Y0 + i * PASO, PZ + 0.3); medidores.add(seg); segmentos.push({ m, i, k });
     }
+    // el puntaje: una pantallita oscura arriba de la barra
+    const cn = pantallita(512, 150), tn = new THREE.CanvasTexture(cn);
+    const pn = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 0.5), new THREE.MeshBasicMaterial({ map: tn }));
+    pn.position.set(s * 3.6, Y0 + N * PASO + 0.1, PZ + 0.29); medidores.add(pn);
+    numeros.push({ c: cn, t: tn, k, visto: null, valor: 0 });
+    // el nombre, abajo
+    const cm = pantallita(512, 110), tm = new THREE.CanvasTexture(cm);
+    const pm = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 0.36), new THREE.MeshBasicMaterial({ map: tm, transparent: true }));
+    pm.position.set(s * 3.6, Y0 - 0.5, PZ + 0.29); medidores.add(pm);
+    nombres.push({ c: cm, t: tm, visto: null });
   });
+  function pintarNumero(n, texto, color) {
+    const x = n.c.getContext('2d');
+    x.fillStyle = '#120E22'; x.fillRect(0, 0, 512, 150);
+    x.strokeStyle = 'rgba(255,255,255,.25)'; x.lineWidth = 6; x.strokeRect(3, 3, 506, 144);
+    dibujarDigitos(x, texto, { x: 256 - anchoDigitos(4, 108) / 2, y: 21, alto: 108, color, cifras: 4 });
+    n.t.needsUpdate = true;
+  }
+  function pintarNombre(n, texto) {
+    const x = n.c.getContext('2d'); x.clearRect(0, 0, 512, 110);
+    x.font = '800 74px "Baloo 2", "Trebuchet MS", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.lineJoin = 'round'; x.lineWidth = 12; x.strokeStyle = '#1C1630'; x.strokeText(texto, 256, 60);
+    x.fillStyle = '#FFFFFF'; x.fillText(texto, 256, 60);
+    n.t.needsUpdate = true;
+  }
   const titulo = makeSign('Escenario del Aura', '#9B6BF0', '#FFFFFF', 9); titulo.position.set(0, 8.4, PZ + 0.1); g.add(titulo);
   caja(0, PZ, 11.4, 1.0, 9);
-  onFrame(t => {
+  onFrame((t, dt) => {
     const M = ESCENARIO.medidor;
-    const nivel = M ? M.niveles : [0.55 + 0.45 * Math.sin(t * 1.3), 0.55 + 0.45 * Math.sin(t * 1.1 + 2)];
-    // el medidor de quien está bailando titila un poco en la punta
+    // el número cuenta hacia arriba hasta los puntos (rápido, ~1 s para 1000)
+    for (const n of numeros) {
+      const meta = M ? M.puntos[n.k] : 0;
+      n.valor = n.valor < meta ? Math.min(meta, n.valor + Math.max(dt * 1200, (meta - n.valor) * dt * 3)) : meta;
+      const texto = M ? String(Math.round(n.valor / 10) * 10) : '';
+      if (texto !== n.visto) { n.visto = texto; pintarNumero(n, texto, COLOR_NUM[n.k]); }
+    }
+    nombres.forEach((n, k) => { const texto = M && M.nombres ? M.nombres[k] : ''; if (texto !== n.visto) { n.visto = texto; pintarNombre(n, texto); } });
+    const nivel = M ? numeros.map(n => n.valor / M.max) : [0.55 + 0.45 * Math.sin(t * 1.3), 0.55 + 0.45 * Math.sin(t * 1.1 + 2)];
+    // el segmento de la punta se enciende de a poco; el de quien está bailando titila
     for (const s of segmentos) {
-      const tope = nivel[s.k] * 8, punta = M && M.activo === s.k && s.i === Math.ceil(tope) - 1;
-      s.m.emissiveIntensity = s.i < tope ? (punta ? 0.65 + 0.35 * Math.sin(t * 10) : 1) : 0.06;
+      const tope = nivel[s.k] * N, lleno = Math.min(1, Math.max(0, tope - s.i));
+      const punta = M && M.activo === s.k && s.i === Math.ceil(tope) - 1;
+      s.m.emissiveIntensity = lleno > 0 ? (punta ? 0.6 + 0.4 * Math.sin(t * 10) : 0.25 + 0.75 * lleno) : 0.06;
     }
   });
   // focos de colores en postes, con su haz barriendo la tarima

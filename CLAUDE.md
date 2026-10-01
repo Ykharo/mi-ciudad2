@@ -38,6 +38,9 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
     un Código Aura (`retoAura`): `ui/codigoAura.js` muestra la ventana y el criptex (evento `'aura'`) y responde con
     `responderCodigo`; acertar: `efectoAura` (`engine/efectoAura.js`) + `camaraLenta` + toma 'lenta' (vuelta de 360°)
     + `celebrarAura` (un juez de pie con `estrellaAura()` y `alzar_estrella`; el público con `aplaudir`).
+    Puntos: `BAILE` 500, `AURA` +1000, `RAPIDO` hasta +500 por movimiento; los vecinos sacan Aura al azar
+    (`PROB_AURA`). La pantalla muestra `ESCENARIO.medidor.puntos` en barras + dígitos de calculadora
+    (`engine/digitos.js`) + nombres; al final los jueces alzan `cartelPuntos(total)`.
   - Zonas: el lugar hace `addZone({ id, x, z, r, label })` y quien sabe qué hacer registra `onZoneAction(id, fn)`.
     Con `opciones: [{ id, label }, …]` el HUD muestra un botón por opción (`#btnAction2`) y la acción recibe
     `fn(zona, opcion)` (tobogán y columpio: 'sentada' / 'de_pie').
