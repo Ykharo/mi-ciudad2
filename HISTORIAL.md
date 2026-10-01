@@ -5,6 +5,44 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Competencia entre dos vecinos (01-10-2026)
+
+- Pedido: primero una competencia de dos vecinos, de 3 movimientos cada uno (antes de que compita la jugadora).
+- `game/aura.js`: dos concursantes (looks sorteados con los del público) esperan de pie a los lados de la tarima
+  (`ESCENARIO.lados`). Al sentarse la jugadora en las graderías (`ESCENARIO.gradas.alSentarse`, nuevo
+  `juego.alSentarse` en `game/juegos.js`) y si no hay una en curso, empieza la competencia (~55 s):
+  presentación con nombres al azar → cada uno camina al centro de la tarima (`ESCENARIO.centro`, mirando al público),
+  hace 3 bailes distintos del menú Acción (nombre e ícono en un globo; el público grita "¡Bravo!", "¡Qué aura!"…),
+  saluda y vuelve a su lado → el jurado da su nota (⭐ 5–10 en cada globo, y en el aviso para quién es) → se anuncia
+  quién gana con la suma, el ganador hace "spin" y "🏆 ¡Gané!", el otro saluda "¡Bien jugado!".
+  - Cada baile vale 6–10 puntos (sin empates); el aura sube en el medidor de su lado de la pantalla
+    (`ESCENARIO.medidor = { niveles, activo }`, que el lugar dibuja; si es null, los medidores se mueven solos). Los
+    segmentos apagados ahora son oscuros (antes no se distinguían de los encendidos).
+  - Los pasos son una lista `{ dur, inicio, cada, fin }` que avanza `updatePublico`; el resultado tiene azar
+    (`Math.random`), pero sólo corre si alguien se sienta (no en las capturas).
+  - Graderías con `vista`: la cámara queda detrás, mirando la tarima.
+  - Ganchos: `window.__juego.competencia` (`enCurso()`, `concursantes()`, `rapido(x)` para acelerarla).
+- Prueba nueva (acelerada ×4: los dos bailan y se anuncia quién gana). Capturas regeneradas (los concursantes mueven a
+  un vecino). Chromium (dev y web): **85/85**.
+
+## Escenario: mascotas que esperan y graderías para sentarse (01-10-2026)
+
+- Pedido: si la jugadora sube a la tarima, la mascota se queda afuera sentada esperando; y poder sentarse en las
+  graderías a mirar.
+- **Mascotas sentadas**: `animatePet(P, t, speed, dt, sentada)` (`pets/models.js`) pasa suave a una pose de sentado
+  (`P.sit` 0…1): el cuerpo se inclina con la cola abajo, las patas de adelante derechas y las de atrás dobladas (el
+  conejo casi no cambia), la cabeza sigue mirando adelante.
+  - Un piso puede traer `espera: { x, z, mira }` (`world/physics.js`, nuevo `pisoEn`): si la jugadora está en él, las
+    mascotas no la siguen; `waitAt` (`pets/follow.js`) las lleva a ese punto, en fila hacia el costado, y las sienta
+    mirando hacia `mira` (`main.js` elige entre seguir y esperar). La tarima y su escalón esperan al lado del escalón,
+    mirando la tarima (`ESCENARIO.espera`, se mueve con el escenario).
+  - `followChain(…, sentadas)`: con la jugadora sentada (banca, graderías, un juego), las que llegan a su lado se sientan.
+- **Graderías**: zona con dos botones, "🪑 Sentarse adelante" / "⬆️ Sentarse arriba" (dos puestos libres en la fila de
+  adelante y dos en la de arriba, mirando la tarima). Usa el tipo `asiento` de `game/juegos.js`, que ahora acepta
+  `asientos` por opción (`{ adelante: […], arriba: […] }`); se levanta al moverse.
+- Prueba nueva (la mascota espera sentada fuera de la tarima y vuelve a seguirla al bajar; sentarse arriba en las
+  graderías). Capturas regeneradas (las anclas nuevas mueven a dos vecinos). Chromium (dev y web): **83/83**.
+
 ## Competencia de aura, etapa A: el Escenario del Aura (01-10-2026)
 
 - Pedido: sólo la etapa A del plan de la competencia (ver `PLAN.md`, "Competencia de aura"), en la **Calle Mora frente

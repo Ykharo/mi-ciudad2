@@ -6,7 +6,8 @@
 //   { tipo: 'cama', centro: ancla }                         saltar en la cama elástica
 //   { tipo: 'tobogan', escalera, arriba, abajo, salida: ancla }   subir por la escalera y tirarse por el tobogán
 //   { tipo: 'columpio', asientos: [ancla…] }                columpiarse impulsándose con la palanca (ver columpio())
-// Opcional: `vista`, el giro de la cámara al subirse (cam.yaw: 0 = la cámara al lado +z de la jugadora).
+// Opcional: `vista`, el giro de la cámara al subirse (cam.yaw: 0 = la cámara al lado +z de la jugadora), y
+// `alSentarse()`, que se llama al subirse (la pone otro módulo de game/, ej. game/aura.js en las graderías).
 // `juego.ocupado` lo pone este módulo (el ancla del asiento que se usa, o true; false al bajarse): el lugar lo lee
 // para moverse distinto mientras alguien juega. Las anclas se crean con `ancla()` de world/place.js.
 // Para bajarse basta moverse (el tobogán no: termina solo; del columpio se salta).
@@ -42,6 +43,7 @@ function empezar(juego, seat, ancla) {
     salir() { juego.ocupado = false; if (seat.alSalir) seat.alSalir(); },
   });
   emit('zona', null); state.currentZone = null; emit('sonido', 'pop');
+  if (juego.alSentarse) juego.alSentarse();   // ej. las graderías del Escenario del Aura empiezan la competencia
 }
 
 // `asientos` puede ser una lista o, si la zona tiene opciones, una lista por opción (ej. graderías: 'adelante' y

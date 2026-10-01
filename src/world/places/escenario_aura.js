@@ -39,6 +39,15 @@ const LIBRES = { adelante: [[4.5, 0], [8.5, 0]], arriba: [[3, 2], [8, 2]] };
 // donde esperan sentadas las mascotas mientras la jugadora está en la tarima: al lado del escalón, mirando la tarima
 const ESPERA = local(-2.4, 3.6);
 ESCENARIO.espera = { ...ESPERA, mira: hacia(ESPERA, ESCENARIO.tarima) };
+// La competencia (game/aura.js): los dos concursantes esperan a los lados de la tarima (el 1, a la izquierda mirando
+// desde el público: su medidor es el de la izquierda) y bailan en `centro`, mirando al público (`mira`).
+// `medidor`: mientras hay competencia, el aura de cada uno (0…1) en los medidores de la pantalla; si no, se mueven solos.
+ESCENARIO.lados = [local(-7, -4), local(7, -4)].map(p => ({ ...p, mira: hacia(p, ESCENARIO.tarima) }));
+ESCENARIO.centro = { ...local(0, -2.2), mira: ESCENARIO.giro };
+ESCENARIO.medidor = null;
+// el juego de las graderías (sentarse a mirar): se crea aquí para que game/aura.js le ponga `alSentarse` antes de que
+// se arme la ciudad; build() le agrega los asientos y la vista
+ESCENARIO.gradas = { tipo: 'asiento', asientos: {} };
 
 function escenario({ world, addObsRot, addZone, onFrame }) {
   const g = new THREE.Group(); g.position.set(ESCENARIO.x, 0, ESCENARIO.z); g.rotation.y = ESCENARIO.giro;
@@ -66,7 +75,8 @@ function escenario({ world, addObsRot, addZone, onFrame }) {
   const segmentos = [];
   [-1, 1].forEach((s, k) => {
     for (let i = 0; i < 8; i++) {
-      const m = new THREE.MeshStandardMaterial({ color: RAINBOW[Math.floor(i * 6 / 8)], emissive: RAINBOW[Math.floor(i * 6 / 8)], emissiveIntensity: 0.1, roughness: 0.5 });
+      // apagado se ve oscuro; encendido brilla con su color (el brillo lo pone el onFrame de abajo)
+      const m = new THREE.MeshStandardMaterial({ color: '#2E2645', emissive: RAINBOW[Math.floor(i * 6 / 8)], emissiveIntensity: 0.1, roughness: 0.5 });
       const seg = new THREE.Mesh(G('segAura', () => new THREE.BoxGeometry(1.5, 0.52, 0.1)), m);
       seg.position.set(s * 3.6, 2.2 + i * 0.66, PZ + 0.3); medidores.add(seg); segmentos.push({ m, i, k });
     }
@@ -74,8 +84,13 @@ function escenario({ world, addObsRot, addZone, onFrame }) {
   const titulo = makeSign('Escenario del Aura', '#9B6BF0', '#FFFFFF', 9); titulo.position.set(0, 8.4, PZ + 0.1); g.add(titulo);
   caja(0, PZ, 11.4, 1.0, 9);
   onFrame(t => {
-    const nivel = [0.55 + 0.45 * Math.sin(t * 1.3), 0.55 + 0.45 * Math.sin(t * 1.1 + 2)];
-    for (const s of segmentos) s.m.emissiveIntensity = s.i < nivel[s.k] * 8 ? 0.9 : 0.08;
+    const M = ESCENARIO.medidor;
+    const nivel = M ? M.niveles : [0.55 + 0.45 * Math.sin(t * 1.3), 0.55 + 0.45 * Math.sin(t * 1.1 + 2)];
+    // el medidor de quien está bailando titila un poco en la punta
+    for (const s of segmentos) {
+      const tope = nivel[s.k] * 8, punta = M && M.activo === s.k && s.i === Math.ceil(tope) - 1;
+      s.m.emissiveIntensity = s.i < tope ? (punta ? 0.65 + 0.35 * Math.sin(t * 10) : 1) : 0.06;
+    }
   });
   // focos de colores en postes, con su haz barriendo la tarima
   const haz = G('hazFoco', () => { const c = new THREE.ConeGeometry(0.9, 7, 20, 1, true); c.translate(0, -3.5, 0); c.rotateX(-Math.PI / 2); return c; });
@@ -109,9 +124,13 @@ function escenario({ world, addObsRot, addZone, onFrame }) {
   for (const [fila, lista] of Object.entries(LIBRES)) {
     asientos[fila] = lista.map(([lx, f]) => { const p = puesto(lx, GRADAS.lz + f * GRADAS.fondo, GRADAS.alto[f] + 0.01); return ancla(world, p.x, p.alto, p.z, p.mira); });
   }
-  const frente = local(GRADAS.lx, GRADAS.lz - 1.5);
+  // (`vista`: la cámara detrás de las graderías, mirando la tarima; al sentarse empieza la competencia: game/aura.js
+  // pone `alSentarse` en ESCENARIO.gradas)
+  const frente = local(GRADAS.lx, GRADAS.lz - 1.5), centroGradas = local(GRADAS.lx, GRADAS.lz + GRADAS.fondo);
   const opciones = [{ id: 'adelante', label: '🪑 Sentarse adelante' }, { id: 'arriba', label: '⬆️ Sentarse arriba' }];
-  addZone({ id: 'juego', x: frente.x, z: frente.z, r: 2.4, label: opciones[0].label, opciones, juego: { tipo: 'asiento', asientos } });
+  const vista = Math.atan2(centroGradas.x - ESCENARIO.tarima.x, centroGradas.z - ESCENARIO.tarima.z);
+  Object.assign(ESCENARIO.gradas, { asientos, vista });
+  addZone({ id: 'juego', x: frente.x, z: frente.z, r: 2.4, label: opciones[0].label, opciones, juego: ESCENARIO.gradas });
   // arco de entrada con el letrero, mirando a la calle
   const arco = mat('#9B6BF0');
   [-1, 1].forEach(s => {

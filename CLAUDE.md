@@ -23,10 +23,14 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
     `onFrame`. `area` = `[x0, x1, z0, z1]` da el nombre del lugar; no cambiar el `orden` de los que existen.
     Un lugar en una manzana de afuera reemplaza su casa (`ocupada` en `city.js`). Ej.: `places/plaza.js`.
     `area: manzana(x, z)` (`world/layout.js`) calcula la manzana; `articulo` ('el'/'la') para las frases.
-    Pisos más altos que el suelo (una tarima): `addPiso` (`world/physics.js`); la jugadora sube sola.
+    Pisos más altos que el suelo (una tarima): `addPiso` (`world/physics.js`); la jugadora sube sola. Con
+    `espera: { x, z, mira }` las mascotas no suben: esperan sentadas ahí (`waitAt` en `pets/follow.js`).
+    Mascotas sentadas: `animatePet(…, sentada)`; también junto a la jugadora sentada.
   - **Escenario del Aura** (`places/escenario_aura.js`): se cambia de lugar sólo con `ESCENARIO = { x, z, giro }`
     (giro en múltiplos de 90°); jurado, público y las pistas del cartel (`game/aura.js`, `pistasEscenario`) se ajustan
-    solos. El cartel tiene dos botones: mirar y "💬 Preguntar dónde es" (`game/cartel.js`).
+    solos. El cartel tiene dos botones: mirar y "💬 Preguntar dónde es" (`game/cartel.js`). Al sentarse en las
+    graderías compiten dos vecinos (3 bailes cada uno, jurado, ganador; pasos en `game/aura.js`, medidores de la
+    pantalla con `ESCENARIO.medidor`; `window.__juego.competencia.rapido(x)` para probarla).
   - Zonas: el lugar hace `addZone({ id, x, z, r, label })` y quien sabe qué hacer registra `onZoneAction(id, fn)`.
     Con `opciones: [{ id, label }, …]` el HUD muestra un botón por opción (`#btnAction2`) y la acción recibe
     `fn(zona, opcion)` (tobogán y columpio: 'sentada' / 'de_pie').

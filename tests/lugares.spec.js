@@ -251,6 +251,28 @@ test('en la tarima la mascota espera abajo sentada; en las graderías se puede s
   expect((await donde(page))[1]).toBeGreaterThan(0.9);   // en la fila de arriba (1,35 m)
 });
 
+test('al sentarse en las graderías, dos concursantes compiten con tres bailes cada uno', async ({ page, jugar }) => {
+  await jugar();
+  await page.evaluate(() => window.__juego.competencia.rapido(4));   // acelerada (dura ~55 s)
+  await ir(page, 55.5, 53.5);
+  await accion(page, '🪑 Sentarse adelante');
+  await expect.poll(() => page.evaluate(() => window.__juego.competencia.enCurso())).toBe(true);
+  // cada uno baila tres bailes distintos en la tarima (se anotan los que se ven)
+  const BAILES = ['aura', 'seis_siete', 'sigma', 'take_l', 'siuu', 'griddy', 'spin', 'fresh', 'floss', 'dance'];
+  const vistos = [new Set(), new Set()];
+  let fin = false;
+  for (let i = 0; i < 200 && !fin; i++) {
+    const s = await page.evaluate(() => ({ en: window.__juego.competencia.enCurso(), q: window.__juego.competencia.concursantes(), aviso: document.querySelector('#toast').textContent }));
+    s.q.forEach((q, k) => { if (BAILES.includes(q.anim)) vistos[k].add(q.anim); });
+    if (/^🏆 ¡Gana /.test(s.aviso)) fin = true;
+    await page.waitForTimeout(100);
+  }
+  expect(fin).toBe(true);
+  expect(vistos[0].size).toBeGreaterThanOrEqual(2);   // (muestreado: alguno corto puede no verse)
+  expect(vistos[1].size).toBeGreaterThanOrEqual(2);
+  await expect.poll(() => page.evaluate(() => window.__juego.competencia.enCurso()), { timeout: 10_000 }).toBe(false);
+});
+
 test('quien lee el cartel da pistas de dónde es la competencia', async ({ page, jugar }) => {
   await jugar();
   await ir(page, 8.7, -5.5);
