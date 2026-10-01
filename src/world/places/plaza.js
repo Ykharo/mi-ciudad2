@@ -1,18 +1,19 @@
 // Plaza de Juegos: en la manzana de afuera frente al Refugio, cruzando la Avenida Menta. Carrusel girando,
-// cama elástica con una pelota que rebota, sube y baja, arenero y bancas para sentarse.
+// cama elástica con una pelota que rebota, sube y baja, arenero y bancas para sentarse. Los juegos se usan: cada uno
+// pone una zona 'juego' con sus anclas (dónde va la jugadora; lo hace game/juegos.js).
 // (El primer lugar hecho sólo con un archivo: city.js lo encuentra solo y no pone una casa en su manzana.)
 import { THREE } from '../../engine/three.js';
 import { TAU } from '../../core/math.js';
 import { RAINBOW, mat } from '../../engine/materials.js';
 import { G, box, cone, cyl, mesh, rlo, sph } from '../../engine/geometry.js';
 import { makeSign, stripeTexture } from '../../engine/textures.js';
-import { definePlace } from '../place.js';
+import { ancla, definePlace } from '../place.js';
 import { flowers, tree } from '../nature.js';
 import { bench } from './park.js';
 
 const CX = 61, CZ = 20;   // centro del piso de goma; la entrada mira a la Avenida Menta (x = 40)
 
-function carrusel({ world, addObs, onFrame }, x, z) {
+function carrusel({ world, addObs, addZone, onFrame }, x, z) {
   world.add(mesh(cyl(3.4, 3.5, 0.3, 36), mat('#FFFFFF'), x, 0.15, z));
   addObs(x, z, 3.4, 3.4, 5.5);
   const g = new THREE.Group(); g.userData.dynamic = true; g.position.set(x, 0.3, z); world.add(g);
@@ -24,47 +25,59 @@ function carrusel({ world, addObs, onFrame }, x, z) {
   g.add(mesh(sph(0.3, 12, 10), mat('#FFD23F', { metalness: 0.4, roughness: 0.3 }), 0, 5.55, 0));
   // seis caballitos de colores que suben y bajan por su barra
   const barra = mat('#FFE9A8', { metalness: 0.4, roughness: 0.3 });
-  const caballos = [];
+  const caballos = [], asientos = [];
   for (let i = 0; i < 6; i++) {
     const a = i / 6 * TAU, r = 2.3;
     g.add(mesh(cyl(0.05, 0.05, 3.4, 8), barra, Math.cos(a) * r, 1.8, Math.sin(a) * r, false));
-    const c = new THREE.Group(); c.position.set(Math.cos(a) * r, 1.2, Math.sin(a) * r); c.rotation.y = -a - Math.PI / 2;
+    const c = new THREE.Group(); c.position.set(Math.cos(a) * r, 0.95, Math.sin(a) * r); c.rotation.y = -a - Math.PI / 2; c.scale.setScalar(1.35);
     const color = mat(RAINBOW[i]);
     c.add(mesh(rlo(1.0, 0.45, 0.36, 0.16), color, 0, 0, 0));
     c.add(mesh(rlo(0.32, 0.55, 0.3, 0.12), color, 0.45, 0.32, 0));
-    c.add(mesh(rlo(0.3, 0.12, 0.42, 0.05), mat('#FFFFFF'), -0.05, 0.27, 0));   // la montura
+    c.add(mesh(rlo(0.3, 0.12, 0.42, 0.05), mat('#FFFFFF'), -0.25, 0.27, 0));   // la montura
+    // de lado, mirando hacia afuera del carrusel (así las piernas no chocan con la cabeza del caballito)
+    asientos.push(ancla(c, -0.25, 0.36, 0, Math.PI));
     [-1, 1].forEach(s => [-1, 1].forEach(t => c.add(mesh(cyl(0.05, 0.05, 0.4, 6), color, s * 0.35, -0.35, t * 0.12))));
     g.add(c); caballos.push(c);
   }
   onFrame(t => {
     g.rotation.y = t * 0.45;
-    caballos.forEach((c, i) => { c.position.y = 1.2 + Math.sin(t * 2.2 + i * 1.7) * 0.22; });
+    caballos.forEach((c, i) => { c.position.y = 0.95 + Math.sin(t * 2.2 + i * 1.7) * 0.22; });
   });
+  addZone({ id: 'juego', x, z, r: 4.8, label: '🎠 Subirse al carrusel', juego: { tipo: 'asiento', asientos } });
 }
 
-function camaElastica({ world, addObs, onFrame }, x, z) {
+function camaElastica({ world, addObs, addZone, onFrame }, x, z) {
   const pata = mat('#3C4670', { roughness: 0.5 });
   for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; world.add(mesh(cyl(0.07, 0.07, 0.8, 8), pata, x + Math.cos(a) * 2.0, 0.4, z + Math.sin(a) * 2.0)); }
   const borde = mesh(G('camaBorde', () => new THREE.TorusGeometry(2.1, 0.18, 10, 40)), mat('#4FB6F5'), x, 0.82, z);
   borde.rotation.x = Math.PI / 2; world.add(borde);
   world.add(mesh(cyl(1.95, 1.95, 0.04, 40), mat('#5B4A8A', { roughness: 0.9 }), x, 0.8, z, false, true));
   addObs(x, z, 2.3, 2.3);
-  // una pelota que rebota sola
+  const juego = { tipo: 'cama', centro: ancla(world, x, 0.84, z) };
+  addZone({ id: 'juego', x, z, r: 3.2, label: '🤸 Saltar en la cama elástica', juego });
+  // una pelota que rebota sola (se esconde mientras salta la jugadora)
   const pelota = mesh(sph(0.35, 16, 12), mat('#FFD23F'), x, 1.2, z); pelota.userData.dynamic = true; world.add(pelota);
-  onFrame(t => { const s = Math.abs(Math.sin(t * 2.4)); pelota.position.y = 1.17 + s * 1.6; pelota.scale.set(1, 0.8 + Math.min(1, s * 4) * 0.2, 1); });
+  onFrame(t => {
+    pelota.visible = !juego.ocupado; const s = Math.abs(Math.sin(t * 2.4)); pelota.position.y = 1.17 + s * 1.6; pelota.scale.set(1, 0.8 + Math.min(1, s * 4) * 0.2, 1); });
 }
 
-function subeBaja({ world, addObs, onFrame }, x, z) {
+function subeBaja({ world, addObs, addZone, onFrame }, x, z) {
   world.add(mesh(rlo(0.5, 0.65, 0.5, 0.1), mat('#FF9B4A'), x, 0.33, z));
   addObs(x, z, 2.5, 0.5);
   const g = new THREE.Group(); g.userData.dynamic = true; g.position.set(x, 0.7, z); world.add(g);
   g.add(mesh(rlo(4.8, 0.14, 0.45, 0.06), mat('#FFD23F'), 0, 0, 0));
+  const asientos = [];
   [[-1, '#FF6FAE'], [1, '#3DD6A8']].forEach(([s, c]) => {
     g.add(mesh(rlo(0.55, 0.1, 0.55, 0.04), mat(c), s * 2.05, 0.1, 0));
+    asientos.push(ancla(g, s * 2.1, 0.2, 0, -s * Math.PI / 2));   // mirando hacia el medio
     g.add(mesh(cyl(0.04, 0.04, 0.5, 6), mat('#3C4670'), s * 1.65, 0.3, 0));
     const asa = mesh(cyl(0.04, 0.04, 0.5, 6), mat('#3C4670'), s * 1.65, 0.55, 0); asa.rotation.x = Math.PI / 2; g.add(asa);
   });
-  onFrame(t => { g.rotation.z = Math.sin(t * 1.5) * 0.2; });
+  const juego = { tipo: 'asiento', asientos };
+  addZone({ id: 'juego', x, z, r: 2.0, label: '⚖️ Subirse al sube y baja', juego });
+  // con alguien arriba sube y baja más
+  let amp = 0.2;
+  onFrame((t, dt) => { amp += ((juego.ocupado ? 0.3 : 0.2) - amp) * Math.min(1, dt * 2); g.rotation.z = Math.sin(t * 1.5) * amp; });
 }
 
 function arenero({ world, addObs }, x, z) {

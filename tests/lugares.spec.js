@@ -24,6 +24,49 @@ test('la plaza de juegos: su nombre y sus bancas', async ({ page, jugar }) => {
   await expect.poll(() => page.evaluate(() => !!window.__juego.player.seat)).toBe(true);
 });
 
+// los juegos de la plaza y del parque (game/juegos.js): subirse, que el juego la lleve, y bajarse al moverse
+const sentada = page => page.evaluate(() => !!window.__juego.player.seat);
+const donde = page => page.evaluate(() => { const r = window.__juego.player.ch.root.position; return [r.x, r.y, r.z]; });
+
+test('subirse al carrusel: gira con ella y se baja al moverse', async ({ page, jugar }) => {
+  await jugar();
+  await ir(page, 64, 18);   // el carrusel está en (64; 13,5)
+  await accion(page, '🎠 Subirse al carrusel');
+  await expect.poll(() => sentada(page)).toBe(true);
+  const [x0, y0, z0] = await donde(page);
+  expect(y0).toBeGreaterThan(0.8);   // arriba de un caballito
+  await expect.poll(async () => { const [x, , z] = await donde(page); return Math.hypot(x - x0, z - z0); }).toBeGreaterThan(0.5);
+  await page.keyboard.down('w');
+  await expect.poll(() => sentada(page)).toBe(false);
+  await page.keyboard.up('w');
+  expect((await donde(page))[1]).toBe(0);
+});
+
+test('la cama elástica, el sube y baja y el columpio', async ({ page, jugar }) => {
+  await jugar();
+  for (const [x, z, texto] of [[56, 29.6, '🤸 Saltar en la cama elástica'], [67, 28.2, '⚖️ Subirse al sube y baja'], [-14.2, -28.4, '🙌 Columpiarse']]) {
+    await ir(page, x, z);
+    await accion(page, texto);
+    await expect.poll(() => sentada(page)).toBe(true);
+    const y0 = (await donde(page))[1];
+    await expect.poll(async () => Math.abs((await donde(page))[1] - y0)).toBeGreaterThan(0.05);   // se mueve
+    await page.keyboard.down('w');
+    await expect.poll(() => sentada(page)).toBe(false);
+    await page.keyboard.up('w');
+  }
+});
+
+test('tirarse por el tobogán: baja sola y queda parada abajo', async ({ page, jugar }) => {
+  await jugar();
+  await ir(page, -33, -17);   // al pie de la escalera; el tobogán baja hacia +x
+  await accion(page, '🎢 Tirarse por el tobogán');
+  await expect.poll(() => sentada(page)).toBe(true);
+  expect((await donde(page))[1]).toBeGreaterThan(1.5);
+  await expect.poll(() => sentada(page)).toBe(false);
+  const p = await page.evaluate(() => { const p = window.__juego.player.pos; return [p.x, p.z]; });
+  expect(p[0]).toBeGreaterThan(-27);
+});
+
 test('pedir un helado', async ({ page, jugar }) => {
   await jugar();
   await ir(page, -24.8, 9.5);

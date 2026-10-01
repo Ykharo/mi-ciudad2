@@ -23,6 +23,9 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
     `onFrame`. `area` = `[x0, x1, z0, z1]` da el nombre del lugar; no cambiar el `orden` de los que existen.
     Un lugar en una manzana de afuera reemplaza su casa (`ocupada` en `city.js`). Ej.: `places/plaza.js`.
   - Zonas: el lugar hace `addZone({ id, x, z, r, label })` y quien sabe qué hacer registra `onZoneAction(id, fn)`.
+  - Juegos que se usan (carrusel, columpio, tobogán…): zona `{ id: 'juego', juego: { tipo, … } }` con anclas
+    (`ancla()` de `world/place.js`: dónde van las caderas, mirando a su +z); los mueve `game/juegos.js`
+    (tipos `asiento`, `cama`, `tobogan`; `juego.ocupado`, `juego.vista`). Bajarse = moverse.
   - `engine/three.js` es el único que importa `three`.
   - Variables que se reasignan desde varios módulos viven en `state` (`state.mode`, `state.clock`, `state.currentZone`,
     `state.lastCar`, `state.shopSpec`, `state.ttModel/ttSpin/ttDrag`, `state.musicOn`, `state.joyId`, `state.preview`).

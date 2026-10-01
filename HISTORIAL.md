@@ -5,6 +5,31 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Juegos que se usan (después de la etapa 8)
+
+- Pedido: poder usar los juegos de la Plaza de Juegos, y también el columpio y el tobogán (los del Parque Central).
+  **`game/juegos.js`**: el lugar pone una zona `{ id: 'juego', juego }` y el juego trae "anclas" (`ancla()` de
+  `world/place.js`: un `Object3D` vacío colgado de la parte que se mueve; marca dónde van las caderas y su +z hacia
+  dónde mira). Tres tipos:
+  - `asiento` (carrusel, sube y baja, columpios): se sienta en el ancla más cercana con la pose final de "sit"
+    (caderas 0,158·k arriba y 0,10·k atrás de la raíz) y la sigue en posición y giro completo (se inclina con el
+    columpio y el sube y baja).
+  - `cama` (cama elástica): bota en el centro (0,9 s por bote, 1,2 m), con la animación "jump" en cada bote.
+  - `tobogan`: espera 0,45 s arriba de la rampa y baja en 1,25 s acelerando; al llegar abajo queda parada en
+    `salida`, contenta. No se interrumpe al moverse (`seat.fijo`).
+  - Bajarse: moverse (`player.js` ahora para cualquier asiento que no sea `fijo`). Al bajarse queda junto al
+    juego (`collide` la saca de su obstáculo). `standUp()` llama `seat.salir()`; `seat.mover(dt)` la pone en su lugar
+    cada cuadro, y `player.pos` sigue al juego (cámara y mascotas).
+  - `juego.ocupado` (el ancla en uso, o `true`): el columpio ocupado se mueve más alto, el sube y baja un poco más, y
+    la pelota de la cama elástica se esconde. `juego.vista`: giro de la cámara al subirse (el tobogán, para que no lo
+    tape un árbol).
+- Carrusel: caballitos 1,35 veces más grandes y más abajo; se va de lado, mirando hacia afuera (de frente las piernas
+  atravesaban la cabeza del caballito). La cámara ya no se acerca cuando la jugadora está dentro de un obstáculo alto
+  (`cameraBlock` ignora el obstáculo que contiene el punto que mira; los autos tienen h = 0, no cambia al manejar).
+- Pruebas nuevas: carrusel (gira con ella, se baja al moverse), cama elástica + sube y baja + columpio, tobogán (baja
+  sola y queda parada abajo). Las anclas nuevas usan `Math.random` (UUID) y mueven a un vecino: capturas regeneradas.
+  Chromium (dev y web): **73/73**.
+
 ## Etapa 8 — Lugares y actividades como módulos (30-09-2026, terminada)
 
 - **Lugar nuevo: Plaza de Juegos** (`world/places/plaza.js`, pedido: plaza de juegos en una manzana de afuera). Es

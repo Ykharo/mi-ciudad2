@@ -8,6 +8,7 @@
 // - `build(ctx)`: arma el lugar. `ctx` trae lo que un lugar necesita del mundo:
 //   world (el grupo de lo que no se mueve; lo que se mueve lleva userData.dynamic), scene, addObs, addObsRot,
 //   addZone (la acción la registra otro con onZoneAction(id, fn)) y onFrame(f(t, dt)) para animar algo en cada cuadro.
+import { THREE } from '../engine/three.js';
 import { scene } from '../engine/renderer.js';
 import { animated } from '../engine/loop.js';
 import { world } from './layout.js';
@@ -26,4 +27,10 @@ function buildPlaces() {
   });
 }
 
-export { buildPlaces, definePlace, places };
+// Juegos que se usan (carrusel, columpio…): el lugar pone una zona { id: 'juego', juego } (ver game/juegos.js) con
+// "anclas": puntos vacíos donde van las caderas de la jugadora, mirando hacia su +z. Se cuelgan de lo que se mueve.
+function ancla(padre, x, y, z, ry = 0, rx = 0) {
+  const a = new THREE.Object3D(); a.position.set(x, y, z); a.rotation.set(rx, ry, 0, 'YXZ'); padre.add(a); return a;
+}
+
+export { ancla, buildPlaces, definePlace, places };

@@ -24,7 +24,7 @@ function updatePlayer(dt) {
   // (la zona muerta del joystick la maneja ui/joystick.js; desde ahí la palanca da 0,1–0,27 caminando y hasta 1 corriendo)
   if (mag < 0.02) { jx = jy = 0; mag = 0; } else if (mag > 1) { jx /= mag; jy /= mag; }
   // moverse deja lo que estaba haciendo (sentada, bailando, saludando…)
-  if (mag > 0 && ch.sp && ch.sp.stopOnMove) { avatarStop(ch); standUp(); }
+  if (mag > 0 && ((ch.sp && ch.sp.stopOnMove) || (player.seat && !player.seat.fijo))) { avatarStop(ch); standUp(); }
   if (player.seat) { jx = jy = 0; mag = 0; }
   const fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
   const dx = rx * jx - fx * jy, dz = rz * jx - fz * jy;
@@ -55,8 +55,9 @@ function updatePlayer(dt) {
   player.speed01 = clamp(sp / PLAYER_SPEED, 0, 1);
   player.happy = Math.max(0, player.happy - dt);
   if (player.iceTime > 0) { player.iceTime -= dt; if (player.iceTime <= 0) setHolding(ch, null); }
-  if (player.seat) { const S = player.seat; ch.root.position.set(S.x, S.y, S.z); ch.root.rotation.y = S.facing; }
-  else { ch.root.position.set(player.pos.x, player.y, player.pos.z); ch.root.rotation.y = player.facing; }
+  // sentada: en una banca (quieta) o en un juego que se mueve (S.mover la pone en su lugar, game/juegos.js)
+  if (player.seat) { const S = player.seat; if (S.mover) S.mover(dt); else { ch.root.position.set(S.x, S.y, S.z); ch.root.rotation.set(0, S.facing, 0); } }
+  else { ch.root.position.set(player.pos.x, player.y, player.pos.z); ch.root.rotation.set(0, player.facing, 0); }
   updateAvatar(ch, dt, sp, player.happy > 0 ? 'feliz' : null);
 }
 // sentarse en una banca del parque (la animación "sit" es en el suelo: la banca la levanta)
@@ -68,7 +69,8 @@ function sitOnBench(b) {
   avatarDo(player.ch, 'sit', { start: 0.95, ts: 1.2 });
   emit('zona', null); state.currentZone = null; emit('sonido', 'pop');
 }
-function standUp() { if (!player.seat) return; player.seat = null; }
+// pararse; un juego puede dejarla en otro lugar al bajarse (S.salir)
+function standUp() { const S = player.seat; if (!S) return; player.seat = null; if (S.salir) S.salir(); }
 
 const FLAVORS = [['#FF9CC7', 'frutilla'], ['#7A4A30', 'chocolate'], ['#8FE3C5', 'menta'], ['#FFF5DE', 'vainilla'], ['#B89CFF', 'mora'], ['#FFD23F', 'mango']];
 function giveIceCream() {

@@ -3,7 +3,7 @@ import { THREE } from '../../engine/three.js';
 import { TAU } from '../../core/math.js';
 import { mat } from '../../engine/materials.js';
 import { box, cyl, mesh, rlo, sph } from '../../engine/geometry.js';
-import { definePlace } from '../place.js';
+import { ancla, definePlace } from '../place.js';
 import { flowers, tree } from '../nature.js';
 
 function fountain({ world, scene, addObs, onFrame }, x, z) {
@@ -36,7 +36,7 @@ function bench({ world, addObsRot, addZone }, x, z, ry) {
   addZone({ id: 'bench', x: x + Math.sin(ry) * 1.0, z: z + Math.cos(ry) * 1.0, r: 1.5, label: '🪑 Sentarse', bench: { x, z, ry } });
 }
 function park(ctx) {
-  const { world, addObs, onFrame } = ctx, cx = -20, cz = -20;
+  const { world, addObs, addZone, onFrame } = ctx, cx = -20, cz = -20;
   world.add(mesh(cyl(7.2, 7.2, 0.04, 40), mat('#F3E4C6', { roughness: 1 }), cx, 0.025, cz, false, true));
   world.add(mesh(box(29, 0.035, 2.6), mat('#F3E4C6', { roughness: 1 }), cx, 0.022, cz, false, true));
   world.add(mesh(box(2.6, 0.035, 29), mat('#F3E4C6', { roughness: 1 }), cx, 0.023, cz, false, true));
@@ -56,19 +56,28 @@ function park(ctx) {
   const ramp = mesh(rlo(1.2, 0.14, 4.0, 0.06), mat('#FF6FAE'), 0, 1.35, 1.0); ramp.rotation.x = 0.62; sl.add(ramp);
   [-1, 1].forEach(s => { const rail = mesh(rlo(0.1, 0.3, 4.0, 0.04), mat('#FF6FAE'), s * 0.6, 1.5, 1.0); rail.rotation.x = 0.62; sl.add(rail); });
   world.add(sl); addObs(cx - 10, cz + 3, 2.0, 1.0);
+  // tirarse: se sienta arriba de la rampa y baja hasta abajo (la rampa va de z −0,6 a 2,6 en el grupo, a 2,5–0,2 m)
+  addZone({ id: 'juego', x: cx - 13, z: cz + 3, r: 1.8, label: '🎢 Tirarse por el tobogán', juego: {
+    tipo: 'tobogan', vista: 0.5, arriba: ancla(sl, 0, 2.62, -0.7, 0, 0.4), abajo: ancla(sl, 0, 0.3, 2.7, 0, 0.4), salida: ancla(sl, 0, 0, 4.2) } });
   // swings (gently moving)
   const sx = cx + 5.8, sz = cz - 10;
   const frameM = mat('#FF9B4A');
   [-1, 1].forEach(s => { [-1, 1].forEach(t => { const leg = mesh(cyl(0.1, 0.1, 3.4, 8), frameM, sx + s * 2.4, 1.6, sz + t * 0.7); leg.rotation.x = -t * 0.22; world.add(leg); }); });
   const beam = mesh(cyl(0.12, 0.12, 5.0, 10), frameM, sx, 3.25, sz); beam.rotation.z = Math.PI / 2; world.add(beam);
   addObs(sx, sz, 2.6, 0.9);
+  const columpios = { tipo: 'asiento', asientos: [] };
   [-1, 1].forEach((s, i) => {
     const pv = new THREE.Group(); pv.position.set(sx + s * 1.1, 3.2, sz); pv.userData.dynamic = true;
     [-1, 1].forEach(k => pv.add(mesh(cyl(0.025, 0.025, 2.3, 5), mat('#6D5A4A'), k * 0.35, -1.15, 0)));
     pv.add(mesh(rlo(0.9, 0.1, 0.45, 0.04), mat(i ? '#FF6FAE' : '#4FB6F5'), 0, -2.3, 0));
+    const asiento = ancla(pv, 0, -2.2, 0);   // mirando hacia el centro del parque
+    columpios.asientos.push(asiento);
     world.add(pv);
-    onFrame(t => { pv.rotation.x = Math.sin(t * 1.7 + i * 1.4) * 0.28; });
+    // con alguien sentado se columpia más alto
+    let amp = 0.28;
+    onFrame((t, dt) => { amp += ((columpios.ocupado === asiento ? 0.7 : 0.28) - amp) * Math.min(1, dt * 0.8); pv.rotation.x = Math.sin(t * 1.7 + i * 1.4) * amp; });
   });
+  addZone({ id: 'juego', x: sx, z: sz, r: 2.4, label: '🙌 Columpiarse', juego: columpios });
   // trees around
   [[-12, -12], [12, -12], [-12, 12], [12, 12], [-12.5, -6], [-6, -12.5], [13, 5]].forEach(([a, b], i) => tree(cx + a, cz + b, 1 + (i % 3) * 0.12, i % 3 === 0 ? 1 : 0));
 }

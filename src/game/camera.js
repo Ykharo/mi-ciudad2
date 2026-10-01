@@ -19,6 +19,7 @@ function cameraBlock(look, yaw, pitch, dist) {
     const x = look.x + Math.sin(yaw) * cp * f, z = look.z + Math.cos(yaw) * cp * f, y = look.y + Math.sin(pitch) * f;
     for (const o of obstacles) {
       if (!o.h || y > o.h) continue;
+      if (Math.abs(look.x - o.x) < o.hw && Math.abs(look.z - o.z) < o.hd) continue;   // el que la tiene adentro (el carrusel)
       if (Math.abs(x - o.x) < o.hw + 0.4 && Math.abs(z - o.z) < o.hd + 0.4) { best = Math.max(3, f * 0.85); return best; }
     }
   }

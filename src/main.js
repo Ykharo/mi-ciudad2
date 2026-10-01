@@ -42,6 +42,7 @@ import { cargarPersonajes } from './game/personajes.js';
 import { crearEspectador, updateEspectador } from './game/cartel.js';
 import { PERSONAJES } from './characters/catalog/personajes.js';
 import { updatePlayer } from './game/player.js';
+import './game/juegos.js';
 import { lookVecinos, spawnNPCs, updateNPCs } from './game/npcs.js';
 import { followChain } from './pets/follow.js';
 import { updateCamera } from './game/camera.js';
