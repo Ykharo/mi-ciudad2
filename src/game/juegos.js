@@ -55,6 +55,7 @@ function asiento(juego, opcion) {
   for (const a of lista) { a.getWorldPosition(_p); const d = Math.hypot(_p.x - player.pos.x, _p.z - player.pos.z); if (d < mejor) { mejor = d; ancla = a; } }
   avatarDo(ch, 'sit', { start: 0.95, ts: 1.2 });
   empezar(juego, {
+    mascotas: ancla.userData.mascotas,   // si el asiento trae dónde se sientan sus mascotas (graderías: a su lado)
     mover() { sentarEn(ch, ancla); },
     alSalir() { ancla.getWorldPosition(_p); bajarEn(_p.x, _p.z, mirada(ancla)); },
   }, ancla);

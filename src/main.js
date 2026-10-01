@@ -73,6 +73,7 @@ function frame(now) {
   const piso = state.mode === 'drive' ? null : pisoEn(player.pos.x, player.pos.z);
   if (state.mode === 'drive') followChain(player.pets.filter(p => !p.riding), player.pos, dt, state.clock, driving.hl + 1.3);
   else if (piso && piso.espera) waitAt(player.pets, piso.espera, dt, state.clock);   // en la tarima: esperan abajo
+  else if (player.seat && player.seat.mascotas) waitAt(player.pets, player.seat.mascotas, dt, state.clock);   // a su lado
   else followChain(player.pets, player.pos, dt, state.clock, 1.7, !!player.seat);
   updateNPCs(dt, state.clock);
   updateEspectador(dt);

@@ -10,22 +10,23 @@ import { sueloEn } from '../world/physics.js';
 import { places } from '../world/place.js';
 import { onZoneAction } from '../world/zones.js';
 import { ESCENARIO } from '../world/places/escenario_aura.js';
-import { NINA, NINA_SCALE, makeAvatar } from '../characters/avatar.js';
+import { NINA, NINA_SCALE, makeAvatar, removeAvatar } from '../characters/avatar.js';
 import { randomLook } from '../characters/looks.js';
 import { avatarDo, avatarStop, updateAvatar } from '../characters/animator.js';
 import { ACTIONS } from '../characters/catalog/acciones.js';
 
 /* ---------- jurado, público y concursantes ---------- */
-const sentados = [], concursantes = [];
+const sentados = [], concursantes = [], RESERVA = 6, reserva = [];
 // sus looks se sortean antes de cargar los personajes (main.js), como los de los vecinos: siempre los mismos
-// (los dos últimos son los concursantes)
+// (después del público: los dos concursantes del comienzo y RESERVA más, para las competencias que siguen)
 function lookPublico() {
   const r = seeded(2468);
-  return [...ESCENARIO.jurado, ...ESCENARIO.publico, ...ESCENARIO.lados].map(() => randomLook(r));
+  return [...ESCENARIO.jurado, ...ESCENARIO.publico, ...ESCENARIO.lados, ...Array(RESERVA)].map(() => randomLook(r));
 }
 // sentados con la pose final de "sit": las caderas en el puesto (0,158 arriba y 0,10 atrás de la raíz)
 function crearPublico(looks) {
   const P = [...ESCENARIO.jurado, ...ESCENARIO.publico];
+  reserva.push(...looks.slice(P.length + ESCENARIO.lados.length));   // (sus avatares se arman cuando les toca)
   P.forEach((p, i) => {
     const c = makeAvatar(looks[i]), k = c.k;
     c.root.position.set(p.x + Math.sin(p.mira) * 0.10 * k, p.alto - 0.158 * k, p.z + Math.cos(p.mira) * 0.10 * k);
@@ -44,6 +45,8 @@ function crearPublico(looks) {
 // sólo se anima a quien se ve (cullAvatars los esconde lejos o fuera de la cámara)
 function updatePublico(dt) {
   if (show) avanzar(dt * velocidad);
+  // si la jugadora sigue sentada en las graderías, después de un descanso viene otra competencia (con otros vecinos)
+  else if (descanso > 0 && (descanso -= dt * velocidad) <= 0 && ESCENARIO.gradas.ocupado) empezarCompetencia();
   for (const c of sentados) if (c.model.visible) updateAvatar(c, dt, 0, null);
   for (const q of concursantes) {
     q.ch.root.position.set(q.x, sueloEn(q.x, q.z), q.z); q.ch.root.rotation.y = q.facing;
@@ -71,7 +74,9 @@ function decir(c, texto, seg = 2.5, sentado = false) {
 const BAILES = ['aura', 'seis_siete', 'sigma', 'take_l', 'siuu', 'griddy', 'spin', 'fresh', 'floss', 'dance'];
 const NOMBRES = ['Rubí', 'Max', 'Sofi', 'Benja', 'Emi', 'Tomi', 'Isa', 'Mati', 'Flo', 'Lucas'];
 const GRITOS = ['¡Bravo!', '¡Qué aura!', '¡Wooow!', '¡Eso!', '¡Increíble!', '¡Otra!'];
-let show = null, velocidad = 1;
+// DESCANSO: segundos entre una competencia y la siguiente (si la jugadora sigue sentada mirando)
+const DESCANSO = 8;
+let show = null, velocidad = 1, descanso = 0;
 
 // los pasos de la competencia: cada uno { dur, inicio(), cada(dt, u) } (u: 0…1 del paso)
 function caminar(q, x, z, vel = 1.6) {
@@ -110,8 +115,44 @@ function bailar(q, id, k, puntos) {
   };
 }
 
+// varios pasos a la vez (los dos concursantes caminando juntos)
+function juntos(...ps) {
+  let t = 0;
+  return {
+    dur: Math.max(...ps.map(p => p.dur)),
+    inicio() { t = 0; ps.forEach(p => p.inicio && p.inicio()); },
+    cada(dt) { t += dt; ps.forEach(p => { if (t <= p.dur + dt && p.cada) p.cada(dt, Math.min(1, t / p.dur)); }); },
+    fin() { ps.forEach(p => p.fin && p.fin()); },
+  };
+}
+// Relevo: los dos de la competencia anterior bajan por detrás de la tarima y suben dos vecinos nuevos (de la reserva,
+// por turno) que van a sus lugares.
+let hechas = 0;
+function relevo() {
+  const S = ESCENARIO.salidas, pasos = [];
+  pasos.push(esperar(1.5, () => {
+    emit('aviso', '🔄 ¡Llegan nuevos concursantes!');
+    concursantes.forEach(q => decir(q.ch, '¡Chao!', 1.4));
+  }));
+  pasos.push(juntos(...concursantes.map((q, k) => caminar(q, S[k].x, S[k].z, 2))));
+  pasos.push(esperar(0.6, () => {
+    concursantes.forEach((q, k) => {
+      for (const g of globos) if (g.c === q.ch) { q.ch.root.remove(g.s); g.t = 0; }
+      removeAvatar(q.ch);
+      q.ch = makeAvatar(reserva[(2 * (hechas - 1) + k) % reserva.length]); q.cara = null;
+      q.x = S[k].x; q.z = S[k].z; q.facing = q.lado.mira;
+    });
+  }));
+  pasos.push(juntos(...concursantes.map(q => caminar(q, q.lado.x, q.lado.z, 2))));
+  pasos.push(juntos(...concursantes.map(q => girar(q, q.lado.mira, 0.5))));
+  return pasos;
+}
+
 function empezarCompetencia() {
   if (show || concursantes.length < 2) return;
+  descanso = 0;
+  const previos = hechas > 0 ? relevo() : [];
+  hechas++;
   const nombres = [...NOMBRES].sort(() => Math.random() - 0.5);
   const turnos = concursantes.map((q, k) => {
     q.nombre = nombres[k];
@@ -121,7 +162,7 @@ function empezarCompetencia() {
   });
   const total = t => t.puntos.reduce((a, b) => a + b, 0);
   if (total(turnos[0]) === total(turnos[1])) turnos[1].puntos[2] += turnos[1].puntos[2] < 10 ? 1 : -1;   // sin empates
-  const C = ESCENARIO.centro, pasos = [];
+  const C = ESCENARIO.centro, pasos = [...previos];
   ESCENARIO.medidor = { niveles: [0, 0], activo: -1 };
   pasos.push(esperar(2.5, () => {
     emit('aviso', `🎤 ¡Comienza la competencia de aura! ${turnos[0].q.nombre} contra ${turnos[1].q.nombre}`);
@@ -166,7 +207,7 @@ function avanzar(dt) {
   if (S.i < 0 || S.t >= S.pasos[S.i].dur) {
     if (S.i >= 0 && S.pasos[S.i].fin) S.pasos[S.i].fin();
     S.i++; S.t = 0;
-    if (S.i >= S.pasos.length) { show = null; ESCENARIO.medidor = null; return; }
+    if (S.i >= S.pasos.length) { show = null; ESCENARIO.medidor = null; descanso = DESCANSO; return; }
     if (S.pasos[S.i].inicio) S.pasos[S.i].inicio();
   }
   const p = S.pasos[S.i];
@@ -179,7 +220,8 @@ ESCENARIO.gradas.alSentarse = empezarCompetencia;
 // (para las pruebas: en qué va, y acelerarla)
 const competencia = {
   enCurso: () => !!show,
-  concursantes: () => concursantes.map(q => ({ nombre: q.nombre, anim: q.ch.sp && q.ch.sp.name, x: q.x, z: q.z })),
+  hechas: () => hechas,
+  concursantes: () => concursantes.map(q => ({ nombre: q.nombre, anim: q.ch.sp && q.ch.sp.name, x: q.x, z: q.z, id: q.ch.root.uuid })),
   rapido(v) { velocidad = v; },
 };
 

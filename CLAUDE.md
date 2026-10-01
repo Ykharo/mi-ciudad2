@@ -30,7 +30,9 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
     (giro en múltiplos de 90°); jurado, público y las pistas del cartel (`game/aura.js`, `pistasEscenario`) se ajustan
     solos. El cartel tiene dos botones: mirar y "💬 Preguntar dónde es" (`game/cartel.js`). Al sentarse en las
     graderías compiten dos vecinos (3 bailes cada uno, jurado, ganador; pasos en `game/aura.js`, medidores de la
-    pantalla con `ESCENARIO.medidor`; `window.__juego.competencia.rapido(x)` para probarla).
+    pantalla con `ESCENARIO.medidor`; `window.__juego.competencia.rapido(x)` para probarla). Si sigue sentada, tras
+    `DESCANSO` llegan otros dos (reserva de looks, `relevo()`). Un asiento con `userData.mascotas` sienta a las
+    mascotas a su lado (`waitAt`).
   - Zonas: el lugar hace `addZone({ id, x, z, r, label })` y quien sabe qué hacer registra `onZoneAction(id, fn)`.
     Con `opciones: [{ id, label }, …]` el HUD muestra un botón por opción (`#btnAction2`) y la acción recibe
     `fn(zona, opcion)` (tobogán y columpio: 'sentada' / 'de_pie').

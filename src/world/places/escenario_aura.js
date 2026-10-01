@@ -34,8 +34,9 @@ const JURADO_Z = 6.0, GRADAS = { lx: 5, lz: 6, alto: [0.45, 0.9, 1.35], fondo: 1
 const puesto = (lx, lz, alto) => { const p = local(lx, lz); return { ...p, alto, mira: hacia(p, ESCENARIO.tarima) }; };
 ESCENARIO.jurado = [-7.2, -5.5, -3.8].map(lx => puesto(lx, JURADO_Z, 0.72));
 ESCENARIO.publico = [[2.5, 0], [6.5, 0], [4, 1], [8, 1], [5.5, 2]].map(([lx, fila]) => puesto(lx, GRADAS.lz + fila * GRADAS.fondo, GRADAS.alto[fila] + 0.01));
-// los puestos libres de las graderías, para que la jugadora se siente a mirar (adelante o arriba)
-const LIBRES = { adelante: [[4.5, 0], [8.5, 0]], arriba: [[3, 2], [8, 2]] };
+// los puestos libres de las graderías, para que la jugadora se siente a mirar (adelante o arriba): [lx, fila, y el lx
+// donde se sienta su mascota, al lado y en el mismo escalón]
+const LIBRES = { adelante: [[4.5, 0, 5.4], [8.5, 0, 7.6]], arriba: [[3, 2, 3.9], [8, 2, 7.1]] };
 // donde esperan sentadas las mascotas mientras la jugadora está en la tarima: al lado del escalón, mirando la tarima
 const ESPERA = local(-2.4, 3.6);
 ESCENARIO.espera = { ...ESPERA, mira: hacia(ESPERA, ESCENARIO.tarima) };
@@ -45,6 +46,8 @@ ESCENARIO.espera = { ...ESPERA, mira: hacia(ESPERA, ESCENARIO.tarima) };
 // mueven solos.
 ESCENARIO.lados = [local(-3.4, -4), local(3.4, -4)].map(p => ({ ...p, mira: ESCENARIO.giro }));
 ESCENARIO.centro = { ...local(0, -2.2), mira: ESCENARIO.giro };
+// por dónde salen y entran los concursantes cuando hay una competencia nueva: detrás de la tarima, a cada lado
+ESCENARIO.salidas = [local(-7.5, -5.5), local(7.5, -5.5)];
 ESCENARIO.medidor = null;
 // el juego de las graderías (sentarse a mirar): se crea aquí para que game/aura.js le ponga `alSentarse` antes de que
 // se arme la ciudad; build() le agrega los asientos y la vista
@@ -123,7 +126,14 @@ function escenario({ world, addObsRot, addZone, onFrame }) {
   // sentarse a mirar el espectáculo: en la fila de adelante o en la de arriba (game/juegos.js, tipo 'asiento')
   const asientos = {};
   for (const [fila, lista] of Object.entries(LIBRES)) {
-    asientos[fila] = lista.map(([lx, f]) => { const p = puesto(lx, GRADAS.lz + f * GRADAS.fondo, GRADAS.alto[f] + 0.01); return ancla(world, p.x, p.alto, p.z, p.mira); });
+    asientos[fila] = lista.map(([lx, f, mx]) => {
+      const lz = GRADAS.lz + f * GRADAS.fondo, p = puesto(lx, lz, GRADAS.alto[f] + 0.01), a = ancla(world, p.x, p.alto, p.z, p.mira);
+      // la mascota se sienta a su lado mirando la tarima (main.js → waitAt; `y`: arriba del escalón)
+      // (`dir`: hacia dónde sigue la fila si son varias, alejándose de la jugadora)
+      const m = local(mx, lz), d = Math.hypot(m.x - p.x, m.z - p.z);
+      a.userData.mascotas = { ...m, y: GRADAS.alto[f], mira: hacia(m, ESCENARIO.tarima), dir: { x: (m.x - p.x) / d, z: (m.z - p.z) / d } };
+      return a;
+    });
   }
   // (`vista`: la cámara detrás de las graderías, mirando la tarima; al sentarse empieza la competencia: game/aura.js
   // pone `alSentarse` en ESCENARIO.gradas)

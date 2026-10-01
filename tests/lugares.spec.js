@@ -249,6 +249,11 @@ test('en la tarima la mascota espera abajo sentada; en las graderías se puede s
   await page.locator('#btnAction2').click({ force: true });   // ⬆️ Sentarse arriba
   await expect.poll(() => sentada(page)).toBe(true);
   expect((await donde(page))[1]).toBeGreaterThan(0.9);   // en la fila de arriba (1,35 m)
+  // la mascota se sienta a su lado, en el mismo escalón
+  await expect.poll(async () => (await toby()).sit).toBeGreaterThan(0.9);
+  const [px, py, pz] = await donde(page), m = await toby();
+  expect(Math.hypot(m.x - px, m.z - pz)).toBeLessThan(1.5);
+  expect(await page.evaluate(() => window.__juego.player.pets[0].obj.root.position.y)).toBeGreaterThan(py);
 });
 
 test('al sentarse en las graderías, dos concursantes compiten con tres bailes cada uno', async ({ page, jugar }) => {
@@ -271,6 +276,12 @@ test('al sentarse en las graderías, dos concursantes compiten con tres bailes c
   expect(vistos[0].size).toBeGreaterThanOrEqual(2);   // (muestreado: alguno corto puede no verse)
   expect(vistos[1].size).toBeGreaterThanOrEqual(2);
   await expect.poll(() => page.evaluate(() => window.__juego.competencia.enCurso()), { timeout: 10_000 }).toBe(false);
+  // sigue sentada: después de un descanso, otra competencia con otros dos vecinos
+  const antes = (await page.evaluate(() => window.__juego.competencia.concursantes())).map(q => q.id);
+  await expect.poll(() => page.evaluate(() => window.__juego.competencia.hechas()), { timeout: 15_000 }).toBe(2);
+  await expect(page.locator('#toast')).toHaveText('🔄 ¡Llegan nuevos concursantes!');
+  await expect.poll(async () => (await page.evaluate(() => window.__juego.competencia.concursantes())).map(q => q.id), { timeout: 15_000 })
+    .not.toEqual(antes);
 });
 
 test('quien lee el cartel da pistas de dónde es la competencia', async ({ page, jugar }) => {

@@ -20,19 +20,22 @@ function followChain(list, leaderPos, dt, t, firstGap = 1.7, sentadas = false) {
   });
 }
 
-// Esperar en un lugar (cuando la dueña sube a una tarima: world/physics.js, piso con `espera`): caminan hasta el
-// punto, se ponen en fila hacia el costado y se sientan mirando hacia `mira`.
+// Esperar en un lugar (cuando la dueña sube a una tarima: world/physics.js, piso con `espera`; o sentadas a su lado en
+// las graderías): caminan hasta el punto, se ponen en fila hacia el costado y se sientan mirando hacia `mira`.
+// Con `y` (un escalón): al llegar suben de un salto a esa altura (sin chocar con el escalón).
 function waitAt(list, punto, dt, t) {
-  const lx = Math.cos(punto.mira), lz = -Math.sin(punto.mira);   // hacia el costado de quien mira hacia `mira`
+  // la fila: hacia el costado de quien mira hacia `mira`, centrada en el punto; o desde el punto hacia `dir`
+  const lx = punto.dir ? punto.dir.x : Math.cos(punto.mira), lz = punto.dir ? punto.dir.z : -Math.sin(punto.mira);
   list.forEach((p, i) => {
-    const off = (i - (list.length - 1) / 2) * 1.0, tx = punto.x + lx * off, tz = punto.z + lz * off;
+    const off = punto.dir ? i * 0.7 :(i - (list.length - 1) / 2) * 1.0, tx = punto.x + lx * off, tz = punto.z + lz * off;
     const dx = tx - p.pos.x, dz = tz - p.pos.z, d = Math.hypot(dx, dz);
     let moved = 0;
     if (d > 30) p.pos.set(tx, 0, tz);
     else if (d > 0.05) { const step = Math.min(d, (d > 3 ? 9 : 5) * dt); p.pos.x += dx / d * step; p.pos.z += dz / d * step; moved = step / Math.max(dt, 1e-4); }
-    collide(p.pos, 0.35);
+    if (!punto.y) collide(p.pos, 0.35);
     p.facing = lerpAngle(p.facing, d > 0.4 ? Math.atan2(dx, dz) : punto.mira, 1 - Math.exp(-dt * 6));
-    p.obj.root.position.set(p.pos.x, 0, p.pos.z); p.obj.root.rotation.y = p.facing;
+    const y = punto.y ? punto.y * clamp(1 - (d - 0.1) / 1.2, 0, 1) + Math.sin(Math.PI * clamp(1 - (d - 0.1) / 1.2, 0, 1)) * 0.25 : 0;
+    p.obj.root.position.set(p.pos.x, y, p.pos.z); p.obj.root.rotation.y = p.facing;
     animatePet(p.obj, t + i, clamp(moved / 5, 0, 3), dt, d < 0.4);
   });
 }

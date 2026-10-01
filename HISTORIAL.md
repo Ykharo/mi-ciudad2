@@ -5,6 +5,21 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Graderías: la mascota se sienta al lado; competencias seguidas (01-10-2026)
+
+- Pedido: al sentarse en las graderías, la mascota se sienta junto a la jugadora mirando el escenario. Cada puesto
+  libre trae `userData.mascotas = { x, z, y, mira, dir }` (en el mismo escalón, al lado; `dir`: hacia dónde sigue la
+  fila si son varias, alejándose de la jugadora, cada 0,7 m). `asiento` lo pasa a `player.seat.mascotas` y `main.js`
+  usa `waitAt` con ese punto. `waitAt` con `y`: al llegar suben de un saltito al escalón (sin chocar con él).
+- Pedido: si sigue sentada, después de un descanso, otros vecinos compiten. Al terminar una competencia, si la
+  jugadora sigue en las graderías (`ESCENARIO.gradas.ocupado`), a los 8 s (`DESCANSO`) empieza otra: "🔄 ¡Llegan
+  nuevos concursantes!", los dos de antes dicen "¡Chao!" y bajan por detrás de la tarima (`ESCENARIO.salidas`), se
+  cambian por dos de la reserva (6 looks más sorteados con el público y cargados al comienzo; los avatares se arman
+  cuando les toca) y suben a sus lugares; después, la competencia de siempre con nombres y bailes nuevos. Sentarse de
+  nuevo más tarde también trae concursantes nuevos. Ganchos: `competencia.hechas()`, `concursantes()[i].id`.
+- Pruebas: la mascota al lado en las graderías; la competencia sigue con otros dos vecinos. Capturas sin cambios.
+  Chromium (dev y web): **85/85**.
+
 ## Competencia entre dos vecinos (01-10-2026)
 
 - Pedido: primero una competencia de dos vecinos, de 3 movimientos cada uno (antes de que compita la jugadora).
