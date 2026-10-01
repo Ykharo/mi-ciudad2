@@ -13,8 +13,10 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
 - Etapas 0–6 y 8 terminadas. **Etapa 7 en curso** (personajes nuevos y variedad). Todo hasta la etapa 8 tiene commit.
 - Etapa 8: los lugares se registran con `definePlace` (`world/place.js`) y `city.js` los encuentra solos. Lugar nuevo
   hecho con un solo archivo: **Plaza de Juegos** (`places/plaza.js`, frente al Refugio cruzando la Avenida Menta).
-- **Juegos que se usan** (sin commit): carrusel, cama elástica y sube y baja de la plaza; columpios y tobogán del
-  parque (`game/juegos.js`, zonas `juego` con anclas). 73/73 en Chromium.
+- Juegos que se usan: carrusel, cama elástica y sube y baja de la plaza; columpios y tobogán del parque
+  (`game/juegos.js`, zonas `juego` con anclas). **Sin commit**: el tobogán se sube por la escalera (animaciones
+  `subir_escalera` y `tobogan`) y el columpio tiene física de péndulo que se impulsa con la palanca (animación
+  `columpio`); se baja saltando. 75/75 en Chromium.
 - Repositorio `github.com/Ykharo/mi-ciudad2`; se publica sólo en GitHub Pages (Actions con `npm run build:web`).
   Commits desde GitHub Desktop (Git no está en el PATH).
 - **Una sola versión: la web.** La de un solo archivo se quitó (decisión del usuario: quiere seguir agregando
@@ -23,8 +25,8 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
   estilos (clásico y urbano) que usan toda la ropa.
 - Ropa y peinados: 32 prendas, 28 generadas por código (`tools/prendas/`) + las 4 originales. Accesorios en 6 espacios
   (cabeza, orejas, cara, cuello, espalda, manos). Cabeza redonda (forma `redonda`) para el amigo y algunos vecinos.
-- 20 animaciones: las 11 originales + 9 bailes (aura, Six Seven, sigma, Take the L, Siuuu, Griddy, Spin, Fresh,
-  Floss) + `mirar_cartel`. Cartel de la competencia de farmear aura frente a la Boutique, con alguien leyéndolo.
+- 24 animaciones: las 11 originales + 9 bailes (aura, Six Seven, sigma, Take the L, Siuuu, Griddy, Spin, Fresh,
+  Floss) + `mirar_cartel` + las de los juegos (`subir_escalera`, `tobogan`, `columpio`). Cartel de la competencia de farmear aura frente a la Boutique, con alguien leyéndolo.
 - Probador (`src/debug/probador.html`) con comparador de referencias (vistas frente/lado, transparencia, alinear).
 
 **Siguiente (a elegir)**

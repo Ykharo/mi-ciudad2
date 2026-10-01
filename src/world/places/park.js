@@ -35,6 +35,26 @@ function bench({ world, addObsRot, addZone }, x, z, ry) {
   world.add(g); addObsRot(x, z, 2.6, 0.9, ry);
   addZone({ id: 'bench', x: x + Math.sin(ry) * 1.0, z: z + Math.cos(ry) * 1.0, r: 1.5, label: '🪑 Sentarse', bench: { x, z, ry } });
 }
+// Un columpio es un péndulo: ángulo (+ = el asiento hacia adelante, hacia +z del ancla) y velocidad. Quien va sentada
+// lo impulsa con `asiento.userData.impulso` (−1…1) y avisa que está con `ocupado` (los pone game/juegos.js): empujar
+// hacia donde va le da energía, al revés lo frena. Sube hasta unos 65°; vacío se va calmando solo.
+const GRAV = 9.8, LARGO = 2.2, IMPULSO = 0.38, TOPE = GRAV / LARGO * (1 - Math.cos(1.15));
+function columpio(asiento, pv, angulo, onFrame) {
+  const S = Object.assign(asiento.userData, { angulo, vel: 0, impulso: 0, largo: LARGO });
+  onFrame((t, dt) => {
+    const n = 4, h = dt / n;
+    for (let k = 0; k < n; k++) {
+      const energia = 0.5 * S.vel * S.vel + GRAV / LARGO * (1 - Math.cos(S.angulo));
+      // empujar a favor da energía sólo hasta el tope; en contra siempre frena
+      const empuje = S.impulso * IMPULSO * (S.impulso * S.vel > 0 ? Math.max(0, 1 - energia / TOPE) : 1);
+      const roce = S.ocupado ? 0.07 : 0.25;
+      S.vel += (-GRAV / LARGO * Math.sin(S.angulo) - roce * S.vel + empuje) * h;
+      S.angulo += S.vel * h;
+    }
+    pv.rotation.x = -S.angulo;   // rotation.x positiva lleva el asiento hacia −z
+  });
+}
+
 function park(ctx) {
   const { world, addObs, addZone, onFrame } = ctx, cx = -20, cz = -20;
   world.add(mesh(cyl(7.2, 7.2, 0.04, 40), mat('#F3E4C6', { roughness: 1 }), cx, 0.025, cz, false, true));
@@ -52,30 +72,36 @@ function park(ctx) {
   const sl = new THREE.Group(); sl.position.set(cx - 10, 0, cz + 3); sl.rotation.y = Math.PI / 2;
   [-1, 1].forEach(s => [-1, 1].forEach(t => sl.add(mesh(cyl(0.1, 0.1, 2.6, 8), mat('#4FB6F5'), s * 0.6, 1.3, t * 0.6 - 1.4))));
   sl.add(mesh(rlo(1.5, 0.2, 1.5, 0.06), mat('#FFD23F'), 0, 2.5, -1.4));
-  for (let i = 0; i < 5; i++) sl.add(mesh(box(1.2, 0.08, 0.12), mat('#FFFFFF'), 0, 0.45 + i * 0.45, -2.1));
+  // la escalera: peldaños cada 0,45 m entre dos pasamanos que siguen hacia arriba (para agarrarse hasta llegar arriba;
+  // las medidas las usa la animación "subir_escalera", tools/animaciones/juegos.mjs)
+  for (let i = 0; i < 5; i++) sl.add(mesh(box(0.76, 0.08, 0.12), mat('#FFFFFF'), 0, 0.45 + i * 0.45, -2.1));
+  [-1, 1].forEach(s => {
+    sl.add(mesh(cyl(0.05, 0.05, 3.9, 8), mat('#FFD23F'), s * 0.38, 1.95, -2.1));
+    sl.add(mesh(sph(0.1, 10, 8), mat('#FF6FAE'), s * 0.38, 3.92, -2.1));
+  });
   const ramp = mesh(rlo(1.2, 0.14, 4.0, 0.06), mat('#FF6FAE'), 0, 1.35, 1.0); ramp.rotation.x = 0.62; sl.add(ramp);
   [-1, 1].forEach(s => { const rail = mesh(rlo(0.1, 0.3, 4.0, 0.04), mat('#FF6FAE'), s * 0.6, 1.5, 1.0); rail.rotation.x = 0.62; sl.add(rail); });
   world.add(sl); addObs(cx - 10, cz + 3, 2.0, 1.0);
-  // tirarse: se sienta arriba de la rampa y baja hasta abajo (la rampa va de z −0,6 a 2,6 en el grupo, a 2,5–0,2 m)
+  // sube por la escalera (los peldaños en z −2,1, cada 0,45 m: el ancla queda 0,14 m antes, ver game/juegos.js), se
+  // sienta arriba de la rampa y baja hasta abajo (la rampa va de z −0,6 a 2,6 en el grupo, a 2,5–0,2 m)
   addZone({ id: 'juego', x: cx - 13, z: cz + 3, r: 1.8, label: '🎢 Tirarse por el tobogán', juego: {
-    tipo: 'tobogan', vista: 0.5, arriba: ancla(sl, 0, 2.62, -0.7, 0, 0.4), abajo: ancla(sl, 0, 0.3, 2.7, 0, 0.4), salida: ancla(sl, 0, 0, 4.2) } });
+    tipo: 'tobogan', vista: -1.0, escalera: ancla(sl, 0, 0, -2.24), arriba: ancla(sl, 0, 2.62, -0.7, 0, 0.4), abajo: ancla(sl, 0, 0.3, 2.7, 0, 0.4), salida: ancla(sl, 0, 0, 4.2) } });
   // swings (gently moving)
   const sx = cx + 5.8, sz = cz - 10;
   const frameM = mat('#FF9B4A');
   [-1, 1].forEach(s => { [-1, 1].forEach(t => { const leg = mesh(cyl(0.1, 0.1, 3.4, 8), frameM, sx + s * 2.4, 1.6, sz + t * 0.7); leg.rotation.x = -t * 0.22; world.add(leg); }); });
   const beam = mesh(cyl(0.12, 0.12, 5.0, 10), frameM, sx, 3.25, sz); beam.rotation.z = Math.PI / 2; world.add(beam);
-  addObs(sx, sz, 2.6, 0.9);
-  const columpios = { tipo: 'asiento', asientos: [] };
+  // los obstáculos son sólo los postes: entre ellos se pasa (y se sale volando al saltar del columpio)
+  [-1, 1].forEach(s => addObs(sx + s * 2.4, sz, 0.25, 0.9));
+  const columpios = { tipo: 'columpio', vista: -Math.PI / 2 + 0.3, asientos: [] };   // la cámara de costado (del lado sin árboles): se ve el vaivén
   [-1, 1].forEach((s, i) => {
     const pv = new THREE.Group(); pv.position.set(sx + s * 1.1, 3.2, sz); pv.userData.dynamic = true;
     [-1, 1].forEach(k => pv.add(mesh(cyl(0.025, 0.025, 2.3, 5), mat('#6D5A4A'), k * 0.35, -1.15, 0)));
     pv.add(mesh(rlo(0.9, 0.1, 0.45, 0.04), mat(i ? '#FF6FAE' : '#4FB6F5'), 0, -2.3, 0));
-    const asiento = ancla(pv, 0, -2.2, 0);   // mirando hacia el centro del parque
+    const asiento = ancla(pv, 0, -2.2, 0);   // mirando hacia el centro del parque (+z)
     columpios.asientos.push(asiento);
     world.add(pv);
-    // con alguien sentado se columpia más alto
-    let amp = 0.28;
-    onFrame((t, dt) => { amp += ((columpios.ocupado === asiento ? 0.7 : 0.28) - amp) * Math.min(1, dt * 0.8); pv.rotation.x = Math.sin(t * 1.7 + i * 1.4) * amp; });
+    columpio(asiento, pv, i ? -0.18 : 0.25, onFrame);
   });
   addZone({ id: 'juego', x: sx, z: sz, r: 2.4, label: '🙌 Columpiarse', juego: columpios });
   // trees around

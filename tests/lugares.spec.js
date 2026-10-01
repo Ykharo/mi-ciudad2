@@ -42,9 +42,9 @@ test('subirse al carrusel: gira con ella y se baja al moverse', async ({ page, j
   expect((await donde(page))[1]).toBe(0);
 });
 
-test('la cama elástica, el sube y baja y el columpio', async ({ page, jugar }) => {
+test('la cama elástica y el sube y baja', async ({ page, jugar }) => {
   await jugar();
-  for (const [x, z, texto] of [[56, 29.6, '🤸 Saltar en la cama elástica'], [67, 28.2, '⚖️ Subirse al sube y baja'], [-14.2, -28.4, '🙌 Columpiarse']]) {
+  for (const [x, z, texto] of [[56, 29.6, '🤸 Saltar en la cama elástica'], [67, 28.2, '⚖️ Subirse al sube y baja']]) {
     await ir(page, x, z);
     await accion(page, texto);
     await expect.poll(() => sentada(page)).toBe(true);
@@ -56,13 +56,43 @@ test('la cama elástica, el sube y baja y el columpio', async ({ page, jugar }) 
   }
 });
 
-test('tirarse por el tobogán: baja sola y queda parada abajo', async ({ page, jugar }) => {
+test('columpiarse: la palanca a tiempo lo hace subir, y se baja saltando', async ({ page, jugar }) => {
+  await jugar();
+  await ir(page, -14.2, -28.4);   // entre los dos columpios; se sienta en el más cercano
+  await accion(page, '🙌 Columpiarse');
+  await expect.poll(() => sentada(page)).toBe(true);
+  expect(await page.evaluate(() => window.__juego.player.ch.sp.name)).toBe('columpio');
+  // empujar hacia donde va (W adelante = +z, S atrás), como un niño, durante 8 s
+  const vaiven = async ms => {
+    let antes = (await donde(page))[2], tecla = null, min = 99, max = -99;
+    for (const fin = Date.now() + ms; Date.now() < fin;) {
+      await page.waitForTimeout(50);
+      const z = (await donde(page))[2], quiere = z > antes ? 'KeyW' : 'KeyS';
+      if (quiere !== tecla) { if (tecla) await page.keyboard.up(tecla); await page.keyboard.down(quiere); tecla = quiere; }
+      antes = z; min = Math.min(min, z); max = Math.max(max, z);
+    }
+    if (tecla) await page.keyboard.up(tecla);
+    return max - min;
+  };
+  const primero = await vaiven(2500), despues = await vaiven(5500);
+  expect(despues).toBeGreaterThan(primero + 0.8);   // cada vez más alto
+  expect(await sentada(page)).toBe(true);           // moverse no la baja
+  await page.keyboard.press('Space');
+  await expect.poll(() => sentada(page)).toBe(false);
+  expect(await page.evaluate(() => window.__juego.player.air)).toBe(true);   // sale volando
+});
+
+test('el tobogán: sube por la escalera, se tira y queda parada abajo', async ({ page, jugar }) => {
   await jugar();
   await ir(page, -33, -17);   // al pie de la escalera; el tobogán baja hacia +x
   await accion(page, '🎢 Tirarse por el tobogán');
   await expect.poll(() => sentada(page)).toBe(true);
-  expect((await donde(page))[1]).toBeGreaterThan(1.5);
-  await expect.poll(() => sentada(page)).toBe(false);
+  const anim = () => page.evaluate(() => window.__juego.player.ch.sp && window.__juego.player.ch.sp.name);
+  expect(await anim()).toBe('subir_escalera');
+  await expect.poll(async () => (await donde(page))[1]).toBeGreaterThan(1.5);   // trepando
+  await expect.poll(anim).toBe('tobogan');                                      // arriba, sentada con los brazos arriba
+  expect((await donde(page))[1]).toBeGreaterThan(2);
+  await expect.poll(() => sentada(page), { timeout: 10_000 }).toBe(false);
   const p = await page.evaluate(() => { const p = window.__juego.player.pos; return [p.x, p.z]; });
   expect(p[0]).toBeGreaterThan(-27);
 });

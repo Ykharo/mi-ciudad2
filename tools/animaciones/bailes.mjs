@@ -12,6 +12,7 @@
 // Los que giran (siuu, spin) giran la cadera y los pies con ella, y terminan mirando hacia donde empezaron.
 import * as THREE from 'three';
 import { E, K, TAU, lerp, crearPoses, esqueleto } from './pose.mjs';
+import { juegos } from './juegos.mjs';
 
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
 
@@ -282,13 +283,13 @@ export function bailes(S) {
   ];
 }
 
-// Agrega los bailes al documento (el de nina_base.glb): rotación de los 17 huesos y posición de la cadera, a 30 cuadros
-// por segundo, como las demás animaciones.
+// Agrega los bailes y las animaciones de los juegos (juegos.mjs) al documento (el de nina_base.glb): rotación de los
+// 17 huesos y posición de la cadera, a 30 cuadros por segundo, como las demás animaciones.
 export function agregarBailes(doc) {
   const S = esqueleto(doc), { resolver } = crearPoses(S), buf = doc.getRoot().listBuffers()[0];
   const acc = (arr, tipo) => doc.createAccessor().setArray(arr).setType(tipo).setBuffer(buf);
   const hechos = [];
-  for (const { nombre, fn, T, loop } of bailes(S)) {
+  for (const { nombre, fn, T, loop } of [...bailes(S), ...juegos(S)]) {
     const n = Math.round(T * FPS), tiempos = Float32Array.from({ length: n + 1 }, (_, i) => (i === n ? T : i / FPS));
     const rot = Object.fromEntries(S.HUESOS.map(b => [b, new Float32Array((n + 1) * 4)])), pos = new Float32Array((n + 1) * 3);
     const antes = {};

@@ -5,6 +5,37 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Tobogán con escalera y columpio con física (30-09-2026)
+
+- Pedido: que suba por la escalera del tobogán, se siente y se tire con los brazos arriba; y que el columpio responda
+  con física a la palanca vertical (impulsarse, ir más alto o frenar), agarrada de las cuerdas y moviendo las piernas.
+- **Animaciones nuevas** (`tools/animaciones/juegos.mjs`, horneadas con los bailes por `separar_glb.mjs`; 24 en total):
+  - `subir_escalera` (0,8 s, bucle): en cada ciclo el cuerpo sube un peldaño; mano derecha con pie izquierdo y la otra
+    pareja medio ciclo y medio peldaño después, así los dos pies pisan peldaños de verdad (agarrado, el pie queda
+    quieto en el mundo; en la animación baja porque el juego sube a la jugadora). Primero las manos iban a los postes
+    a 0,6 m del centro y quedaban como "manos arriba" sin alcanzar (el brazo mide 0,34 hasta la muñeca): la escalera
+    ahora tiene pasamanos propios a 0,38 m, que siguen hasta 3,9 m (las manos van por encima de la cabeza hasta arriba),
+    y peldaños de 0,76 m de ancho.
+  - `tobogan` (1,2 s, bucle): sentada como "sit", piernas estiradas, brazos arriba en V moviéndose.
+  - `columpio` (1 s, no se reproduce): 0 = piernas recogidas bajo el asiento y el cuerpo adelante, 1 = piernas
+    estiradas y el cuerpo atrás; las manos fijas en las cuerdas (a los lados, a la altura del pecho: más arriba
+    quedaban junto a la cara, por lo grande de la cabeza), así al echarse atrás los brazos se estiran.
+- **Tobogán** (`game/juegos.js`): ancla nueva `escalera` (al pie, 0,14 m antes de los peldaños). Trepa 4 ciclos
+  (3,2 s) subiendo 0,45 m por ciclo (el primer pie justo sobre el primer peldaño: las medidas de la animación están
+  repetidas en `ESCALERA`), pasa en 0,7 s a sentarse arriba de la rampa con un saltito, espera 0,35 s y baja.
+- **Columpio**: el péndulo lo simula el parque (`columpio()` en `places/park.js`: largo 2,2 m, 4 pasos por cuadro,
+  roce 0,07 con alguien y 0,25 vacío). `userData.impulso` (−1…1, la palanca vertical: arriba = adelante) suma una
+  aceleración de 0,38 rad/s²: a favor del movimiento da energía (hasta ~65°, después no suma más), en contra frena.
+  La pose sigue al impulso (adelante estira las piernas, atrás las recoge). Moverse ya no la baja (`seat.fijo`): se
+  baja saltando (`seat.saltar`, nuevo en `player.js`: sale con la velocidad del asiento, y en el aire casi no frena,
+  `player.lanzada`) o con la palanca hacia el lado. Aviso al sentarse. El obstáculo del columpio ahora son sólo los
+  postes (el de antes tapaba el paso y frenaba el salto).
+  - `player.js` le pasa la palanca a `seat.mover(dt, jx, jy)`.
+- Cámaras: el tobogán desde atrás de la escalera, el columpio de costado (del lado sin árboles).
+- Pruebas: columpio (empujando a tiempo el vaivén crece; moverse no la baja; al saltar sale volando) y tobogán (trepa,
+  arriba pasa a "tobogan", termina parada abajo). Capturas regeneradas (escalera nueva, columpios con física).
+  Chromium (dev y web): **75/75**.
+
 ## Juegos que se usan (después de la etapa 8)
 
 - Pedido: poder usar los juegos de la Plaza de Juegos, y también el columpio y el tobogán (los del Parque Central).

@@ -25,10 +25,12 @@ function updatePlayer(dt) {
   if (mag < 0.02) { jx = jy = 0; mag = 0; } else if (mag > 1) { jx /= mag; jy /= mag; }
   // moverse deja lo que estaba haciendo (sentada, bailando, saludando…)
   if (mag > 0 && ((ch.sp && ch.sp.stopOnMove) || (player.seat && !player.seat.fijo))) { avatarStop(ch); standUp(); }
+  const palanca = [jx, jy];   // para los juegos que se manejan con la palanca (el columpio)
   if (player.seat) { jx = jy = 0; mag = 0; }
   const fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
   const dx = rx * jx - fx * jy, dz = rz * jx - fz * jy;
-  const acc = 1 - Math.exp(-dt * (mag > 0 ? 10 : 12));
+  // lanzada desde un juego (saltar del columpio): en el aire casi no frena
+  const acc = 1 - Math.exp(-dt * (player.lanzada && player.air ? 0.6 : mag > 0 ? 10 : 12));
   player.vel.x += (dx * PLAYER_SPEED - player.vel.x) * acc;
   player.vel.z += (dz * PLAYER_SPEED - player.vel.z) * acc;
   if (!player.seat) {
@@ -45,18 +47,18 @@ function updatePlayer(dt) {
   if (input.jump && !player.air && !player.seat && state.mode === 'play') {
     player.vy = 8.2; player.air = true; emit('sonido', 'jump');
     avatarDo(ch, 'jump', { start: 0.36, ts: 0.75, stopOnMove: false });
-  }
+  } else if (input.jump && player.seat && player.seat.saltar && state.mode === 'play') player.seat.saltar();
   input.jump = false;
   if (ch.sp && ch.sp.name === 'walk_back' && !player.seat) {   // retrocede a la velocidad de la animación
     const v = 0.32 * ch.k; player.pos.x -= Math.sin(player.facing) * v * dt; player.pos.z -= Math.cos(player.facing) * v * dt;
     collide(player.pos, 0.5); player.pos.x = clamp(player.pos.x, -73, 73); player.pos.z = clamp(player.pos.z, -73, 73);
   }
-  if (player.air) { player.vy -= 24 * dt; player.y += player.vy * dt; if (player.y <= 0) { player.y = 0; player.vy = 0; player.air = false; } }
+  if (player.air) { player.vy -= 24 * dt; player.y += player.vy * dt; if (player.y <= 0) { player.y = 0; player.vy = 0; player.air = false; player.lanzada = false; } }
   player.speed01 = clamp(sp / PLAYER_SPEED, 0, 1);
   player.happy = Math.max(0, player.happy - dt);
   if (player.iceTime > 0) { player.iceTime -= dt; if (player.iceTime <= 0) setHolding(ch, null); }
   // sentada: en una banca (quieta) o en un juego que se mueve (S.mover la pone en su lugar, game/juegos.js)
-  if (player.seat) { const S = player.seat; if (S.mover) S.mover(dt); else { ch.root.position.set(S.x, S.y, S.z); ch.root.rotation.set(0, S.facing, 0); } }
+  if (player.seat) { const S = player.seat; if (S.mover) S.mover(dt, ...palanca); else { ch.root.position.set(S.x, S.y, S.z); ch.root.rotation.set(0, S.facing, 0); } }
   else { ch.root.position.set(player.pos.x, player.y, player.pos.z); ch.root.rotation.set(0, player.facing, 0); }
   updateAvatar(ch, dt, sp, player.happy > 0 ? 'feliz' : null);
 }

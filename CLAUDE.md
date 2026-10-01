@@ -25,7 +25,11 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
   - Zonas: el lugar hace `addZone({ id, x, z, r, label })` y quien sabe qué hacer registra `onZoneAction(id, fn)`.
   - Juegos que se usan (carrusel, columpio, tobogán…): zona `{ id: 'juego', juego: { tipo, … } }` con anclas
     (`ancla()` de `world/place.js`: dónde van las caderas, mirando a su +z); los mueve `game/juegos.js`
-    (tipos `asiento`, `cama`, `tobogan`; `juego.ocupado`, `juego.vista`). Bajarse = moverse.
+    (tipos `asiento`, `cama`, `tobogan`, `columpio`; `juego.ocupado`, `juego.vista`). Bajarse = moverse, salvo
+    `seat.fijo` (tobogán, columpio: se baja saltando, `seat.saltar`). El columpio es un péndulo simulado en
+    `places/park.js` que se impulsa con la palanca vertical (`userData.impulso`). Las animaciones de los juegos
+    (`subir_escalera`, `tobogan`, `columpio`) están en `tools/animaciones/juegos.mjs`; la de la escalera depende de
+    las medidas de la escalera del parque (repetidas en `ESCALERA` de `game/juegos.js`).
   - `engine/three.js` es el único que importa `three`.
   - Variables que se reasignan desde varios módulos viven en `state` (`state.mode`, `state.clock`, `state.currentZone`,
     `state.lastCar`, `state.shopSpec`, `state.ttModel/ttSpin/ttDrag`, `state.musicOn`, `state.joyId`, `state.preview`).
@@ -127,7 +131,7 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
   walk_back (−0,32 m/s), candle. Sólo el hueso Hips tiene traslación (en Y/Z), no hay root motion.
   Más 9 bailes (aura, seis_siete, sigma, take_l, siuu, griddy, spin, fresh, floss) armados en Node:
   `tools/animaciones/pose.mjs` (las utilidades de `reanimar_avatar.py` en JavaScript: poses, IK de pies y brazos,
-  curvas `K`; validado contra "wave") y `tools/animaciones/bailes.mjs`; `separar_glb.mjs` los hornea en
+  curvas `K`; validado contra "wave") y `tools/animaciones/bailes.mjs` (+ `juegos.mjs`: escalera, tobogán, columpio); `separar_glb.mjs` los hornea en
   `nina_base.glb` (`SIN_BAILES=1` para armarla sin ellos). En el menú Acción: `characters/catalog/acciones.js`
   (`AUTO_FACE` puede cambiar la cara con el tiempo: `[[segundo, cara], …]`).
 - Las texturas de los .glb se cargan como imágenes `data:` (no `blob:`): venía del visor donde se publicaba antes,

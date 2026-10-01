@@ -4,11 +4,12 @@
 //   { tipo: 'asiento', asientos: [ancla…] }                sentarse en el asiento más cercano (carrusel, columpio,
 //                                                           sube y baja); el juego se mueve más con alguien arriba
 //   { tipo: 'cama', centro: ancla }                         saltar en la cama elástica
-//   { tipo: 'tobogan', arriba: ancla, abajo: ancla, salida: ancla }   tirarse por el tobogán
+//   { tipo: 'tobogan', escalera, arriba, abajo, salida: ancla }   subir por la escalera y tirarse por el tobogán
+//   { tipo: 'columpio', asientos: [ancla…] }                columpiarse impulsándose con la palanca (ver columpio())
 // Opcional: `vista`, el giro de la cámara al subirse (cam.yaw: 0 = la cámara al lado +z de la jugadora).
 // `juego.ocupado` lo pone este módulo (el ancla del asiento que se usa, o true; false al bajarse): el lugar lo lee
 // para moverse distinto mientras alguien juega. Las anclas se crean con `ancla()` de world/place.js.
-// Para bajarse basta moverse (el tobogán no: termina solo).
+// Para bajarse basta moverse (el tobogán no: termina solo; del columpio se salta).
 import { THREE } from '../engine/three.js';
 import { state } from '../core/state.js';
 import { emit } from '../core/events.js';
@@ -16,6 +17,7 @@ import { collide } from '../world/physics.js';
 import { onZoneAction } from '../world/zones.js';
 import { avatarDo, avatarStop } from '../characters/animator.js';
 import { cam, player } from './actors.js';
+import { standUp } from './player.js';
 
 const _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _o = new THREE.Vector3(), _f = new THREE.Vector3();
 // la pose final de "sit" deja las caderas 0,158 m arriba y 0,10 m atrás de la raíz (por la escala del personaje)
@@ -72,30 +74,92 @@ function cama(juego) {
   });
 }
 
-const ESPERA = 0.45, BAJADA = 1.25;   // segundos arriba antes de tirarse y bajando
+// El tobogán: sube por la escalera (animación "subir_escalera", cuyo ciclo sube un peldaño: las medidas son las de
+// tools/animaciones/juegos.mjs), pasa a sentarse arriba de la rampa con los brazos arriba ("tobogan"), se tira
+// acelerando y queda parada abajo. `juego.escalera`: el ancla al pie de la escalera, mirándola.
+const ESCALERA = { ciclo: 0.8, peldano: 0.45, inicio: 0.49 - 0.18 * 1.4, ciclos: 4 };   // inicio: el pie en el 1.er peldaño
+const PASO = 0.2, ARRIBA = 0.7, ESPERA = 0.35, BAJADA = 1.25;   // segundos: pisar el 1.er peldaño, pasar a la rampa…
 function tobogan(juego) {
-  const ch = player.ch;
-  let t = 0;
-  avatarDo(ch, 'sit', { start: 0.95, ts: 1.2, stopOnMove: false });
-  const arriba = new THREE.Vector3(), abajo = new THREE.Vector3();
+  const ch = player.ch, k = ch.k / 1.4;   // la animación está hecha para la escala de Nina
+  const subida = ESCALERA.ciclo * ESCALERA.ciclos, fin = subida + ARRIBA;
+  let t = 0, sentada = false;
+  avatarDo(ch, 'subir_escalera', { loop: true, stopOnMove: false, instant: false });
+  const arriba = new THREE.Vector3(), abajo = new THREE.Vector3(), p0 = new THREE.Vector3(), p1 = new THREE.Vector3();
+  const q0 = new THREE.Quaternion(), q1 = new THREE.Quaternion();
   juego.arriba.getWorldPosition(arriba); juego.abajo.getWorldPosition(abajo);
+  juego.escalera.getWorldPosition(p0); juego.escalera.getWorldQuaternion(q0);
+  const alto = s => (ESCALERA.inicio * Math.min(1, s / PASO) + ESCALERA.peldano * s / ESCALERA.ciclo) * k;
   empezar(juego, {
     fijo: true,
     mover(dt) {
       t += dt;
-      const s = Math.min(1, Math.max(0, t - ESPERA) / BAJADA), e = s * s;   // acelera al bajar
-      sentarEn(ch, juego.arriba);   // la orientación de la rampa
-      ch.root.position.add(_p.copy(abajo).sub(arriba).multiplyScalar(e));
+      if (t < subida) {   // trepando
+        ch.root.position.copy(p0).y += alto(t); ch.root.quaternion.copy(q0);
+      } else if (t < fin) {   // de la escalera a sentarse arriba de la rampa, con un saltito
+        if (!sentada) { sentada = true; avatarDo(ch, 'tobogan', { loop: true, stopOnMove: false }); sentarEn(ch, juego.arriba); p1.copy(ch.root.position); q1.copy(ch.root.quaternion); }
+        const u = (t - subida) / ARRIBA, e = u * u * (3 - 2 * u);
+        ch.root.position.copy(p0).setY(p0.y + alto(subida)).lerp(p1, e).y += 0.3 * Math.sin(Math.PI * u);
+        ch.root.quaternion.copy(q0).slerp(q1, e);
+      } else {   // espera un poquito y se tira
+        const s = Math.min(1, Math.max(0, t - fin - ESPERA) / BAJADA), e = s * s;   // acelera al bajar
+        sentarEn(ch, juego.arriba);   // la orientación de la rampa
+        ch.root.position.add(_p.copy(abajo).sub(arriba).multiplyScalar(e));
+        if (t >= fin + ESPERA && t - dt < fin + ESPERA) emit('sonido', 'jump');
+        if (s >= 1) { avatarStop(ch); player.seat.salir(); player.seat = null; player.happy = 1.5; emit('sonido', 'adopt'); return; }
+      }
       player.pos.x = ch.root.position.x; player.pos.z = ch.root.position.z;
-      if (t >= ESPERA && t - dt < ESPERA) emit('sonido', 'jump');
-      if (s >= 1) { avatarStop(ch); player.seat.salir(); player.seat = null; player.happy = 1.5; emit('sonido', 'adopt'); }
     },
     alSalir() { juego.salida.getWorldPosition(_p); bajarEn(_p.x, _p.z, mirada(juego.salida)); },
   });
   player.seat.mover(0);
 }
 
-const TIPOS = { asiento, cama, tobogan };
+// El columpio, con física de péndulo (la simula el lugar: world/places/park.js). La palanca vertical impulsa:
+// adelante estira las piernas y echa el cuerpo atrás, atrás las recoge; a tiempo con el columpio lo hace subir más, a
+// destiempo lo frena. La animación "columpio" no se reproduce: su momento (0 recogida … 1 estirada) sigue al impulso.
+// Para bajarse: saltar (sale volando con el impulso que lleva) o la palanca hacia el lado.
+// En el ancla, el lugar pone `userData.angulo` y `userData.vel` (rad y rad/s, + hacia adelante) y `userData.largo`;
+// este módulo pone `userData.impulso` (−1…1) y `userData.ocupado`.
+function columpio(juego) {
+  const ch = player.ch;
+  let ancla = null, mejor = Infinity;
+  for (const a of juego.asientos) { a.getWorldPosition(_p); const d = Math.hypot(_p.x - player.pos.x, _p.z - player.pos.z); if (d < mejor) { mejor = d; ancla = a; } }
+  avatarDo(ch, 'columpio', { hold: true, stopOnMove: false });
+  let pose = 0.5;
+  const S = ancla.userData;
+  S.ocupado = true;
+  empezar(juego, {
+    fijo: true,
+    mover(dt, jx = 0, jy = 0) {
+      const empuje = Math.abs(jy) > 0.12 ? Math.max(-1, Math.min(1, -jy * 1.3)) : 0;   // palanca arriba = adelante
+      S.impulso = empuje;
+      pose += (0.5 + 0.5 * empuje - pose) * Math.min(1, dt * 5);
+      if (ch.sp && ch.sp.name === 'columpio') { ch.sp.a.timeScale = 0; ch.sp.a.time = pose * ch.sp.a.getClip().duration; }
+      sentarEn(ch, ancla);
+      player.happy = Math.abs(S.vel || 0) > 1 ? 0.3 : 0;
+      if (Math.abs(jx) > 0.6 && Math.abs(jx) > Math.abs(jy)) { avatarStop(ch); standUp(); }   // palanca al lado: se baja
+    },
+    saltar() {
+      // sale con la velocidad del asiento: tangente al arco del columpio
+      const v = (S.vel || 0) * (S.largo || 2.2), a = S.angulo || 0, f = mirada(ancla);
+      ancla.getWorldPosition(_p);
+      const y = Math.max(0, ch.root.position.y);
+      player.seat = null; juego.ocupado = false; S.impulso = 0; S.ocupado = false;
+      player.pos.set(_p.x, 0, _p.z); player.facing = f; player.y = y;
+      const adelante = Math.max(-7, Math.min(7, v * Math.cos(a)));
+      player.vel.set(Math.sin(f) * adelante, 0, Math.cos(f) * adelante);
+      player.vy = 5 + Math.max(0, v * Math.sin(a)); player.air = true; player.lanzada = true;
+      avatarDo(ch, 'jump', { start: 0.36, ts: 0.75, stopOnMove: false });
+      ch.root.rotation.set(0, f, 0);
+      player.happy = 1.2; emit('sonido', 'jump');
+    },
+    alSalir() { S.impulso = 0; S.ocupado = false; ancla.getWorldPosition(_p); bajarEn(_p.x, _p.z, mirada(ancla)); },
+  }, ancla);
+  sentarEn(ch, ancla);
+  emit('aviso', '¡Mueve la palanca adelante y atrás a tiempo para columpiarte! Para bajarte, salta');
+}
+
+const TIPOS = { asiento, cama, tobogan, columpio };
 onZoneAction('juego', z => {
   if (state.mode !== 'play' || player.air || player.seat) return;
   const f = TIPOS[z.juego.tipo]; if (f) f(z.juego);
