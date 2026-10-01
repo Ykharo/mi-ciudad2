@@ -35,13 +35,14 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
   de quien lee el cartel ("💬 Preguntar dónde es"). En la tarima las mascotas esperan abajo sentadas; en las
   graderías la jugadora se sienta a mirar (adelante o arriba), y al sentarse dos vecinos compiten en la tarima, por
   turnos, un baile cada vez (3 rondas, notas del jurado, ganador); si sigue sentada, tras un descanso compiten otros
-  dos vecinos. Su mascota se sienta a su lado en las graderías. 85/85 en Chromium.
+  dos vecinos. Su mascota se sienta a su lado en las graderías. **La jugadora compite**: "😎 Competir" delante de la
+  tarima (se anota si hay una en curso), elige 3 movimientos en una ventana y compite contra un vecino, por ahora
+  automático, con cámaras de cerca, desde abajo y girando. 91/91 en Chromium.
 
 **Competencia de aura (plan por etapas)**
 - A. El lugar ✅.
-- B. Una ronda simple: "Competir" empieza una ronda de ~40 s; bailar en la tarima llena el medidor (bonus por variedad
-  y por terminar con la Mirada sigma); panel final con puntaje y nivel (novata / pro / leyenda). `game/aura.js`,
-  `ui/panels/aura.js`, evento `'aura'`.
+- B. La jugadora compite ✅ (por ahora automático: elige 3 movimientos y se hacen solos). Falta: que interactúe
+  durante sus movimientos (eso es la etapa C) y un panel final con puntaje y nivel (novata / pro / leyenda).
 - C. El ritmo: música con pulso de 0,55 s, círculo que late, botón "✨ ¡Aura!" (perfecto / bien), medido con el reloj
   del juego.
 - D. Jurado y público con vida: animaciones `aplaudir`, `levantar_cartel`, `celebrar`; notas del jurado; rivales.

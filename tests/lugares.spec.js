@@ -221,14 +221,14 @@ test('subirse a un auto de la calle con E', async ({ page, jugar }) => {
   await expect.poll(() => modo(page)).toBe('play');
 });
 
-test('el Escenario del Aura: su nombre, la tarima (se sube) y "Competir"', async ({ page, jugar }) => {
+test('el Escenario del Aura: su nombre, la tarima (se sube) y "Competir" delante', async ({ page, jugar }) => {
   await jugar();
   await ir(page, 60.5, 49);   // la entrada, desde la Calle Mora (frente a la Plaza de Juegos)
   await expect(page.locator('#placeName')).toHaveText('Escenario del Aura');
   await ir(page, 60.5, 59);   // en la tarima: la jugadora queda arriba (0,5 m)
   await expect.poll(() => page.evaluate(() => window.__juego.player.y)).toBeCloseTo(0.5, 2);
-  await accion(page, '😎 Competir');
-  await expect(page.locator('#toast')).toContainText('¡Muy pronto!');
+  await ir(page, 58.7, 53.6);   // delante de la tarima: anotarse para competir
+  await expect(page.locator('#btnAction')).toHaveText('😎 Competir');
 });
 
 test('en la tarima la mascota espera abajo sentada; en las graderías se puede sentar a mirar', async ({ page, jugar }) => {
@@ -282,6 +282,71 @@ test('al sentarse en las graderías, dos concursantes compiten con tres bailes c
   await expect(page.locator('#toast')).toHaveText('🔄 ¡Llegan nuevos concursantes!');
   await expect.poll(async () => (await page.evaluate(() => window.__juego.competencia.concursantes())).map(q => q.id), { timeout: 15_000 })
     .not.toEqual(antes);
+});
+
+// la jugadora compite: la zona "Competir" está delante de la tarima, junto al escalón
+const COMPETIR = [58.7, 53.6];
+const C = page => page.evaluate(() => ({ jugando: window.__juego.competencia.jugando(), en: window.__juego.competencia.enCurso(),
+  toma: window.__juego.competencia.toma(), modo: window.__juego.state.mode, anim: window.__juego.player.ch.sp && window.__juego.player.ch.sp.name }));
+
+test('competir: la ventana para elegir 3 movimientos, y cancelar', async ({ page, jugar }) => {
+  await jugar();
+  await ir(page, ...COMPETIR);
+  await accion(page, '😎 Competir');
+  await expect(page.locator('#auraPanel')).toBeVisible();
+  expect((await C(page)).modo).toBe('aura');
+  await expect(page.locator('#auraGo')).toBeDisabled();
+  for (const id of ['griddy', 'floss']) await page.locator(`#auraPanel [data-b="${id}"]`).click();
+  await expect(page.locator('#auraGo')).toBeDisabled();       // faltan movimientos
+  await page.locator('#auraPanel [data-b="floss"]').click();    // tocar uno elegido lo quita
+  await expect(page.locator('#auraPanel .opt.on')).toHaveCount(1);
+  await page.locator('#auraCancel').click();
+  await expect(page.locator('#auraPanel')).toBeHidden();
+  await expect.poll(async () => (await C(page)).modo).toBe('play');
+});
+
+test('competir: elige 3 movimientos, los baila con cámaras de cerca y vuelve a jugar', async ({ page, jugar }) => {
+  await jugar();
+  await page.evaluate(() => window.__juego.competencia.rapido(4));
+  await ir(page, ...COMPETIR);
+  await accion(page, '😎 Competir');
+  for (const id of ['griddy', 'floss', 'sigma']) await page.locator(`#auraPanel [data-b="${id}"]`).click();
+  await page.locator('#auraGo').click();
+  await expect(page.locator('#auraPanel')).toBeHidden();
+  const anims = new Set(), tomas = new Set();
+  let s;
+  for (let i = 0; i < 400; i++) {
+    s = await C(page);
+    if (s.anim) anims.add(s.anim);
+    if (s.toma) tomas.add(s.toma);
+    if (i > 5 && !s.jugando) break;
+    await page.waitForTimeout(100);
+  }
+  expect(s.jugando).toBe(false);
+  expect([...anims].filter(a => ['griddy', 'floss', 'sigma'].includes(a)).length).toBeGreaterThanOrEqual(2);
+  for (const t of ['general', 'cerca', 'abajo', 'orbita', 'jurado']) expect([...tomas]).toContain(t);
+  await expect(page.locator('#toast')).toBeVisible();
+  await expect.poll(async () => (await C(page)).modo).toBe('play');
+  expect(await page.evaluate(() => window.__juego.player.seat)).toBeNull();
+  // vuelve a moverse con el teclado
+  const x0 = await page.evaluate(() => window.__juego.player.pos.x);
+  await page.keyboard.down('a'); await page.waitForTimeout(400); await page.keyboard.up('a');
+  expect(await page.evaluate(() => window.__juego.player.pos.x)).not.toBeCloseTo(x0, 1);
+});
+
+test('competir: si hay una competencia en curso, queda anotada y le toca al terminar', async ({ page, jugar }) => {
+  await jugar();
+  await page.evaluate(() => window.__juego.competencia.rapido(5));
+  await ir(page, 55.5, 53.5);
+  await accion(page, '🪑 Sentarse adelante');   // empieza una entre vecinos
+  await expect.poll(async () => (await C(page)).en).toBe(true);
+  await page.keyboard.down('s'); await page.waitForTimeout(200); await page.keyboard.up('s');
+  await ir(page, ...COMPETIR);
+  await accion(page, '😎 Competir');
+  await expect(page.locator('#toast')).toContainText('¡Te anotaste!');
+  await expect(page.locator('#auraPanel')).toBeHidden();
+  await expect(page.locator('#auraPanel')).toBeVisible({ timeout: 60_000 });   // al terminar la de los vecinos
+  expect((await C(page)).en).toBe(false);
 });
 
 test('quien lee el cartel da pistas de dónde es la competencia', async ({ page, jugar }) => {

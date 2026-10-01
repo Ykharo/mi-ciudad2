@@ -32,7 +32,9 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
     graderías compiten dos vecinos (3 bailes cada uno, jurado, ganador; pasos en `game/aura.js`, medidores de la
     pantalla con `ESCENARIO.medidor`; `window.__juego.competencia.rapido(x)` para probarla). Si sigue sentada, tras
     `DESCANSO` llegan otros dos (reserva de looks, `relevo()`). Un asiento con `userData.mascotas` sienta a las
-    mascotas a su lado (`waitAt`).
+    mascotas a su lado (`waitAt`). La jugadora compite con "😎 Competir" (delante de la tarima): ventana
+    `ui/panels/aura.js` (evento `'aura'`), `competir(movs)`; modo `'aura'`, la mueve un `player.seat` fijo y la cámara
+    `cam.cine` (tomas por paso: `toma`/`objetivo`; `game/camera.js` se desliza hacia ellas).
   - Zonas: el lugar hace `addZone({ id, x, z, r, label })` y quien sabe qué hacer registra `onZoneAction(id, fn)`.
     Con `opciones: [{ id, label }, …]` el HUD muestra un botón por opción (`#btnAction2`) y la acción recibe
     `fn(zona, opcion)` (tobogán y columpio: 'sentada' / 'de_pie').

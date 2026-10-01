@@ -37,6 +37,10 @@ function updateCamera(dt) {
     const cp = Math.cos(cam.pitch) * dist;
     _pos.set(_look.x + Math.sin(cam.yaw) * cp, _look.y + Math.sin(cam.pitch) * dist, _look.z + Math.cos(cam.yaw) * cp);
     k = 1 - Math.exp(-dt * 8);
+  } else if (state.mode === 'aura' && cam.cine) {
+    // la competencia del Escenario del Aura maneja la cámara (game/aura.js): se desliza hacia cada toma
+    _pos.copy(cam.cine.pos); _look.copy(cam.cine.look);
+    k = 1 - Math.exp(-dt * cam.cine.k);
   } else if (state.mode === 'play' || state.mode === 'intro') {
     if (state.mode === 'intro') cam.yaw += dt * 0.12;
     _look.set(p.x, 1.6 + player.y * 0.5, p.z);

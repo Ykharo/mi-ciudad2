@@ -5,6 +5,31 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## La jugadora compite en el Escenario del Aura (01-10-2026)
+
+- Pedido: al acercarse al escenario poder elegir participar; si hay una competencia en curso, que le toque al
+  terminar; elegir 3 movimientos en una ventana; la competencia por ahora automática, con cámaras de cerca y desde
+  abajo y transiciones (para más adelante poder interactuar durante los movimientos).
+- "😎 Competir" pasó de la tarima a delante de ella, junto al escalón (`ESCENARIO.frente`). Si hay una competencia en
+  curso: "📝 ¡Te anotaste!…" y, apenas termina (si está a menos de 16 m y jugando), se abre la ventana; si no, se abre
+  ya (y se para si estaba sentada en las graderías).
+- Ventana (`ui/panels/aura.js`, `#auraPanel`; la abre el evento `'aura'` `{ que: 'elegir', bailes }`): los 10 bailes,
+  se tocan en orden (número en la esquina, tres casillas arriba), tocar uno elegido lo quita; "¡A competir!" con 3;
+  "Cancelar" vuelve a jugar. Modo `'aura'` (`enterMenu`: sin HUD ni palanca).
+- La competencia (`competir(movs)` en `game/aura.js`): los dos vecinos se despiden y bajan; llega un rival nuevo
+  (reserva) y la jugadora camina a su lugar (izquierda); presentación, 3 rondas por turnos (ella primero), jurado,
+  ganador ("🏆 ¡Ganaste!…" o gana el rival); al final ella baja delante de la tarima, llega otro vecino a su lugar y
+  vuelve el modo 'play'. Los puntos todavía son al azar como los de los vecinos. La lleva un "asiento" fijo
+  (`player.seat` con `mover` y `vel`: `player.js` ahora usa `seat.vel` para caminar).
+  - El núcleo de la competencia (`competir2`) es el mismo para vecinos y para ella.
+- **Cámaras** (`cam.cine`, rama nueva del modo 'aura' en `game/camera.js`, que se desliza hacia cada toma con su `k`:
+  ésa es la transición). Cada paso trae `toma` (y `objetivo`): general (desde el público), cerca (de frente), abajo
+  (desde el piso de la tarima mirando hacia arriba), orbita (girando alrededor), lado, jurado (desde la tarima),
+  ganador. En sus bailes: 1.º cerca → abajo, 2.º orbita, 3.º abajo → lado; los del rival, general.
+- Ganchos: `competencia.jugando()`, `competencia.toma()`. Pruebas nuevas: ventana y cancelar; competir completo
+  (acelerado: baila lo elegido, pasan las tomas, vuelve a jugar y a moverse); anotarse con una en curso. Capturas sin
+  cambios. Chromium (dev y web): **91/91**.
+
 ## Graderías: la mascota se sienta al lado; competencias seguidas (01-10-2026)
 
 - Pedido: al sentarse en las graderías, la mascota se sienta junto a la jugadora mirando el escenario. Cada puesto

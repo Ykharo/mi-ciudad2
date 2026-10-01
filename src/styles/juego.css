@@ -151,6 +151,16 @@ button:focus-visible{outline:4px solid var(--sky);outline-offset:3px;}
 #petPanel .opt.on{border-color:var(--mint);background:#EAFBF4;box-shadow:0 3px 0 #9DE8CF;}
 .opt:active{transform:translateY(2px);}
 #wardrobePanel .phead{background:var(--pink);}
+/* la ventana para elegir los 3 movimientos de la competencia de aura: cada elegido muestra su número */
+#auraPanel .phead{background:#9B6BF0;}
+#auraPanel .opt{position:relative;}
+#auraPanel .opt.on{border-color:#9B6BF0;background:#F3EDFF;box-shadow:0 3px 0 #CDB8FF;}
+#auraPanel .opt .n{position:absolute;top:-8px;right:-8px;width:28px;height:28px;border-radius:50%;background:#9B6BF0;color:#fff;
+  display:grid;place-items:center;font:800 16px/1 var(--display);border:3px solid #fff;}
+#auraPanel .elegidos{display:flex;gap:8px;margin-top:6px;}
+#auraPanel .elegidos span{flex:1;min-height:44px;border:3px dashed var(--line);border-radius:14px;display:grid;place-items:center;
+  font:800 15px/1.1 var(--body);color:var(--ink-soft);text-align:center;padding:4px;}
+#auraPanel .elegidos span.lleno{border-style:solid;border-color:#9B6BF0;color:var(--ink);background:#F3EDFF;}
 /* muestra "como viene": el color original de la prenda, con una flechita */
 .sw.fabrica{position:relative;}
 .sw.fabrica::after{content:"↩";position:absolute;inset:0;display:grid;place-items:center;font:800 18px/1 var(--display);color:#fff;

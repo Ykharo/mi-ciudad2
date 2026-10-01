@@ -42,7 +42,8 @@ function updatePlayer(dt) {
     }
     player.pos.x = clamp(player.pos.x, -73, 73); player.pos.z = clamp(player.pos.z, -73, 73);
   }
-  const sp = player.seat ? 0 : Math.hypot(player.vel.x, player.vel.z);
+  // (un "asiento" que la lleva caminando, como la competencia de aura, dice a qué velocidad: `seat.vel`)
+  const sp = player.seat ? player.seat.vel || 0 : Math.hypot(player.vel.x, player.vel.z);
   if (sp > 0.4 && state.mode === 'play') player.facing = lerpAngle(player.facing, Math.atan2(player.vel.x, player.vel.z), 1 - Math.exp(-dt * 12));
   if (input.jump && !player.air && !player.seat && state.mode === 'play') {
     player.vy = 8.2; player.air = true; emit('sonido', 'jump');

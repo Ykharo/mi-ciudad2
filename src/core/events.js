@@ -7,6 +7,7 @@
 //   'auto'   ('subir' | 'bajar', auto)
 //   'motor'  (velocidad, tono)      cada cuadro mientras se maneja
 //   'personaje' (id)                se cambió el personaje con que se juega
+//   'aura'   ({ que, … })            competencia de aura: 'elegir' (abrir la ventana de los 3 movimientos, con `bailes`)
 const listeners = new Map();
 
 export function on(name, fn) {

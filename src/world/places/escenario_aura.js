@@ -48,6 +48,10 @@ ESCENARIO.lados = [local(-3.4, -4), local(3.4, -4)].map(p => ({ ...p, mira: ESCE
 ESCENARIO.centro = { ...local(0, -2.2), mira: ESCENARIO.giro };
 // por dónde salen y entran los concursantes cuando hay una competencia nueva: detrás de la tarima, a cada lado
 ESCENARIO.salidas = [local(-7.5, -5.5), local(7.5, -5.5)];
+// "😎 Competir": delante de la tarima, al lado del escalón; ahí vuelve la jugadora después de competir
+const FRENTE = local(1.8, 4.4);
+ESCENARIO.frente = { ...FRENTE, mira: hacia(FRENTE, ESCENARIO.tarima) };
+ESCENARIO.local = local;   // (para que game/aura.js ubique sus cámaras)
 ESCENARIO.medidor = null;
 // el juego de las graderías (sentarse a mirar): se crea aquí para que game/aura.js le ponga `alSentarse` antes de que
 // se arme la ciudad; build() le agrega los asientos y la vista
@@ -151,9 +155,8 @@ function escenario({ world, addObsRot, addZone, onFrame }) {
   });
   const letrero = makeSign('Escenario del Aura', '#9B6BF0', '#FFFFFF', 5.6); letrero.position.set(0, 3.6, 11.8); g.add(letrero);
   world.add(g);
-  // subirse a competir (por ahora sólo avisa: lo hace game/aura.js)
-  const z = local(TARIMA.lx, TARIMA.lz + 1);
-  addZone({ id: 'aura', x: z.x, z: z.z, r: 3.5, label: '😎 Competir' });
+  // anotarse para competir, delante de la tarima (lo hace game/aura.js)
+  addZone({ id: 'aura', x: ESCENARIO.frente.x, z: ESCENARIO.frente.z, r: 2.0, label: '😎 Competir' });
 }
 
 definePlace({ id: 'escenario', nombre: 'Escenario del Aura', articulo: 'el', orden: 90, area: manzana(ESCENARIO.x, ESCENARIO.z), build: escenario });
