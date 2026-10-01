@@ -59,7 +59,9 @@ function buildCity() {
     const a = r() * TAU, d = 82 + r() * 26;
     const x = Math.cos(a) * d, z = Math.sin(a) * d;
     if (LINES.some(L => Math.abs(x - L) < 5 || Math.abs(z - L) < 5)) continue;
-    tree(x, z, 1 + r() * 0.6, r() < 0.45 ? 2 : 0);
+    // (el tamaño y el tipo se sortean igual aunque no se plante: así los demás árboles no se mueven)
+    const s = 1 + r() * 0.6, kind = r() < 0.45 ? 2 : 0;
+    if (!ocupada(x, z, 2.5)) tree(x, z, s, kind);
   }
   // trees along inner blocks
   [[8, -32], [32, -32], [8, 32], [32, 32], [-32, 32], [-8, 8.5], [32, 8.5]].forEach(([x, z], i) => tree(x, z, 0.9, i % 2));

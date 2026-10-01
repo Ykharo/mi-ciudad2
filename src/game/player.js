@@ -2,7 +2,7 @@
 import { state } from '../core/state.js';
 import { emit } from '../core/events.js';
 import { clamp, lerpAngle, pick } from '../core/math.js';
-import { collide } from '../world/physics.js';
+import { collide, sueloEn } from '../world/physics.js';
 import { onZoneAction } from '../world/zones.js';
 import { avatarDo, avatarStop, updateAvatar } from '../characters/animator.js';
 import { setHolding } from '../characters/props.js';
@@ -53,7 +53,10 @@ function updatePlayer(dt) {
     const v = 0.32 * ch.k; player.pos.x -= Math.sin(player.facing) * v * dt; player.pos.z -= Math.cos(player.facing) * v * dt;
     collide(player.pos, 0.5); player.pos.x = clamp(player.pos.x, -73, 73); player.pos.z = clamp(player.pos.z, -73, 73);
   }
-  if (player.air) { player.vy -= 24 * dt; player.y += player.vy * dt; if (player.y <= 0) { player.y = 0; player.vy = 0; player.air = false; player.lanzada = false; } }
+  // el suelo puede estar más alto (una tarima: world/physics.js, addPiso)
+  const suelo = sueloEn(player.pos.x, player.pos.z);
+  if (player.air) { player.vy -= 24 * dt; player.y += player.vy * dt; if (player.y <= suelo) { player.y = suelo; player.vy = 0; player.air = false; player.lanzada = false; } }
+  else if (!player.seat) player.y = suelo;
   player.speed01 = clamp(sp / PLAYER_SPEED, 0, 1);
   player.happy = Math.max(0, player.happy - dt);
   if (player.iceTime > 0) { player.iceTime -= dt; if (player.iceTime <= 0) setHolding(ch, null); }

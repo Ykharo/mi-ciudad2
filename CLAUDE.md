@@ -22,6 +22,11 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
     (`world/place.js`; `city.js` los encuentra solo). `ctx`: `world`, `scene`, `addObs`, `addObsRot`, `addZone`,
     `onFrame`. `area` = `[x0, x1, z0, z1]` da el nombre del lugar; no cambiar el `orden` de los que existen.
     Un lugar en una manzana de afuera reemplaza su casa (`ocupada` en `city.js`). Ej.: `places/plaza.js`.
+    `area: manzana(x, z)` (`world/layout.js`) calcula la manzana; `articulo` ('el'/'la') para las frases.
+    Pisos más altos que el suelo (una tarima): `addPiso` (`world/physics.js`); la jugadora sube sola.
+  - **Escenario del Aura** (`places/escenario_aura.js`): se cambia de lugar sólo con `ESCENARIO = { x, z, giro }`
+    (giro en múltiplos de 90°); jurado, público y las pistas del cartel (`game/aura.js`, `pistasEscenario`) se ajustan
+    solos. El cartel tiene dos botones: mirar y "💬 Preguntar dónde es" (`game/cartel.js`).
   - Zonas: el lugar hace `addZone({ id, x, z, r, label })` y quien sabe qué hacer registra `onZoneAction(id, fn)`.
     Con `opciones: [{ id, label }, …]` el HUD muestra un botón por opción (`#btnAction2`) y la acción recibe
     `fn(zona, opcion)` (tobogán y columpio: 'sentada' / 'de_pie').
@@ -36,7 +41,7 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
   - Variables que se reasignan desde varios módulos viven en `state` (`state.mode`, `state.clock`, `state.currentZone`,
     `state.lastCar`, `state.shopSpec`, `state.ttModel/ttSpin/ttDrag`, `state.musicOn`, `state.joyId`, `state.preview`).
   - `main.js` importa todos los módulos en el orden original de las secciones: ese orden define el arranque.
-  - Ganchos de prueba `window.__juego` (state, player, npcs, cars, `teleport(x, z)`): sólo en desarrollo o con `?test`.
+  - Ganchos de prueba `window.__juego` (state, player, npcs, cars, cam, `teleport(x, z)`): sólo en desarrollo o con `?test`.
 - `src/styles/juego.css` — estilos.
 - Imágenes del juego en `src/assets/imagenes/` (se importan desde el código; Vite las publica como archivos aparte). Cartel de la competencia de farmear aura: `world/places/cartel.js` (letrero + zona "Mirar el
   cartel") y `game/cartel.js` (espectador que lo lee con la animación `mirar_cartel`); `main.js` espera la imagen.

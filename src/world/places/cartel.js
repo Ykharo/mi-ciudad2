@@ -49,12 +49,15 @@ function cartel({ world, addObs, addZone }) {
   imagen.position.set(0, BASE + ALTO / 2, 0.005); g.add(imagen);
   world.add(g);
   addObs(CARTEL.x, CARTEL.z, 2.0, 0.55, BASE + ALTO);
-  // la jugadora lo mira desde un lado del frente (el espectador está al otro)
+  // la jugadora lo mira desde un lado del frente (el espectador está al otro), o le pregunta al espectador dónde es la
+  // competencia (le da pistas: game/cartel.js)
   const z = CARTEL.frente(4.0, 1.0);
-  addZone({ id: 'cartel', x: z.x, z: z.z, r: 2.0, label: '👀 Mirar el cartel' });
+  const opciones = [{ id: 'mirar', label: '👀 Mirar el cartel' }, { id: 'preguntar', label: '💬 Preguntar dónde es' }];
+  addZone({ id: 'cartel', x: z.x, z: z.z, r: 2.0, label: opciones[0].label, opciones });
 }
 
 // sin área propia: está en la manzana de la Boutique
 definePlace({ id: 'cartel', nombre: 'Cartel de la competencia', orden: 20, build: cartel });
 
-export { CARTEL, cartelListo };
+// la imagen del cartel también sale en la pantalla gigante del Escenario del Aura
+export { CARTEL, cartelListo, textura as cartelTextura };

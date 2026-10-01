@@ -14,7 +14,7 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
 - Etapa 8: los lugares se registran con `definePlace` (`world/place.js`) y `city.js` los encuentra solos. Lugar nuevo
   hecho con un solo archivo: **Plaza de Juegos** (`places/plaza.js`, frente al Refugio cruzando la Avenida Menta).
 - Juegos que se usan: carrusel, cama elástica y sube y baja de la plaza; columpios y tobogán del parque
-  (`game/juegos.js`, zonas `juego` con anclas). **Sin commit**: el tobogán se sube por la escalera (animaciones
+  (`game/juegos.js`, zonas `juego` con anclas). Todo con commit (01-10-2026). El tobogán se sube por la escalera (animaciones
   `subir_escalera` y `tobogan`) y el columpio tiene física de péndulo que se impulsa con la palanca (animación
   `columpio`); se baja saltando. Los dos se pueden usar sentada o de pie (dos botones). Los modelos se piden con su
   huella (`?v=`), así el navegador no se queda con uno viejo. 77/77 en Chromium.
@@ -30,11 +30,26 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
   Floss) + `mirar_cartel` + las de los juegos (`subir_escalera`, `tobogan`, `columpio` y sus versiones `_de_pie`). Cartel de la competencia de farmear aura frente a la Boutique, con alguien leyéndolo.
 - Probador (`src/debug/probador.html`) con comparador de referencias (vistas frente/lado, transparencia, alinear).
 
+- **Competencia de aura, etapa A hecha** (sin commit): el Escenario del Aura en la Calle Mora frente a la Plaza de
+  Juegos (`world/places/escenario_aura.js`; se cambia de lugar con `ESCENARIO`), jurado y público sentados, y pistas
+  de quien lee el cartel ("💬 Preguntar dónde es"). 81/81 en Chromium.
+
+**Competencia de aura (plan por etapas)**
+- A. El lugar ✅.
+- B. Una ronda simple: "Competir" empieza una ronda de ~40 s; bailar en la tarima llena el medidor (bonus por variedad
+  y por terminar con la Mirada sigma); panel final con puntaje y nivel (novata / pro / leyenda). `game/aura.js`,
+  `ui/panels/aura.js`, evento `'aura'`.
+- C. El ritmo: música con pulso de 0,55 s, círculo que late, botón "✨ ¡Aura!" (perfecto / bien), medido con el reloj
+  del juego.
+- D. Jurado y público con vida: animaciones `aplaudir`, `levantar_cartel`, `celebrar`; notas del jurado; rivales.
+- E. Premio y guardado: corona (accesorio nuevo) al llegar a leyenda, `aura: { mejor, corona }` en el guardado.
+- F. (Opcional) flecha o huellas desde el cartel, brillo de aura, prueba en iPad.
+
 **Siguiente (a elegir)**
 - Lo que falta de las hojas: jeans baggy, reloj, zapatillas deportivas, clip de estrella; celular y botella en la
   mano (necesitan poses).
 - Nombres definitivos de la amiga y el amigo (una línea en `characters/catalog/personajes.js`).
-- Una zona de competencia de aura (que el cartel lleve a algo: bailar y ganar puntos).
+- Competencia de aura: etapa B (arriba).
 - Menú Acción con 18 opciones: separar en "Acciones" y "Bailes" si molesta.
 - Cartel: que la cámara se ajuste al mirarlo, o abrir la imagen en grande.
 - Etapa 7 del plan: altura de sentarse medida del esqueleto (quitar el 0,158 fijo); caras alternativas.

@@ -40,4 +40,4 @@ function iceCreamShop({ world, addObs, addZone }) {
   addZone({ id: 'icecream', x: x + 1.2, z: z - d / 2 - 2.0, r: 3.0, label: '🍦 Pedir un helado' });
 }
 
-definePlace({ id: 'heladeria', nombre: 'Heladería', orden: 40, area: [-34.5, -5.5, 5.5, 21], build: iceCreamShop });
+definePlace({ id: 'heladeria', nombre: 'Heladería', articulo: 'la', orden: 40, area: [-34.5, -5.5, 5.5, 21], build: iceCreamShop });

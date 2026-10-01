@@ -5,6 +5,31 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Competencia de aura, etapa A: el Escenario del Aura (01-10-2026)
+
+- Pedido: sólo la etapa A del plan de la competencia (ver `PLAN.md`, "Competencia de aura"), en la **Calle Mora frente
+  a la Plaza de Juegos**, fácil de cambiar de lugar más adelante, y que quien lee el cartel dé pistas de dónde es.
+- `world/places/escenario_aura.js`: todo se arma desde `ESCENARIO = { x, z, giro }` (hoy 60,5; 58; mirando a −z, la
+  calle). La manzana sale sola (`manzana(x, z)`, nuevo en `world/layout.js`), y con ella el nombre del lugar y la casa
+  que se quita. Tarima redonda (r 5,2, 0,5 m de alto, con focos chicos en el borde y un escalón), pantalla gigante con el
+  cartel al medio y dos medidores de aura (segmentos arcoíris que suben y bajan), cuatro focos en postes con su haz
+  barriendo la tarima (conos transparentes con `lookAt`), mesa del jurado con tres sillas, graderías de tres filas, arco
+  de entrada con letrero, piso propio. Zona "😎 Competir" en la tarima: por ahora avisa "¡Muy pronto!".
+  - Jurado (3) y público (5) sentados (`game/aura.js`, looks sorteados con semilla y cargados con los de los vecinos);
+    sólo se animan si se ven.
+  - **Pisos**: `addPiso` / `sueloEn` en `world/physics.js` (círculos o rectángulos más altos que el suelo); la jugadora
+    camina y cae sobre ellos (`player.js`). Las mascotas todavía no (quedan a nivel del suelo).
+- **Pistas**: el cartel tiene ahora dos botones, "👀 Mirar el cartel" y "💬 Preguntar dónde es". Quien lo lee se da
+  vuelta, saluda y dice una pista en su globo (y completa en el aviso), una distinta cada vez: la calle, el lugar de
+  enfrente, hacia dónde queda mirando el cartel y a cuántos metros, y "busca los focos". Las arma `pistasEscenario()`
+  (`game/aura.js`) desde la posición del escenario: la calle más cercana, el lugar que queda al otro lado de esa calle
+  (con `articulo`, nuevo en `definePlace`) y el ángulo desde el espectador. Después vuelve a leer el cartel.
+- `city.js`: el anillo de árboles de las afueras ya no planta dentro de una manzana ocupada (había uno pegado a la
+  pantalla); sortea igual el tamaño y el tipo para que los demás árboles no se muevan.
+- Ganchos de prueba: `window.__juego.cam` (para fotos desde un ángulo dado).
+- Pruebas nuevas: el escenario (nombre, subirse a la tarima, "Competir") y las pistas (las cuatro y vuelta a empezar).
+  Capturas regeneradas. Chromium (dev y web): **81/81**.
+
 ## Tobogán y columpio de pie o sentada; modelos con huella (01-10-2026)
 
 - El usuario veía a Nina **de pie** en el columpio y tirándose del tobogán: su navegador seguía con un

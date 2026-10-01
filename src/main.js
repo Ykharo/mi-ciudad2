@@ -40,6 +40,7 @@ import { MAX_CARS, addPet, cam, ownedCars, player } from './game/actors.js';
 import { loadSave, save } from './game/save.js';
 import { cargarPersonajes } from './game/personajes.js';
 import { crearEspectador, updateEspectador } from './game/cartel.js';
+import { crearPublico, lookPublico, updatePublico } from './game/aura.js';
 import { PERSONAJES } from './characters/catalog/personajes.js';
 import { updatePlayer } from './game/player.js';
 import './game/juegos.js';
@@ -73,6 +74,7 @@ function frame(now) {
   else followChain(player.pets, player.pos, dt, state.clock, 1.7);
   updateNPCs(dt, state.clock);
   updateEspectador(dt);
+  updatePublico(dt);
   updatePreview(dt, state.clock);
   updateZones();
   for (const f of animated) f(state.clock, dt);
@@ -97,10 +99,11 @@ async function boot() {
   cargarPersonajes(saved);   // con quién se juega y el look de cada uno
   // la base y las prendas del personaje, de los vecinos y del espectador del cartel (la amiga o el amigo); y la imagen
   // del cartel
-  const vecinos = lookVecinos(7);
-  await Promise.all([loadCharacters([player.look, PERSONAJES.amiga.look, PERSONAJES.amigo.look, ...vecinos]), cartelListo]);
+  const vecinos = lookVecinos(7), publico = lookPublico();   // (y el jurado y el público del Escenario del Aura)
+  await Promise.all([loadCharacters([player.look, PERSONAJES.amiga.look, PERSONAJES.amigo.look, ...vecinos, ...publico]), cartelListo]);
   player.ch = makeAvatar(player.look);
   crearEspectador();
+  crearPublico(publico);
   const pets = saved ? (saved.pets || []) : [{ kind: 'perro', color: '#E9B77A', name: 'Toby' }];
   pets.slice(0, MAX_PETS).forEach(p => { if (PET_KINDS.some(k => k.id === p.kind)) addPet(p.kind, p.color || '#E9B77A', String(p.name || 'Toby').slice(0, 12)); });
   // your own cars, parked where you left them

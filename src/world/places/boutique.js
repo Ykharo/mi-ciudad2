@@ -60,4 +60,4 @@ function boutique({ world, addObs, addZone }) {
   addZone({ id: 'boutique', x, z: z + d / 2 + 3.2, r: 3.4, label: '👗 Vestidor' });
 }
 
-definePlace({ id: 'boutique', nombre: 'Boutique Arcoíris', orden: 10, area: [5.5, 34.5, -34.5, -5.5], build: boutique });
+definePlace({ id: 'boutique', nombre: 'Boutique Arcoíris', articulo: 'la', orden: 10, area: [5.5, 34.5, -34.5, -5.5], build: boutique });

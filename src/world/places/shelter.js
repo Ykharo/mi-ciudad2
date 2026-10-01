@@ -45,4 +45,4 @@ function shelter({ world, scene, addObs, addZone, onFrame }) {
   addZone({ id: 'pets', x, z: z - 9 / 2 - 2.4, r: 3.4, label: '🐾 Adoptar mascota' });
 }
 
-definePlace({ id: 'refugio', nombre: 'Refugio de Mascotas', orden: 30, area: [5.5, 34.5, 5.5, 34.5], build: shelter });
+definePlace({ id: 'refugio', nombre: 'Refugio de Mascotas', articulo: 'el', orden: 30, area: [5.5, 34.5, 5.5, 34.5], build: shelter });

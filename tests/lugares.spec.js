@@ -221,6 +221,37 @@ test('subirse a un auto de la calle con E', async ({ page, jugar }) => {
   await expect.poll(() => modo(page)).toBe('play');
 });
 
+test('el Escenario del Aura: su nombre, la tarima (se sube) y "Competir"', async ({ page, jugar }) => {
+  await jugar();
+  await ir(page, 60.5, 49);   // la entrada, desde la Calle Mora (frente a la Plaza de Juegos)
+  await expect(page.locator('#placeName')).toHaveText('Escenario del Aura');
+  await ir(page, 60.5, 59);   // en la tarima: la jugadora queda arriba (0,5 m)
+  await expect.poll(() => page.evaluate(() => window.__juego.player.y)).toBeCloseTo(0.5, 2);
+  await accion(page, '😎 Competir');
+  await expect(page.locator('#toast')).toContainText('¡Muy pronto!');
+});
+
+test('quien lee el cartel da pistas de dónde es la competencia', async ({ page, jugar }) => {
+  await jugar();
+  await ir(page, 8.7, -5.5);
+  const preguntar = async () => {
+    await expect(page.locator('#btnAction2')).toHaveText('💬 Preguntar dónde es');
+    await page.locator('#btnAction2').click({ force: true });
+    await expect(page.locator('#toast')).toHaveClass(/show/);
+    return page.locator('#toast').textContent();
+  };
+  const pistas = [];
+  for (let i = 0; i < 5; i++) { pistas.push(await preguntar()); await page.waitForTimeout(150); }
+  expect(pistas[0]).toContain('Calle Mora');
+  expect(pistas[1]).toContain('frente a la Plaza de Juegos');
+  expect(pistas[2]).toMatch(/a la derecha, a unos \d+ metros/);
+  expect(pistas[3]).toContain('focos de colores');
+  expect(pistas[4]).toBe(pistas[0]);   // vuelve a empezar
+  // se da vuelta a hablar y después vuelve a leer el cartel
+  const anim = () => page.evaluate(() => window.__juego.espectador().sp && window.__juego.espectador().sp.name);
+  await expect.poll(anim, { timeout: 8000 }).toBe('mirar_cartel');
+});
+
 test('el cartel de la competencia: alguien lo lee y la jugadora también lo puede mirar', async ({ page, jugar }) => {
   await jugar();
   // el espectador (la amiga, porque se juega con Nina) está leyendo el cartel

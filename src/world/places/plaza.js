@@ -122,4 +122,4 @@ function plaza(ctx) {
   flowers(47.2, 15.6, 1.4, 3, 10, 51); flowers(47.2, 24.4, 1.4, 3, 10, 52); flowers(72.6, 20, 1.2, 3, 8, 53);
 }
 
-definePlace({ id: 'plaza', nombre: 'Plaza de Juegos', orden: 80, area: [45.5, 76, 5.5, 34.5], build: plaza });
+definePlace({ id: 'plaza', nombre: 'Plaza de Juegos', articulo: 'la', orden: 80, area: [45.5, 76, 5.5, 34.5], build: plaza });

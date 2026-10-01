@@ -20,4 +20,17 @@ function collide(p, r, skip) {
   }
 }
 
-export { addObs, addObsRot, collide, obstacles };
+// Pisos más altos que el suelo (una tarima): círculos { x, z, r, h } o rectángulos { x, z, hw, hd, h }. Quien camina
+// encima queda a esa altura (la jugadora: game/player.js); se sube sin escalar, así que conviene que sean bajos.
+const pisos = [];
+function addPiso(p) { pisos.push(p); }
+function sueloEn(x, z) {
+  let h = 0;
+  for (const p of pisos) {
+    const dentro = p.r ? Math.hypot(x - p.x, z - p.z) < p.r : Math.abs(x - p.x) < p.hw && Math.abs(z - p.z) < p.hd;
+    if (dentro && p.h > h) h = p.h;
+  }
+  return h;
+}
+
+export { addObs, addObsRot, addPiso, collide, obstacles, sueloEn };

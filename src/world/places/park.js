@@ -112,6 +112,6 @@ function park(ctx) {
   [[-12, -12], [12, -12], [-12, 12], [12, 12], [-12.5, -6], [-6, -12.5], [13, 5]].forEach(([a, b], i) => tree(cx + a, cz + b, 1 + (i % 3) * 0.12, i % 3 === 0 ? 1 : 0));
 }
 
-definePlace({ id: 'parque', nombre: 'Parque Central', orden: 50, area: [-34.5, -5.5, -34.5, -5.5], build: park });
+definePlace({ id: 'parque', nombre: 'Parque Central', articulo: 'el', orden: 50, area: [-34.5, -5.5, -34.5, -5.5], build: park });
 
 export { bench };   // la plaza de juegos también tiene bancas
