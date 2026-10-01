@@ -1,16 +1,6 @@
-// La versión de un solo archivo no necesita internet: Three.js y el modelo van adentro.
-// Sólo las fuentes de Google quedan afuera, y el juego tiene letras de respaldo.
+// El juego no depende de nada de internet (Three.js va empaquetado, los modelos se sirven con el juego): sólo las
+// fuentes de Google quedan afuera, y el juego tiene letras de respaldo.
 import { test, expect } from './ayudantes.js';
-import { pathToFileURL } from 'node:url';
-import { resolve } from 'node:path';
-
-test('abre como archivo, con doble clic', async ({ page }) => {
-  await page.goto(pathToFileURL(resolve('dist/unico/ciudad-arcoiris.html')).href);
-  await expect(page.locator('#btnPlay')).toHaveText('¡A jugar!', { timeout: 60_000 });
-  await page.locator('#btnPlay').click();
-  await expect(page.locator('#start')).toBeHidden();
-  await expect(page.locator('#placeName')).toHaveText('Paseo Algodón');
-});
 
 test('arranca sin red', async ({ page, context, jugar, errores, baseURL }) => {
   const bloqueadas = [];

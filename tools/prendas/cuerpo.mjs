@@ -385,6 +385,21 @@ export function calcomania(m, figura, lugar, dentro, grosor, mat) {
   cascara(m, V, orientar(V, F, () => dentro), grosor, mat);
 }
 
+// Pega una figura sobre una superficie cualquiera (malla de rayos): `centro` cerca de la superficie, `normal` hacia
+// afuera, `arriba` = hacia dónde queda el "arriba" de la figura, `giro` (grados) la rota en su plano. Cada punto se
+// proyecta sobre la superficie desde afuera, 3 mm por encima.
+export function calcomaniaSobre(m, superficie, centro, normal, arriba, figura, grosor, mat, giro = 0) {
+  const n = normal.clone().normalize(), u0 = arriba.clone().addScaledVector(n, -arriba.dot(n)).normalize();
+  const d0 = new THREE.Vector3().crossVectors(u0, n);
+  const g = giro * Math.PI / 180, u = u0.clone().multiplyScalar(Math.cos(g)).addScaledVector(d0, Math.sin(g)), d = new THREE.Vector3().crossVectors(u, n);
+  const lugar = (x, y) => {
+    const o = centro.clone().addScaledVector(d, x).addScaledVector(u, y).addScaledVector(n, 0.25);
+    const t = rayo(superficie, o, n.clone().negate());
+    return o.addScaledVector(n, -((t ?? 0.25) - 0.003));
+  };
+  calcomania(m, figura, lugar, centro.clone().addScaledVector(n, -0.1), grosor, mat);
+}
+
 // Superficie con grosor (como el modificador Solidify): exterior, interior y bordes.
 export function cascara(m, V, F, grosor, matFuera, matDentro = matFuera, matBorde = matFuera, uv, pesos, afuera) {
   const N = afuera || normales(V, F);

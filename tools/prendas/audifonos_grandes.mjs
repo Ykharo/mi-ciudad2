@@ -6,6 +6,7 @@ import { Malla, lerp, mallaRayos, rayoDesdeAfuera, revolucion, tubo, v3 } from '
 import { queTapa } from './gorra.mjs';
 import * as gorra from './gorra.mjs';
 import * as jockey from './jockey.mjs';
+import * as gorroLana from './gorro_lana.mjs';
 
 export const ID = 'audifonos_grandes';
 const OREJA = v3(0, 1.292, -0.005);            // centro de las orejas (en y, z; x = el costado)
@@ -13,7 +14,7 @@ const R_AURICULAR = 0.06, ANCHO_CINTILLO = 0.032, GRUESO_CINTILLO = 0.018;
 
 export function construir(C) {
   const m = new Malla(), HC = C.HC;
-  const gorros = [gorra, jockey].map(g => g.construir(C).mallas[0].malla);
+  const gorros = [gorra, jockey, gorroLana].map(g => g.construir(C).mallas[0].malla);
   const todo = [...queTapa(C), ...gorros.map(g => mallaRayos(g.V.flatMap(v => [v.x, v.y, v.z]), g.F.flat()))];
   const lejos = (eje, d) => Math.max(...todo.map(x => rayoDesdeAfuera(x, eje, d, 0.6) ?? 0));
   const extremos = [];

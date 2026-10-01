@@ -1,10 +1,6 @@
-// Carga de modelos .glb, una sola vez por id (se guarda la promesa).
-// Bytes:
-// - Versión de un solo archivo: vienen en un bloque <script id="asset:ID"> con el .glb en base64.
-// - Desarrollo y versión web: se descargan con fetch desde assets/.
-// Decodificación (igual venga de donde venga): las texturas se separan del .glb y se cargan como imágenes
-// data:. Nunca se usa fetch(blob:) ni fetch(data:): el visor donde se publica los bloquea en algunos navegadores
-// (Safari en iPad).
+// Carga de modelos .glb, una sola vez por id (se guarda la promesa). Se descargan con fetch desde assets/.
+// Decodificación: las texturas se separan del .glb y se cargan como imágenes data: (no fetch(blob:): el visor donde
+// se publicaba antes lo bloqueaba en Safari del iPad; se mantiene porque funciona en todos lados).
 import { GLTFLoader, THREE } from '../engine/three.js';
 import { assetFile } from './manifest.js';
 
@@ -16,20 +12,12 @@ export function readAsset(id) {
 }
 
 async function read(id) {
-  const el = document.getElementById('asset:' + id);
-  if (el) return base64ToBytes(el.textContent.trim());
   const file = assetFile(id);
   if (!file) throw new Error('Modelo desconocido: ' + id);
   const url = import.meta.env.BASE_URL + file;
   const r = await fetch(url);
   if (!r.ok) throw new Error(`No se pudo cargar ${url} (${r.status})`);
   return new Uint8Array(await r.arrayBuffer());
-}
-
-function base64ToBytes(b64) {
-  const raw = atob(b64), bytes = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-  return bytes;
 }
 
 // Carga y decodifica un .glb: { scene, animations, parser }. Los colores de los materiales quedan en sRGB

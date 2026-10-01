@@ -132,6 +132,35 @@ test('accesorios: varios a la vez, la gorra esconde el moño, y se guardan', asy
   expect(await color(page, 'Mochila_Correa')).toBe('#ff4f5e');
 });
 
+test('las prendas nuevas se ponen desde el Vestidor (y la cadena se puede sacar)', async ({ page, jugar }) => {
+  await jugar();
+  const puestas = () => page.evaluate(() => Object.fromEntries(Object.entries(window.__juego.player.ch.prendas).map(([s, p]) => [s, p.id])));
+  const tab = t => page.locator(`#wardrobeTabs [data-tab="${t}"]`).click();
+  const prenda = id => muestra(page, `data-k="prenda"][data-v="${id}"`);
+  await abrirVestidor(page);
+  for (const [t, slot, ids] of [['arriba', 'torso', ['top_corto', 'polera_corta', 'polera_larga']], ['chaqueta', 'abrigo', ['chaqueta_oversize', 'poleron_oversize']],
+    ['abajo', 'piernas', ['pantalon_ancho']], ['zapatos', 'pies', ['zapatillas_plataforma']]]) {
+    await tab(t);
+    for (const id of ids) { await prenda(id).click(); await expect.poll(async () => (await puestas())[slot]).toBe(id); }
+  }
+  await tab('accesorios');
+  await muestra(page, 'data-k="accesorio"][data-v="gorro_lana"').click();
+  await expect.poll(async () => (await puestas()).cabeza).toBe('gorro_lana');
+  // los tres lentes de sol van en la cara: uno reemplaza al otro; el color de los lentes se cambia aparte
+  for (const id of ['lentes_aviador', 'lentes_clasicos', 'lentes_corazon']) {
+    await muestra(page, `data-k="accesorio"][data-v="${id}"`).click();
+    await expect.poll(async () => (await puestas()).cara).toBe(id);
+  }
+  await muestra(page, 'data-slot="cara"][data-canal="lentes"][data-v="#1F3B5E"').click();
+  expect(await color(page, 'SolK_Lente')).toBe('#1f3b5e');
+  await tab('abajo');
+  await muestra(page, 'data-k="extra:PantalonA_Cadena"][data-v="no"').click();
+  expect(await visible(page, 'PantalonA_Cadena')).toBe(false);
+  await page.locator('#wardrobeDone').click();
+  const g = await page.evaluate(() => JSON.parse(localStorage.getItem('ciudadArcoiris.v2')).nina.look.prendas);
+  expect(g).toMatchObject({ torso: { id: 'polera_larga' }, abrigo: { id: 'poleron_oversize' }, piernas: { id: 'pantalon_ancho', extras: { PantalonA_Cadena: false } }, pies: { id: 'zapatillas_plataforma' }, cabeza: { id: 'gorro_lana' } });
+});
+
 test('Sorpréndeme y Original', async ({ page, jugar }) => {
   await jugar();
   const deFabrica = await color(page, 'Cotton_Charcoal');

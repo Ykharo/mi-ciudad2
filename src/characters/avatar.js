@@ -3,7 +3,6 @@ import { SkeletonUtils, THREE } from '../engine/three.js';
 import { loadGLB } from '../assets/loader.js';
 import { camera, scene } from '../engine/renderer.js';
 import { setFace } from './face.js';
-import { VECINOS } from './catalog/personajes.js';
 import { dress, loadPrendas, setupMesh } from './wardrobe.js';
 
 /* ================= NINA: base .glb con esqueleto de 17 huesos y 11 animaciones =================
@@ -14,10 +13,10 @@ const NINA_SCALE = 1.4;                  // el modelo mide ~1,65 m; en la ciudad
 const avatars = [];
 const NINA = { scene: null, clips: {}, walkStride: 0, runStride: 0, runSpeed: 0 };
 
-// Carga la base y las prendas que usan estos looks y las plantillas de vecinos. Después makeAvatar es inmediato.
+// Carga la base y las prendas que usan estos looks (los de los vecinos también: game/npcs.js, lookVecinos). Después
+// makeAvatar es inmediato.
 async function loadCharacters(looks) {
-  const vecinos = VECINOS.map(v => ({ prendas: Object.fromEntries(Object.entries(v.prendas).map(([s, id]) => [s, { id }])) }));
-  const [gltf] = await Promise.all([loadGLB('nina_base'), loadPrendas([...looks, ...vecinos])]);
+  const [gltf] = await Promise.all([loadGLB('nina_base'), loadPrendas(looks)]);
   NINA.scene = gltf.scene;
   gltf.animations.forEach(c => { NINA.clips[c.name] = c; });
   const ex = (gltf.parser.json.asset || {}).extras || {};

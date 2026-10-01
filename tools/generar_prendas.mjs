@@ -17,9 +17,19 @@ import * as peloCorto from './prendas/pelo_corto.mjs';
 import * as poleron from './prendas/poleron.mjs';
 import * as buzo from './prendas/buzo.mjs';
 import * as guantes from './prendas/guantes.mjs';
+import * as polera from './prendas/polera.mjs';
+import * as poleronOversize from './prendas/poleron_oversize.mjs';
+import * as chaquetaOversize from './prendas/chaqueta_oversize.mjs';
+import * as topCorto from './prendas/top_corto.mjs';
+import * as pantalonAncho from './prendas/pantalon_ancho.mjs';
+import * as zapatillasPlataforma from './prendas/zapatillas_plataforma.mjs';
+import * as gorroLana from './prendas/gorro_lana.mjs';
+import * as lentesSol from './prendas/lentes_sol.mjs';
 
 // (los peinados van antes que los gorros y los audífonos grandes, que se calzan por fuera de ellos: gorra.mjs, queTapa)
-const GENERADORES = [falda, chaqueta, peloLargo, peloCorto, gorra, lentes, audifonos, mochila, jockey, audifonosGrandes, poleron, buzo, guantes];
+const GENERADORES = [falda, chaqueta, peloLargo, peloCorto, gorra, lentes, audifonos, mochila, jockey, audifonosGrandes, poleron, buzo, guantes,
+  polera.corta, polera.larga, poleronOversize, chaquetaOversize, topCorto, pantalonAncho, zapatillasPlataforma, gorroLana,
+  lentesSol.aviador, lentesSol.clasicos, lentesSol.corazon];
 
 // materiales que el catálogo conoce para una prenda (canales, derivados, extras y fijos)
 const declarados = P => [...Object.values(P.canales || {}).flatMap(c => c.mats), ...Object.keys(P.derivados || {}),

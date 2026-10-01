@@ -24,8 +24,7 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
   - `main.js` importa todos los módulos en el orden original de las secciones: ese orden define el arranque.
   - Ganchos de prueba `window.__juego` (state, player, npcs, cars, `teleport(x, z)`): sólo en desarrollo o con `?test`.
 - `src/styles/juego.css` — estilos.
-- Imágenes del juego en `src/assets/imagenes/` (se importan desde el código: archivo aparte en la web, incrustadas en
-  el archivo único). Cartel de la competencia de farmear aura: `world/places/cartel.js` (letrero + zona "Mirar el
+- Imágenes del juego en `src/assets/imagenes/` (se importan desde el código; Vite las publica como archivos aparte). Cartel de la competencia de farmear aura: `world/places/cartel.js` (letrero + zona "Mirar el
   cartel") y `game/cartel.js` (espectador que lo lee con la animación `mirar_cartel`); `main.js` espera la imagen.
 - `src/assets/loader.js` + `manifest.js` — `loadGLB(id)`: lee cada modelo (bloque base64 incrustado o `fetch`),
   lo decodifica (texturas como imágenes `data:`, colores a sRGB) y lo guarda. Ids: `nina_base`, `prenda:<id>`.
@@ -33,7 +32,9 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
   (una prenda cada uno). Generados, cuantizados: **no editar a mano**; se regeneran con `node tools/separar_glb.mjs`
   desde `herramientas_avatar/avatar_vestido.glb` (el modelo vestido completo que sale de los scripts de Python).
   Las prendas **nuevas** (sin `mallas` en el catálogo: falda_tableada, chaqueta, pelo_largo y los accesorios gorra,
-  jockey, lentes, audifonos, audifonos_grandes, mochila; del niño: pelo_corto, poleron, buzo, guantes) salen de `node tools/generar_prendas.mjs [id…]`: un archivo por prenda en
+  jockey, lentes, audifonos, audifonos_grandes, mochila; del niño: pelo_corto, poleron, buzo, guantes; de la amiga:
+  top_corto, chaqueta_oversize, pantalon_ancho, zapatillas_plataforma; y polera_corta, polera_larga,
+  poleron_oversize, gorro_lana; lentes de sol lentes_aviador, lentes_clasicos, lentes_corazon) salen de `node tools/generar_prendas.mjs [id…]`: un archivo por prenda en
   `tools/prendas/`, que mide el cuerpo con rayos (`cuerpo.mjs`) y escribe/valida/cuantiza el .glb (`escribir.mjs`).
   Superficies con grosor: `orientar()` antes de `cascara()` (el grosor va hacia adentro según la normal). Sólidos
   cerrados (accesorios): `tubo()`, `revolucion()`, `caja()`. Los accesorios son rígidos: todos sus vértices pesan en un
@@ -50,6 +51,9 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
   en el probador (`&fov=6&dist=14`, apuntando la cámara con `window.__probador.orb` al hueso de la cabeza). El look elige cuánto:
   `formas: { redonda: 0..1 }` (`FORMAS_CABEZA` en `catalog/personajes.js`, los nombres deben coincidir).
   `assets/` es el publicDir de Vite.
+- **Vecinos**: estilos en `VECINOS` (`characters/catalog/personajes.js`: listas de prendas, opcionales con
+  probabilidad, colores al azar de las paletas); `randomLook` los arma; `lookVecinos` (game/npcs.js) sortea los 7 antes
+  de cargar, para cargar sólo sus prendas. Una prenda nueva sólo aparece en los vecinos si se agrega a un estilo.
 - **Personajes jugables**: Nina, Amiga y Amigo (nombres provisorios; `PERSONAJES` en `characters/catalog/personajes.js`).
   Se eligen en el inicio y con el botón redondo de arriba (`ui/personajes.js`); `game/personajes.js` los cambia.
   Cada uno guarda su look: `player.looks[id]`; `player.look` es el del que se usa. En el guardado: `jugador`,
@@ -73,7 +77,6 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
   transparencia, "Diferencia", reflejar, recortes por hoja (`RECORTES`: frontal, lateral, cabeza, cabeza de lado),
   mover arrastrando y agrandar con la rueda (botón 🖐 o Mayús), "Alinear con 4 toques", líneas guía, cargar otra
   imagen. El ajuste se guarda en el navegador por hoja. Tecla P: ocultar el panel.
-- `tools/vite-embed-assets.js` — incrusta los modelos (base + todas las prendas) en la versión de un solo archivo.
 - `tests/` — Playwright: humo, lugares (con los ganchos), manejo (joystick con el mouse real), guardado, vestidor,
   capturas de referencia (`tests/capturas/`), sin red.
   Checklist manual en `tests/checklist_manual.md`.
@@ -83,9 +86,11 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
 ## Comandos
 - `npm run dev` — desarrollo con recarga (http://localhost:5173, y desde el iPad con la IP del PC).
 - `npm run build:web` → `dist/web/` (GitHub Pages, se publica solo con GitHub Actions al hacer push a main).
-- `npm run build` → `dist/unico/ciudad-arcoiris.html` (un solo archivo, abre con doble clic).
+- `npm run build` = `npm run build:web`. **Ya no hay versión de un solo archivo** (se quitó el 30-09-2026 para poder
+  seguir agregando contenido: llevaba todas las prendas adentro). Los modelos se descargan cuando se usan; no hace
+  falta que el juego funcione sin red ni abriéndolo con doble clic.
 - `npm run lint` — ESLint, incluidas las reglas de capas y ciclos.
-- `npm test` — lint + arma ambas versiones + todas las pruebas (~10 min, 150 pruebas). Las capturas deben salir
+- `npm test` — lint + arma el juego + todas las pruebas (dev y web, en Chromium y en WebKit con emulación de iPad). Las capturas deben salir
   iguales; sólo se regeneran (`npm run test:capturas`) cuando un cambio visible es a propósito.
   Ojo: Three.js r149 usa `Math.random` para los UUID, así que crear más o menos materiales/geometrías mueve a los
   vecinos en las capturas aunque nada se dibuje distinto. Para comprobar que el dibujo no cambió:
@@ -114,8 +119,8 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
   curvas `K`; validado contra "wave") y `tools/animaciones/bailes.mjs`; `separar_glb.mjs` los hornea en
   `nina_base.glb` (`SIN_BAILES=1` para armarla sin ellos). En el menú Acción: `characters/catalog/acciones.js`
   (`AUTO_FACE` puede cambiar la cara con el tiempo: `[[segundo, cara], …]`).
-- Las texturas incrustadas se cargan como imágenes `data:` (no `blob:`) porque el visor donde se publica
-  bloquea `fetch(blob:)` en algunos navegadores (Safari iPad). Mantener ese truco o servir los PNG aparte.
+- Las texturas de los .glb se cargan como imágenes `data:` (no `blob:`): venía del visor donde se publicaba antes,
+  que bloqueaba `fetch(blob:)` en Safari iPad. Ya no es necesario, pero funciona en todos lados.
 
 ## Convenciones del juego
 - Sin gestión de color (r149, modo legacy): los colores hex se usan tal cual; al cargar el glb se pasan

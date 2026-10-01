@@ -3,7 +3,7 @@
 //   chaqueta  abierta tipo "varsity" (referencias/ropa/hoja_de_referencia_nina.png, "Chaqueta")
 //   poleron   (poleron.mjs) cerrado, más holgado y largo, con franjas en las mangas y capucha
 import * as THREE from 'three';
-import { Malla, cascara, clamp, grilla, lerp, orientar, pesosDelCuerpo, rayo, smooth, v3 } from './cuerpo.mjs';
+import { Malla, cascara, clamp, grilla, lerp, mallaRayos, orientar, pesosDelCuerpo, rayo, smooth, v3 } from './cuerpo.mjs';
 
 export const ID = 'chaqueta';
 const Y_NECK = 1.135;
@@ -36,7 +36,7 @@ export function cuerpoAbrigo(C, { abierto, holgura, hem, M, hombroCaido = false 
   const torso = C.partes(['Hips', 'Spine', 'Chest', 'Neck']);
   const hombros = C.partes(['Spine', 'Chest', 'Neck', 'UpperArmL', 'UpperArmR']);
   const ys = [hem, hem + 0.018, hem + 0.036, ...Array.from({ length: 11 }, (_, i) => lerp(hem + 0.05, Y_NECK, (i + 1) / 11))];
-  const V = [], filas = [], ejes = [], radiosFila = [];
+  const V = [], filas = [], ejes = [], radiosFila = [], crudos = [];
   ys.forEach((y, i) => {
     const t = (y - hem) / (Y_NECK - hem);
     const abre = abierto ? lerp(0.30, 0.50, smooth((t - 0.4) / 0.6)) : 0;   // abertura del frente (radianes, a cada lado)
@@ -53,7 +53,7 @@ export function cuerpoAbrigo(C, { abierto, holgura, hem, M, hombroCaido = false 
     });
     const cierre = smooth((y - (Y_NECK - 0.05)) / 0.05);            // arriba se ciñe al cuello
     const hol = holgura * (1 - 0.15 * cierre) + (i < 3 ? 0.004 : 0); // el borde de abajo, un poco más grueso
-    radiosFila.push(r.map(x => x + hol));
+    radiosFila.push(r.map(x => x + hol)); crudos.push(r);
     filas.push(dirs.map((d, k) => d.clone().multiplyScalar(r[k] + hol).add(eje)));
   });
   if (hombroCaido) {
@@ -61,9 +61,10 @@ export function cuerpoAbrigo(C, { abierto, holgura, hem, M, hombroCaido = false 
     ys.forEach((y, i) => {
       const w = smooth((y - 1.04) / (Y_NECK - 1.04)) ** 1.3;
       if (w <= 0) return;
+      // (pero nunca más adentro que el cuerpo + 3 cm: si no, la polera o el peto de abajo asoman en el hombro)
       filas[i] = filas[i].map((p, k) => {
         const d = p.clone().sub(ejes[i]), r = d.length();
-        return d.multiplyScalar(lerp(r, Math.min(r, cuelloR[k] + 0.02), w) / r).add(ejes[i]);
+        return d.multiplyScalar(Math.max(lerp(r, Math.min(r, cuelloR[k] + 0.02), w), Math.min(r, crudos[i][k] + 0.03)) / r).add(ejes[i]);
       });
     });
   }
@@ -84,17 +85,20 @@ export function cuerpoAbrigo(C, { abierto, holgura, hem, M, hombroCaido = false 
   return { malla: m, filas, ejes, ys };
 }
 
-// op: { holgura, M: { tela, detalle, forro, franja? } }; con M.franja, dos franjas por el lado de afuera
-export function mangaAbrigo(C, S, { holgura, M }) {
+// op: { holgura, M: { tela, detalle, forro, franja? }, hasta, puño }; con M.franja, dos franjas por el lado de afuera.
+// hasta: cuántos puntos del camino (de 20: 11 hasta el codo; 8 = manga corta). puño: holgura del puño.
+// Devuelve la malla; en `.camino` quedan los puntos del eje (para pegar dibujos encima).
+export function mangaAbrigo(C, S, { holgura, M, hasta = 20, puño = 0.012 }) {
   const m = new Malla(), NA = 20, side = S === 'L' ? -1 : 1;
   const h = C.huesos, a = h['UpperArm' + S], b = h['Forearm' + S], c = h['Hand' + S];
   const brazo = C.partes(['UpperArm' + S, 'Forearm' + S]);
   // camino del eje: empieza un poco adentro del hombro (se mete en el cuerpo del abrigo) y llega a la muñeca
   const ab = b.clone().sub(a), bc = c.clone().sub(b);
   const ini = a.clone().addScaledVector(ab.clone().normalize(), -0.045);
-  const puntos = [];
+  let puntos = [];
   for (let i = 0; i <= 10; i++) puntos.push(ini.clone().lerp(b, i / 10));
   for (let i = 1; i <= 9; i++) puntos.push(b.clone().addScaledVector(bc, i / 9 * 0.93));
+  puntos = puntos.slice(0, hasta);
   const V = [];
   puntos.forEach((p, i) => {
     const tg = (puntos[Math.min(i + 1, puntos.length - 1)].clone().sub(puntos[Math.max(i - 1, 0)])).normalize();
@@ -102,9 +106,11 @@ export function mangaAbrigo(C, S, { holgura, M }) {
     const dirs = Array.from({ length: NA }, (_, k) => { const t = 2 * Math.PI * k / NA; return u.clone().multiplyScalar(Math.cos(t)).addScaledVector(w, Math.sin(t)); });
     const r = radios(brazo, p, dirs, true, 0.035);
     const fin = i >= puntos.length - 2;                                           // puño
-    const hol = (fin ? 0.012 : holgura) + 0.008 * Math.exp(-(((i - 11) / 4) ** 2)); // un poco más amplia en el codo
-    // con mucha holgura, el borde de arriba del comienzo (dentro del hombro) asomaba como una punta: se afina
-    const afina = holgura > 0.02 ? lerp(0.72, 1, smooth(i / 4)) : 1;
+    const hol = (fin ? puño : holgura) + 0.008 * Math.exp(-(((i - 11) / 4) ** 2)); // un poco más amplia en el codo
+    // el comienzo (dentro del hombro) se afina: con mucha holgura asomaba como una punta, y la manga de una polera de
+    // abajo asomaba por el hombro del abrigo (la polera larga, casi pegada al brazo, también se afina). Las demás (la
+    // chaqueta, la polera de manga corta, que si no deja ver piel en el hombro) se quedan como estaban.
+    const afina = holgura > 0.02 || holgura < 0.004 ? lerp(0.72, 1, smooth(i / 4)) : 1;
     dirs.forEach((d, k) => V.push(d.clone().multiplyScalar((r[k] + hol) * afina).add(p)));
   });
   const F = orientar(V, grilla(puntos.length, NA, true), i => puntos[Math.floor(i / NA)]), nPuño = 2 * NA;
@@ -121,8 +127,11 @@ export function mangaAbrigo(C, S, { holgura, M }) {
     }
   }
   m.pesos = pesosDelCuerpo(C, m.V, ['Chest', 'UpperArm' + S, 'Forearm' + S, 'Hand' + S], 6, side);
+  m.camino = puntos;
   return m;
 }
+// malla para lanzar rayos contra una Malla (para pegar dibujos sobre una prenda)
+export const superficieDe = m => mallaRayos(m.V.flatMap(v => [v.x, v.y, v.z]), m.F.flat());
 
 // junta varias mallas en una (menos objetos)
 export function juntar(partes) {

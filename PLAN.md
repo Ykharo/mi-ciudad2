@@ -75,7 +75,7 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
       `0xC0E90002` (Windows lo bloquea), incluso en la prueba de humo y fuera del entorno aislado. El 28-09 corría.
       Probablemente sea el Control inteligente de aplicaciones o el antivirus; revisar la seguridad de Windows o
       reinstalar con `npx playwright install webkit`. Hasta entonces las pruebas de iPad (proyectos `-ipad`) no corren.
-  - **Regiones de `Body_Base` hechas (30-09-2026, falta probar en el navegador y commit): con esto la etapa 6 queda
+  - **Regiones de `Body_Base` hechas (30-09-2026, probadas y con commit): con esto la etapa 6 queda
     completa.** `separar_glb.mjs` tiene ahora una tabla `APARTAR` (partes que pasan a su propia malla, en orden) y
     parte el cuerpo por el hueso que más pesa en cada vértice (un triángulo va a la región si sus 3 vértices son de
     ella): `Body_Pies` (1.028 triángulos; llegan a 0,183 m, la zapatilla a 0,184), `Body_Piernas` (1.816: cadera,
@@ -96,7 +96,8 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
       Chromium (dev, web, archivo único): **77/77**. WebKit sigue sin arrancar (las 48 de iPad fallan al lanzar el
       navegador, código `0xC0E90002`).
   - Los moños (lazos) del pelo de la referencia quedan para más adelante.
-- **Etapa 7 empezada (30-09-2026, falta probar en el navegador y commit): dos personajes nuevos.** Con el cuerpo de
+- **Etapa 7 en curso (30-09-2026; todo lo de abajo, hasta el cartel de la competencia, probado por el usuario y con
+  commit): dos personajes nuevos.** Con el cuerpo de
   Nina y compartiendo la ropa: la niña de `referencias/ropa/hoja_personaje_nuevo.png` (1,40 m) y el niño de
   `referencias/ropa/hoja_personaje_nino.png` (1,35 m; la cabeza "no tan plana, más redondeada" de perfil y los
   audífonos grandes puestos sobre el jockey). Decidido: se empezó por la cabeza y los audífonos; la forma de cabeza es
@@ -162,7 +163,10 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
       dentro de ella; pretina, basta recogida sobre la zapatilla, dos franjas al costado, mariposa en el muslo.
       Esconde las piernas. Revisado sentado, en split, acostado, en la vela y saltando.
     - `guantes` (40 KB, espacio nuevo `manos`): funda de la muñeca a los nudillos con puño; el radio se engorda con
-      el máximo de los vecinos (con un promedio asomaban el pulgar y los nudillos).
+      el máximo de los vecinos (con un promedio asomaban el pulgar y los nudillos). Corregido después (reporte del
+      usuario: "sólo están hasta la mitad"): llegaban a 5 cm de la muñeca y la mano mide 12; ahora llegan a 8,5 cm (los
+      nudillos), cada anillo se centra en el centro real de la mano en ese tramo (los dedos se curvan y una línea recta
+      se salía) y las dos últimas filas se ciñen a los dedos. 52 KB.
     - La forma "redonda" ya no alcanza nada bajo la nuca (la capucha del polerón la recibía y pesaba 343 KB).
     - Zapatillas: las de siempre, azul oscuro con detalles blancos.
     - Chromium (dev, web, archivo único): **89/89** (WebKit sigue bloqueado). Archivo único: **4.979 KB** (4.010
@@ -249,8 +253,62 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
       amiga (cambia al cambiar de personaje). Zona "👀 Mirar el cartel": la jugadora se da vuelta hacia el cartel, lo
       lee (hasta moverse) y sale el aviso "¡Competencia de farmear aura! Sábado 24 de mayo, 16:00 hrs".
     - Prueba nueva en `lugares.spec.js`. Capturas regeneradas (el cartel se ve en varias). `window.__juego.espectador()`.
-  - Siguiente: la ropa de la niña (chaqueta oversize con mariposas, top corto, pantalón ancho con cadena, zapatillas
-    de plataforma, pelo ondulado largo con mechas; lacio y trenzas), el pelo largo desordenado del niño, y los nombres.
+  - **Ropa de la amiga + poleras, gorro y polerón** (pedido: la ropa de la hoja de la amiga, polera de manga corta y
+    larga, y el gorro de lana y el polerón de `referencias/ropa/hoja_ropa_gorro_poleron.png`). Nueve prendas nuevas:
+    `top_corto` (torso: blanco con tirantes, banda gris y estrella que se puede sacar), `chaqueta_oversize` (abrigo:
+    negra, abierta, hombros caídos, mariposas y estrellas rosadas en el frente, la espalda y las mangas: canal
+    "dibujos" y extra "Dibujos"), `pantalon_ancho` (piernas: cargo lila muy ancho hasta el zapato, bolsillos con tapa y
+    cadena de 24 eslabones en la cadera: extra "Cadena"), `zapatillas_plataforma` (pies: blancas, suela alta de dos
+    capas con la de abajo lila, borde del tobillo y talón lila, cordones), `polera_corta` y `polera_larga` (torso,
+    pegadas para caber bajo los abrigos; la larga esconde los brazos), `poleron_oversize` (abrigo: amarillo, cuello
+    redondo, muy holgado) y `gorro_lana` (cabeza: canales tejidos, doblez, un poco holgado atrás, etiqueta). El
+    polerón con capucha pasa a llamarse "Polerón con capucha". La amiga ya usa su ropa propia.
+    - Reutilización: `mangaAbrigo` acepta `hasta` (manga corta) y `puño`, y devuelve su `camino`; `buzo.mjs` exporta
+      `cadera`/`pierna` con opciones (el buzo salió idéntico byte a byte; también la chaqueta y el polerón tras el
+      primer cambio). `calcomaniaSobre` (cuerpo.mjs) pega una figura sobre cualquier superficie apuntando desde afuera;
+      `superficieDe` (chaqueta.mjs) hace la malla de rayos de una prenda.
+    - Corregido mirando fotos: el lila del pantalón se veía blanco (más saturado); la cadena casi no se veía (más larga,
+      apoyada en la cadera y el muslo); los cordones quedaban hundidos; en los hombros de los abrigos con `hombroCaido`
+      asomaban la polera y el peto (ahora nunca más adentro que el cuerpo + 3 cm; el polerón con capucha y la chaqueta
+      oversize también cambian un poco); la manga corta asomaba por el hombro de los abrigos y, al afinarla, dejaba ver
+      piel (las poleras van más pegadas: 0,9 cm el cuerpo, 0,3–0,5 cm las mangas); el gorro de lana terminaba en punta y
+      se abría como campana (domo redondo; el pelo largo cuenta sólo hasta 5 cm sobre la cabeza y sus mechones salen
+      bajo el doblez). Los audífonos grandes se calzan también por fuera del gorro de lana.
+    - Prueba nueva: cada prenda nueva se pone desde el Vestidor, la cadena se saca, y queda guardado. Capturas
+      regeneradas (la amiga del cartel cambió de ropa). Chromium: **98/98**. Archivo único: **7.821 KB** (crece con
+      cada prenda: ya conviene pensar en comprimir los modelos, por ejemplo con meshopt).
+  - **Lentes de sol, tres modelos** (`tools/prendas/lentes_sol.mjs`, espacio `cara`, 34–41 KB): aviador (gota, marco
+    dorado fino, doble puente; la primera gota salió redonda y se rehízo más honda abajo y hacia la nariz), clásicos
+    (marco negro grueso, más ancho arriba, con ceja) y corazón (rosados). Cada uno: el contorno de la lente como
+    función, el marco siguiéndolo, la lente teñida (una calcomanía con esa forma, pegada a la curva de la cara), puente
+    y patillas como los lentes redondos. Canales: marco y "Color de los lentes" (paletas nuevas `lentes` y `metal`).
+    La prueba de prendas nuevas los pone uno tras otro y cambia el color de los lentes.
+  - **Vecinos con la ropa nueva** (etapa 7). Antes había una sola plantilla (la ropa original de Nina, sólo cambiaban
+    los colores). Ahora `VECINOS` son estilos (`catalog/personajes.js`): "clásico" (moño, pelo largo o corto; peto o
+    poleras; pantalón cargo o falda; a veces chaqueta, lentes, gorra) y "urbano" (poleras o top; buzo, pantalón ancho o
+    cargo; zapatillas o plataformas; casi siempre polerón o chaqueta oversize; a veces gorro, audífonos, lentes de sol,
+    mochila, guantes; más seguido la cabeza redonda). Formato: `prendas` (una de cada lista), `opcionales`
+    ([{ prob, ids }], el espacio sale del catálogo), `colorProb` (cada canal con color al azar de su paleta o el de
+    fábrica; el pelo siempre), extras al 70 %, `escala`, `cabeza`, `formaRedonda`. `randomLook` lo aplica.
+    - Los looks de los 7 vecinos se sortean antes de cargar (`lookVecinos` en `game/npcs.js`, semilla 4321) y
+      `loadCharacters` carga sólo las prendas que usan (antes cargaba las de las plantillas); `spawnNPCs(looks)`.
+    - Probador: "Vecino al azar" (prendas y colores; antes sólo colores) y `?look=azar&seed=N` con la semilla
+      mezclada: el generador del juego (LCG) da primeros números casi iguales con semillas seguidas, y los 8 primeros
+      salían iguales de estilo.
+    - Revisados 16 vecinos al azar y las combinaciones nuevas (mochila sobre los abrigos holgados, audífonos al cuello
+      con polerones): sin choques. Con los abrigos holgados, las correas de la mochila quedan en parte por dentro.
+    - Capturas regeneradas (los vecinos cambiaron).
+  - **Se quitó la versión de un solo archivo** (decisión del usuario, 30-09-2026: no la usa y quiere seguir
+    agregando contenido; llevaba todo en base64 y ya pesaba 8 MB). Queda sólo la web (GitHub Pages): cada prenda se
+    descarga cuando alguien la usa. Fuera: `vite-plugin-singlefile`, `tools/vite-embed-assets.js`, el modo `unico`
+    de Vite, el proyecto `unico` de las pruebas y la lectura de bloques `<script id="asset:…">` en el cargador.
+    `npm run build` = `build:web`. La prueba "arranca sin red" pasó a la versión web (el juego no depende de nada de
+    internet salvo las fuentes); la de "abrir con doble clic" se borró. Las secciones 4.2 y las decisiones de abajo
+    que hablan del archivo único quedan como historia. Chromium (dev y web): **65/65**, en 3,8 min (antes 98 en 6 min,
+    con el archivo único).
+  - Siguiente: peinados (ondulado largo con mechas rosadas, lacio y trenzas de la amiga; pelo largo desordenado del
+    amigo), lo que falta de las hojas (jeans baggy, reloj, zapatillas deportivas, clip de estrella, celular, botella), y
+    los nombres de la amiga y el amigo.
     Los peinados nuevos: sumarlos a `queTapa` (gorra.mjs) y regenerar gorra, jockey y audífonos grandes.
 - **Mejora (después de la etapa 5): joystick con zona lenta y zona rápida.** Pedido: más recorrido para caminar y
   manejar despacio. El joystick pasó de 156 a 200 px (164 en pantallas chicas); mientras la perilla está entera

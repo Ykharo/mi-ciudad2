@@ -26,11 +26,17 @@ function npcTarget(n) {
   }
   n.target.set(LINES[n.i] + n.sx * WALK, 0, LINES[n.j] + n.sz * WALK);
 }
-function spawnNPCs(count) {
+// Los looks de los vecinos se sortean antes de cargar los personajes (main.js), así se cargan sólo las prendas que
+// usan. Siempre salen los mismos (semilla fija).
+function lookVecinos(count) {
+  const r = seeded(4321);
+  return Array.from({ length: count }, () => randomLook(r));
+}
+function spawnNPCs(looks) {
   const r = seeded(1234);
-  for (let k = 0; k < count; k++) {
+  for (let k = 0; k < looks.length; k++) {
     const i = Math.floor(r() * 3), j = Math.floor(r() * 3), sx = r() < 0.5 ? -1 : 1, sz = r() < 0.5 ? -1 : 1;
-    const n = { ch: makeAvatar(randomLook(r)), i, j, sx, sz, pos: new THREE.Vector3(LINES[i] + sx * WALK, 0, LINES[j] + sz * WALK), target: new THREE.Vector3(), facing: r() * TAU, wait: r() * 2, speed: 0.9 + r() * 0.45, greet: 0, cool: r() * 4, bubble: null, pets: [] };
+    const n = { ch: makeAvatar(looks[k]), i, j, sx, sz, pos: new THREE.Vector3(LINES[i] + sx * WALK, 0, LINES[j] + sz * WALK), target: new THREE.Vector3(), facing: r() * TAU, wait: r() * 2, speed: 0.9 + r() * 0.45, greet: 0, cool: r() * 4, bubble: null, pets: [] };
     // start somewhere along a sidewalk rather than all on corners
     npcTarget(n); n.pos.lerp(n.target, r() * 0.8);
     if (k % 3 === 0) {
@@ -77,4 +83,4 @@ function updateNPCs(dt, t) {
 // Nina saluda: los vecinos cercanos contestan
 function greetAround() { npcs.forEach(n => { if (n.pos.distanceTo(player.pos) < 9) { n.greet = 2.2; n.cool = 8; npcSay(n, '¡Hola!'); } }); }
 
-export { greetAround, npcSay, npcs, spawnNPCs, updateNPCs };
+export { greetAround, lookVecinos, npcSay, npcs, spawnNPCs, updateNPCs };

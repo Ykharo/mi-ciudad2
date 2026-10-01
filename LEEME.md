@@ -5,9 +5,8 @@ Nina pasea por la ciudad, baila, adopta mascotas, diseña y maneja autos, y se c
 Boutique Arcoíris.
 
 ## Para jugar
-- **En internet**: la versión web se publica en GitHub Pages cada vez que se sube un cambio a `main`.
-- **Un solo archivo**: `npm run build` crea `dist/unico/ciudad-arcoiris.html`; ábrelo con doble clic
-  (no necesita internet).
+- **En internet**: se publica en GitHub Pages cada vez que se sube un cambio a `main`
+  (https://ykharo.github.io/mi-ciudad2/).
 
 ## Para trabajar en el juego
 Requiere Node (una vez: `npm install`).
@@ -15,7 +14,7 @@ Requiere Node (una vez: `npm install`).
 - `npm run dev` — abre el juego en http://localhost:5173 y se recarga solo al guardar.
   Para probar en el iPad, usa la dirección con la IP del PC que muestra la terminal.
 - `npm test` — revisa el código (`npm run lint`), arma el juego y corre las pruebas automáticas.
-- `npm run build:web` / `npm run build` — arma la versión web o la de un solo archivo.
+- `npm run build` — arma el juego en `dist/web` (lo mismo que hace GitHub Actions para publicarlo).
 
 ## Dónde está cada cosa
 - `index.html` y `src/styles/juego.css` — pantalla, botones y paneles.
@@ -28,9 +27,10 @@ Requiere Node (una vez: `npm install`).
   - `game/player.js` — `PLAYER_SPEED`, velocidad al caminar/correr. `game/driving.js` — manejar.
   - `world/city.js` arma la ciudad; cada lugar especial está en `world/places/`.
   - `main.js` — arranque y bucle principal.
-- `assets/modelos/nina_base.glb` — Nina sin ropa: esqueleto, cuerpo, cara y las 11 animaciones.
-  `assets/modelos/prendas/` — un archivo por prenda. Las cuatro originales se generan con `node tools/separar_glb.mjs`;
-  las nuevas (falda, chaqueta, pelo largo) con `node tools/generar_prendas.mjs`, una por archivo en `tools/prendas/`.
+- `assets/modelos/nina_base.glb` — Nina sin ropa: esqueleto, cuerpo, cara, las 11 animaciones y los bailes.
+  `assets/modelos/prendas/` — un archivo por prenda (se descargan sólo cuando alguien las usa). Las cuatro originales
+  se generan con `node tools/separar_glb.mjs`; las nuevas con `node tools/generar_prendas.mjs`, una por archivo en
+  `tools/prendas/`.
   Las imágenes de referencia para ropa nueva van en `referencias/ropa/`.
 - `herramientas_avatar/` — scripts Python que generaron el modelo (ropa, animaciones, expresiones), atlas de la cara
   y `avatar_vestido.glb`, el modelo completo del que salen la base y las prendas.

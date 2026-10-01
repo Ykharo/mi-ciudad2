@@ -34,21 +34,28 @@ function lookMaterials(look) {
 }
 
 // un vecino al azar según las plantillas (r = generador de azar, para que salgan siempre los mismos)
+// (ver las plantillas en catalog/personajes.js: el orden del sorteo está documentado ahí)
 function randomLook(r = Math.random) {
-  // con una sola plantilla no se sortea cuál usar: así los vecinos de siempre no cambian
-  let T = VECINOS[0];
-  if (VECINOS.length > 1) { let x = r() * VECINOS.reduce((s, v) => s + v.peso, 0); T = VECINOS.find(v => (x -= v.peso) < 0) || T; }
+  const elegir = lista => lista[Math.floor(r() * lista.length)];
+  let x = r() * VECINOS.reduce((s, v) => s + v.peso, 0);
+  const T = VECINOS.find(v => (x -= v.peso) < 0) || VECINOS[0];
   const look = { base: 'nina', piel: null, escala: 1, cabeza: 1, prendas: {} };
-  for (const [slot, id] of Object.entries(T.prendas)) look.prendas[slot] = { id, colores: {}, extras: {} };
-  for (const s of T.sorteo) {
-    let v;
-    if (s.paleta) { const pal = PALETAS[s.paleta]; v = pal[Math.floor(r() * pal.length)]; }
-    else if (s.prob != null) v = r() < s.prob;
-    else v = s.min + r() * s.rango;
-    if (s.campo) look[s.campo] = v;
-    else if (s.canal) look.prendas[s.prenda].colores[s.canal] = v;
-    else look.prendas[s.prenda].extras[s.extra] = v;
+  for (const [slot, ids] of Object.entries(T.prendas)) look.prendas[slot] = { id: elegir(ids) };
+  for (const o of T.opcionales || []) {
+    if (r() >= o.prob) continue;
+    const id = elegir(o.ids);
+    look.prendas[PRENDA[id].slot] = { id };
   }
+  look.piel = elegir(PALETAS.piel);
+  for (const [slot, sel] of Object.entries(look.prendas)) {
+    const P = PRENDA[sel.id];
+    sel.colores = {}; sel.extras = {};
+    for (const [canal, C] of Object.entries(P.canales)) if (slot === 'pelo' || r() < T.colorProb) sel.colores[canal] = elegir(PALETAS[C.paleta]);
+    for (const e of Object.keys(P.extras || {})) sel.extras[e] = r() < 0.7;
+  }
+  look.escala = T.escala[0] + r() * T.escala[1];
+  look.cabeza = T.cabeza[0] + r() * T.cabeza[1];
+  if (r() < T.formaRedonda) look.formas = { redonda: 1 };
   return look;
 }
 

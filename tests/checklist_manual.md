@@ -22,7 +22,7 @@ PC = Chrome/Edge de escritorio. iPad = Safari en un iPad real, en horizontal y v
 | Personajes (etapa 7): elegir al empezar y con el botón de arriba; cada uno guarda su look; "Original" lo deja como es él; al recargar sigue el mismo; ropa del amigo (pelo corto, polerón, buzo, guantes) caminando, sentado, bailando y manejando | — | — |
 | Música on/off; al cambiar de pestaña el audio se pausa | ✅ | pendiente |
 | Rendimiento: fluido caminando por el centro con vecinos a la vista | ✅ | pendiente |
-| Versión de un solo archivo: abre con doble clic y en el visor donde se publica | ✅ | pendiente |
+| Versión publicada en GitHub Pages: abre y carga los modelos (la de un solo archivo se quitó el 30-09-2026) | ✅ | pendiente |
 
 ## Notas
 

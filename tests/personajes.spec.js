@@ -34,7 +34,7 @@ test('elegir al amigo al empezar y cambiar a la amiga jugando; se recuerda al vo
   await page.locator('#btnAct').click();
 
   await elegir(page, 'amiga');
-  expect((await jugador(page)).prendas).toMatchObject({ cabeza: 'gorra', abrigo: 'chaqueta', cuello: 'audifonos' });
+  expect((await jugador(page)).prendas).toMatchObject({ cabeza: 'gorra', abrigo: 'chaqueta_oversize', piernas: 'pantalon_ancho', pies: 'zapatillas_plataforma', torso: 'top_corto' });
   await expect(page.locator('#btnChar')).toHaveText('👱‍♀️');
   expect(await page.evaluate(() => window.__juego.npcs.length + 1)).toBe(8);   // no quedó un personaje de más
   expect((await guardado(page)).jugador).toBe('amiga');

@@ -34,6 +34,7 @@ export function queTapa(C) {
   for (const peinado of [peloLargo, peloCorto]) {
     const p = peinado.construir(C).mallas[0].malla;
     mallas.push(mallaRayos(p.V.flatMap(v => [v.x, v.y, v.z]), p.F.flat()));
+    if (peinado === peloLargo) mallas.largo = mallas[mallas.length - 1];   // (el gorro de lana lo trata aparte)
   }
   return (C.peinados = mallas);
 }

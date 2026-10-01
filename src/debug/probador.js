@@ -14,7 +14,7 @@ import { loadCharacters, makeAvatar, NINA } from '../characters/avatar.js';
 import { avatarDo, avatarStop, updateAvatar } from '../characters/animator.js';
 import { PRENDAS, SLOTS } from '../characters/catalog/prendas.js';
 import { LOOK_NINA, PERSONAJES } from '../characters/catalog/personajes.js';
-import { fixLook, randomLook } from '../characters/looks.js';
+import { randomLook } from '../characters/looks.js';
 import { ponerPrenda, quitarPrenda, recolorear } from '../characters/wardrobe.js';
 import { crearReferencias } from './referencias.js';
 
@@ -25,7 +25,7 @@ const suelo = new THREE.Mesh(new THREE.CircleGeometry(3, 48), new THREE.MeshStan
 suelo.rotation.x = -Math.PI / 2; suelo.receiveShadow = true; scene.add(suelo);
 sun.position.copy(SUN_OFF); sun.target.position.set(0, 0, 0);   // como en el juego (game/camera.js), con Nina al centro
 
-let look = q.get('look') === 'azar' ? randomLook(seeded(+(q.get('seed') || 1))) : copia((PERSONAJES[q.get('look')] || {}).look || LOOK_NINA);
+let look = q.get('look') === 'azar' ? randomLook(seeded(Math.imul(+(q.get('seed') || 1), 2654435761) >>> 0))   /* (semilla mezclada: con semillas seguidas el generador da primeros números casi iguales) */ : copia((PERSONAJES[q.get('look')] || {}).look || LOOK_NINA);
 for (const s of (q.get('sin') || '').split(',').filter(Boolean)) delete look.prendas[s];
 for (const par of (q.get('con') || '').split(',').filter(Boolean)) { const [s, id] = par.split(':'); look.prendas[s] = { id }; }
 for (const par of (q.get('forma') || '').split(',').filter(Boolean)) { const [f, v] = par.split(':'); (look.formas = look.formas || {})[f] = +(v ?? 1); }
@@ -125,7 +125,12 @@ $('#prendas').addEventListener('change', async e => {
   else quitarPrenda(ch, slot);
   info();
 });
-$('#azar').addEventListener('click', () => { const l = randomLook(); l.escala = ch.look.escala; l.cabeza = ch.look.cabeza; l.formas = ch.look.formas; recolorear(ch, fixLook(l)); info(); });
+// un vecino al azar (prendas y colores, como en la ciudad; la estatura y la cabeza se quedan)
+$('#azar').addEventListener('click', async () => {
+  const l = randomLook(); l.escala = ch.look.escala; l.cabeza = ch.look.cabeza;
+  for (const s of SLOTS) { if (l.prendas[s]) await ponerPrenda(ch, s, l.prendas[s]); else quitarPrenda(ch, s); }
+  recolorear(ch, l); info();
+});
 $('#fabrica').addEventListener('click', () => { recolorear(ch, copia(LOOK_NINA)); info(); });
 function info() {
   let v = 0, m = new Set();

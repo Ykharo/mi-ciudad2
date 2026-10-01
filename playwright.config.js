@@ -1,15 +1,13 @@
-// Pruebas del juego con Playwright. `npm test` arma primero las dos versiones (pretest) y prueba:
+// Pruebas del juego con Playwright. `npm test` arma primero la versión web (pretest) y prueba:
 // - dev:   el código de src/ servido por Vite (desarrollo)
 // - web:   dist/web, la versión que se publica en GitHub Pages
-// - unico: dist/unico/ciudad-arcoiris.html, la versión de un solo archivo
-// Las capturas de referencia (tests/capturas/) son las mismas para todas: vienen del juego de la etapa 0.
+// Las capturas de referencia (tests/capturas/) son las mismas para las dos.
 import { defineConfig, devices } from '@playwright/test';
 
 // ?test instala los ganchos de prueba (window.__juego, ver src/debug/hooks.js)
 const SERVIDORES = {
   dev:   { puerto: 5173, cmd: 'npx vite', pagina: '/?test' },
   web:   { puerto: 4173, cmd: 'npx vite preview', pagina: '/?test' },
-  unico: { puerto: 4174, cmd: 'npx vite preview --mode unico', pagina: '/ciudad-arcoiris.html?test' },
 };
 
 const escritorio = {
@@ -48,9 +46,8 @@ export default defineConfig({
   projects: [
     proyecto('dev', 'dev', escritorio, /(humo|lugares|manejo|guardado|vestidor|personajes|capturas)\.spec\.js/),
     proyecto('dev-ipad', 'dev', ipad, /(humo|lugares|manejo|guardado|vestidor|personajes)\.spec\.js/),
-    proyecto('web', 'web', escritorio, /(humo|lugares|manejo|guardado|vestidor|personajes|capturas)\.spec\.js/),
+    proyecto('web', 'web', escritorio, /(humo|lugares|manejo|guardado|vestidor|personajes|capturas|sin-red)\.spec\.js/),
     proyecto('web-ipad', 'web', ipad, /(humo|lugares|manejo|guardado|vestidor|personajes)\.spec\.js/),
-    proyecto('unico', 'unico', escritorio, /(humo|lugares|manejo|guardado|vestidor|personajes|capturas|sin-red)\.spec\.js/),
   ],
   webServer: Object.values(SERVIDORES).map(s => ({
     command: `${s.cmd} --port ${s.puerto} --strictPort`,

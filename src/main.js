@@ -42,7 +42,7 @@ import { cargarPersonajes } from './game/personajes.js';
 import { crearEspectador, updateEspectador } from './game/cartel.js';
 import { PERSONAJES } from './characters/catalog/personajes.js';
 import { updatePlayer } from './game/player.js';
-import { spawnNPCs, updateNPCs } from './game/npcs.js';
+import { lookVecinos, spawnNPCs, updateNPCs } from './game/npcs.js';
 import { followChain } from './pets/follow.js';
 import { updateCamera } from './game/camera.js';
 import { driving, updateCar } from './game/driving.js';
@@ -96,7 +96,8 @@ async function boot() {
   cargarPersonajes(saved);   // con quién se juega y el look de cada uno
   // la base y las prendas del personaje, de los vecinos y del espectador del cartel (la amiga o el amigo); y la imagen
   // del cartel
-  await Promise.all([loadCharacters([player.look, PERSONAJES.amiga.look, PERSONAJES.amigo.look]), cartelListo]);
+  const vecinos = lookVecinos(7);
+  await Promise.all([loadCharacters([player.look, PERSONAJES.amiga.look, PERSONAJES.amigo.look, ...vecinos]), cartelListo]);
   player.ch = makeAvatar(player.look);
   crearEspectador();
   const pets = saved ? (saved.pets || []) : [{ kind: 'perro', color: '#E9B77A', name: 'Toby' }];
@@ -117,7 +118,7 @@ async function boot() {
   if (saved && saved.shop) state.shopSpec = fixCarSpec(saved.shop);
   if (saved && saved.migrada) save();   // partida v1: queda guardada en el formato nuevo
   refreshTT();
-  spawnNPCs(7);
+  spawnNPCs(vecinos);
   resize();
   cam.look.set(player.pos.x, 1.6, player.pos.z); cam.pos.set(player.pos.x + 8, 7, player.pos.z + 8);
   requestAnimationFrame(t => { last = t; frame(t); });
