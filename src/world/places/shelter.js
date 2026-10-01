@@ -1,17 +1,14 @@
 // Refugio de Mascotas.
 import { THREE } from '../../engine/three.js';
-import { scene } from '../../engine/renderer.js';
 import { mat } from '../../engine/materials.js';
 import { G, box, cyl, mesh, rlo } from '../../engine/geometry.js';
 import { makeSign } from '../../engine/textures.js';
-import { world } from '../layout.js';
-import { addObs } from '../physics.js';
-import { addZone } from '../zones.js';
-import { animated } from '../../engine/loop.js';
+import { definePlace } from '../place.js';
 import { house } from '../houses.js';
 import { animatePet, buildPet } from '../../pets/models.js';
 
-function shelter(x, z) {
+function shelter({ world, scene, addObs, addZone, onFrame }) {
+  const x = 15, z = 17;
   const ry = Math.PI; // faces -z (toward Paseo Algodón)
   const g = house(x, z, ry, { w: 13, d: 9, h: 5.2, wall: '#D2F4E6', roof: '#2FA58A', door: '#FFD23F', rh: 3.2, path: 3 });
   const sign = makeSign('Refugio de Mascotas', '#2FA58A', '#FFFFFF', 8.5); sign.position.set(0, 4.75, 9 / 2 + 0.07); g.add(sign);
@@ -43,9 +40,9 @@ function shelter(x, z) {
   const residents = [['perro', '#C98B4F', yx - 1.5, yz - 1.8], ['gato', '#F2A65A', yx + 1.2, yz - 2.6], ['conejo', '#FFFFFF', yx - 1.8, yz + 2.2]];
   residents.forEach(([k, c, px, pz], i) => {
     const p = buildPet(k, c); p.root.position.set(px, 0, pz); p.root.rotation.y = -Math.PI / 2 + i; scene.add(p.root);
-    animated.push((t) => { animatePet(p, t + i * 2, 0, 0.016); p.root.rotation.y += Math.sin(t * 0.6 + i) * 0.004; });
+    onFrame((t) => { animatePet(p, t + i * 2, 0, 0.016); p.root.rotation.y += Math.sin(t * 0.6 + i) * 0.004; });
   });
   addZone({ id: 'pets', x, z: z - 9 / 2 - 2.4, r: 3.4, label: '🐾 Adoptar mascota' });
 }
 
-export { shelter };
+definePlace({ id: 'refugio', nombre: 'Refugio de Mascotas', orden: 30, area: [5.5, 34.5, 5.5, 34.5], build: shelter });

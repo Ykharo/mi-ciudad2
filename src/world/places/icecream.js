@@ -3,11 +3,10 @@ import { THREE } from '../../engine/three.js';
 import { mat } from '../../engine/materials.js';
 import { cone, cyl, mesh, rlo, sph } from '../../engine/geometry.js';
 import { makeSign, stripeTexture } from '../../engine/textures.js';
-import { world } from '../layout.js';
-import { addObs } from '../physics.js';
-import { addZone } from '../zones.js';
+import { definePlace } from '../place.js';
 
-function iceCreamShop(x, z) {
+function iceCreamShop({ world, addObs, addZone }) {
+  const x = -26, z = 15;
   const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = Math.PI;
   const w = 9, d = 7, h = 4.4;
   g.add(mesh(rlo(w + 0.4, 0.4, d + 0.4, 0.12), mat('#E4DACB'), 0, 0.2, 0));
@@ -41,4 +40,4 @@ function iceCreamShop(x, z) {
   addZone({ id: 'icecream', x: x + 1.2, z: z - d / 2 - 2.0, r: 3.0, label: '🍦 Pedir un helado' });
 }
 
-export { iceCreamShop };
+definePlace({ id: 'heladeria', nombre: 'Heladería', orden: 40, area: [-34.5, -5.5, 5.5, 21], build: iceCreamShop });

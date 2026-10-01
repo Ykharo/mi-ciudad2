@@ -16,6 +16,14 @@ test('sentarse en una banca del parque', async ({ page, jugar }) => {
   await page.keyboard.up('w');
 });
 
+test('la plaza de juegos: su nombre y sus bancas', async ({ page, jugar }) => {
+  await jugar();
+  await ir(page, 71.6, 16);   // la banca está en (72,6; 16), mirando hacia los juegos (−x)
+  await expect(page.locator('#placeName')).toHaveText('Plaza de Juegos');
+  await accion(page, '🪑 Sentarse');
+  await expect.poll(() => page.evaluate(() => !!window.__juego.player.seat)).toBe(true);
+});
+
 test('pedir un helado', async ({ page, jugar }) => {
   await jugar();
   await ir(page, -24.8, 9.5);

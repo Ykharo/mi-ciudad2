@@ -3,9 +3,7 @@ import { THREE } from '../../engine/three.js';
 import { mat } from '../../engine/materials.js';
 import { G, box, cyl, mesh, rbox, rlo, sph } from '../../engine/geometry.js';
 import { makeSign, stripeTexture } from '../../engine/textures.js';
-import { world } from '../layout.js';
-import { addObs } from '../physics.js';
-import { addZone } from '../zones.js';
+import { definePlace } from '../place.js';
 
 /* ---------- special places ---------- */
 function mannequin(g, x, y, z, color, skirt) {
@@ -15,7 +13,8 @@ function mannequin(g, x, y, z, color, skirt) {
   g.add(mesh(cyl(0.34, skirt ? 0.62 : 0.4, 0.55, 20), mat(skirt ? color : '#4FB6F5'), x, y + 1.0, z));
   g.add(mesh(sph(0.26, 14, 10), mat('#F4EEF6'), x, y + 2.1, z));
 }
-function boutique(x, z) {
+function boutique({ world, addObs, addZone }) {
+  const x = 20, z = -17;
   const g = new THREE.Group(); g.position.set(x, 0, z);
   const w = 16, d = 11, h = 7.6;
   const wall = mat('#FFC9E0'), pink = mat('#FF6FAE'), white = mat('#FFFFFF');
@@ -61,4 +60,4 @@ function boutique(x, z) {
   addZone({ id: 'boutique', x, z: z + d / 2 + 3.2, r: 3.4, label: '👗 Vestidor' });
 }
 
-export { boutique };
+definePlace({ id: 'boutique', nombre: 'Boutique Arcoíris', orden: 10, area: [5.5, 34.5, -34.5, -5.5], build: boutique });

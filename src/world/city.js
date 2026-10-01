@@ -1,42 +1,30 @@
 // Arma la ciudad.
 import { TAU, seeded } from '../core/math.js';
 import { mergeStatic } from '../engine/merge.js';
-import { makeSign } from '../engine/textures.js';
 import { LINES, world } from './layout.js';
 import { obstacles } from './physics.js';
-import { addArea } from './zones.js';
 import { buildGround } from './ground.js';
-import { flowers, tree } from './nature.js';
+import { tree } from './nature.js';
 import { HOUSE_STYLES, house } from './houses.js';
-import { boutique } from './places/boutique.js';
-import { cartel } from './places/cartel.js';
-import { shelter } from './places/shelter.js';
-import { iceCreamShop } from './places/icecream.js';
-import { park } from './places/park.js';
+import { buildPlaces, places } from './place.js';
 import { spawnCar } from '../cars/fleet.js';
-import { carShop } from './places/carshop.js';
 
-// Cada lugar especial con el rectángulo de su manzana (x0, x1, z0, z1), para el nombre del lugar.
+// Los lugares especiales: cada archivo de places/ se registra solo con definePlace (ver place.js).
+import.meta.glob('./places/*.js', { eager: true });
+
 function buildCity() {
   buildGround();
-  boutique(20, -17); addArea('Boutique Arcoíris', 5.5, 34.5, -34.5, -5.5);
-  cartel();   // el cartel de la competencia de farmear aura, en la esquina de la Boutique
-  shelter(15, 17); addArea('Refugio de Mascotas', 5.5, 34.5, 5.5, 34.5);
-  iceCreamShop(-26, 15); addArea('Heladería', -34.5, -5.5, 5.5, 21);
-  park(-20, -20); addArea('Parque Central', -34.5, -5.5, -34.5, -5.5);
-  // "Mi Casa" next to the ice cream shop, facing Calle Arcoíris
-  const mine = house(-13, 26, Math.PI / 2, { w: 9, d: 7.5, h: 6, wall: '#FFD6E2', roof: '#FF6FAE', door: '#9B6BF0', path: 3.3 });
-  const s = makeSign('Mi Casa', '#9B6BF0', '#FFFFFF', 3.4); s.position.set(0, 5.1, 7.5 / 2 + 0.07); mine.add(s);
-  addArea('Mi Casa', -34.5, -5.5, 21, 34.5);
-  flowers(-7.5, 20, 2, 4, 14, 41); flowers(-7.5, 32, 2, 4, 14, 42);
-  carShop(); addArea('Autos Arcoíris', 45.5, 76, -34.5, -5.5);
+  buildPlaces();
 
+  // las manzanas de afuera que ocupa un lugar especial (por ejemplo Autos Arcoíris): sin casa ni árboles sueltos
+  const ocupada = (x, z, m = 0) => places.some(p => p.area && Math.max(Math.abs(p.area[0]), Math.abs(p.area[1])) > 36
+    && x > p.area[0] - m && x < p.area[1] + m && z > p.area[2] - m && z < p.area[3] + m);
   // houses in the outer blocks, each facing the nearest street
   const outer = [-57.75, -20, 20, 57.75];
   let k = 0;
   outer.forEach(bx => outer.forEach(bz => {
     if (Math.abs(bx) < 30 && Math.abs(bz) < 30) return;
-    if (bx > 50 && bz === -20) { k++; return; } // this block is the car dealership
+    if (ocupada(bx, bz)) { k++; return; }
     let best = null;
     LINES.forEach(L => {
       const dx = Math.abs(bx - L), dz = Math.abs(bz - L);
@@ -59,7 +47,7 @@ function buildCity() {
 
   // trees scattered in the outer blocks and a green belt around the city
   const r = seeded(99);
-  const clearOf = (x, z, m) => !obstacles.some(o => Math.abs(x - o.x) < o.hw + m && Math.abs(z - o.z) < o.hd + m) && !LINES.some(L => Math.abs(x - L) < 7 || Math.abs(z - L) < 7) && !(x > 43 && x < 78 && z > -37 && z < -3);
+  const clearOf = (x, z, m) => !obstacles.some(o => Math.abs(x - o.x) < o.hw + m && Math.abs(z - o.z) < o.hd + m) && !LINES.some(L => Math.abs(x - L) < 7 || Math.abs(z - L) < 7) && !ocupada(x, z, 2.5);
   let placed = 0, tries = 0;
   while (placed < 26 && tries < 800) {
     tries++;

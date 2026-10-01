@@ -5,9 +5,7 @@
 import { THREE } from '../../engine/three.js';
 import { mat } from '../../engine/materials.js';
 import { cyl, mesh, rlo, sph } from '../../engine/geometry.js';
-import { world } from '../layout.js';
-import { addObs } from '../physics.js';
-import { addZone } from '../zones.js';
+import { definePlace } from '../place.js';
 import cartelUrl from '../../assets/imagenes/cartel_aura.jpg';
 
 const ANCHO = 3.8, ALTO = 5.7, BASE = 1.9;   // la imagen es 2:3; el borde de abajo a 1,9 m
@@ -28,7 +26,7 @@ const cartelListo = new Promise(ok => {
   img.src = cartelUrl;
 });
 
-function cartel() {
+function cartel({ world, addObs, addZone }) {
   const g = new THREE.Group(); g.position.set(CARTEL.x, 0, CARTEL.z); g.rotation.y = CARTEL.ry;
   const marco = mat('#2E2550'), morado = mat('#9B6BF0', { roughness: 0.5 });
   // patas y base
@@ -56,4 +54,7 @@ function cartel() {
   addZone({ id: 'cartel', x: z.x, z: z.z, r: 2.0, label: '👀 Mirar el cartel' });
 }
 
-export { CARTEL, cartel, cartelListo };
+// sin área propia: está en la manzana de la Boutique
+definePlace({ id: 'cartel', nombre: 'Cartel de la competencia', orden: 20, build: cartel });
+
+export { CARTEL, cartelListo };

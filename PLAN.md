@@ -13,6 +13,9 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
 - Etapas 0–6 terminadas. **Etapa 7 en curso** (personajes nuevos y variedad). Todo hasta el cartel de la
   competencia, la ropa de la amiga y los lentes de sol tiene commit; **sin commit todavía**: vecinos con la ropa nueva,
   retiro de la versión de un solo archivo y peinados nuevos (probados con 65/65 en Chromium).
+- **Etapa 8 terminada** (sin commit): los lugares se registran con `definePlace` (`world/place.js`) y `city.js` los
+  encuentra solos. Lugar nuevo hecho con un solo archivo: **Plaza de Juegos** (`places/plaza.js`, frente al
+  Refugio cruzando la Avenida Menta). 67/67 en Chromium.
 - Repositorio `github.com/Ykharo/mi-ciudad2`; se publica sólo en GitHub Pages (Actions con `npm run build:web`).
   Commits desde GitHub Desktop (Git no está en el PATH).
 - **Una sola versión: la web.** La de un solo archivo se quitó (decisión del usuario: quiere seguir agregando
@@ -32,8 +35,8 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
 - Una zona de competencia de aura (que el cartel lleve a algo: bailar y ganar puntos).
 - Menú Acción con 18 opciones: separar en "Acciones" y "Bailes" si molesta.
 - Cartel: que la cámara se ajuste al mirarlo, o abrir la imagen en grande.
-- Etapa 7 del plan: altura de sentarse medida del esqueleto (quitar el 0,158 fijo); caras alternativas. Etapa 8:
-  lugares y actividades como módulos.
+- Etapa 7 del plan: altura de sentarse medida del esqueleto (quitar el 0,158 fijo); caras alternativas.
+- Plaza de Juegos: que se pueda usar (saltar en la cama elástica, subirse al carrusel o al sube y baja).
 
 **Pendientes y avisos**
 - **WebKit no arranca en este PC** (Windows lo bloquea, código `0xC0E90002`): las pruebas de iPad no corren. Revisar

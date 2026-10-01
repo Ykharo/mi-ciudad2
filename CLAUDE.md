@@ -18,8 +18,11 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
     pets, cars) ← game ← audio, ui ← debug ← main.js. Nadie importa capas de más arriba y no hay ciclos.
     Para avisar hacia arriba se usan eventos: `emit('zona' | 'aviso' | 'sonido' | 'menu' | 'auto' | 'motor', …)`
     (lista en `core/events.js`); `game/` no toca el DOM ni el audio.
+  - Lugares: un archivo en `world/places/` con `definePlace({ id, nombre, orden, area, build(ctx) })`
+    (`world/place.js`; `city.js` los encuentra solo). `ctx`: `world`, `scene`, `addObs`, `addObsRot`, `addZone`,
+    `onFrame`. `area` = `[x0, x1, z0, z1]` da el nombre del lugar; no cambiar el `orden` de los que existen.
+    Un lugar en una manzana de afuera reemplaza su casa (`ocupada` en `city.js`). Ej.: `places/plaza.js`.
   - Zonas: el lugar hace `addZone({ id, x, z, r, label })` y quien sabe qué hacer registra `onZoneAction(id, fn)`.
-    Nombre del lugar: `addArea(...)` en `world/city.js`.
   - `engine/three.js` es el único que importa `three`.
   - Variables que se reasignan desde varios módulos viven en `state` (`state.mode`, `state.clock`, `state.currentZone`,
     `state.lastCar`, `state.shopSpec`, `state.ttModel/ttSpin/ttDrag`, `state.musicOn`, `state.joyId`, `state.preview`).

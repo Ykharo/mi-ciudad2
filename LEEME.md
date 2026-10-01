@@ -25,7 +25,8 @@ Requiere Node (una vez: `npm install`).
     `acciones.js` con `ACTIONS`, la lista del menú 🎬 Acción (id = nombre de la animación en el .glb).
   - `cars/build.js` — `CAR_SCALE`, tamaño de los autos respecto al personaje. `cars/catalog.js` — tipos, colores, adornos.
   - `game/player.js` — `PLAYER_SPEED`, velocidad al caminar/correr. `game/driving.js` — manejar.
-  - `world/city.js` arma la ciudad; cada lugar especial está en `world/places/`.
+  - `world/city.js` arma la ciudad; cada lugar especial es un archivo en `world/places/` (para agregar un lugar basta
+    un archivo nuevo con `definePlace`, ver `world/place.js`).
   - `main.js` — arranque y bucle principal.
 - `assets/modelos/nina_base.glb` — Nina sin ropa: esqueleto, cuerpo, cara, las 11 animaciones y los bailes.
   `assets/modelos/prendas/` — un archivo por prenda (se descargan sólo cuando alguien las usa). Las cuatro originales

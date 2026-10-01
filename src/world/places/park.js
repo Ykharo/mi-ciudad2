@@ -1,16 +1,12 @@
 // Parque Central: pileta, bancas, resbalín y columpios.
 import { THREE } from '../../engine/three.js';
 import { TAU } from '../../core/math.js';
-import { scene } from '../../engine/renderer.js';
 import { mat } from '../../engine/materials.js';
 import { box, cyl, mesh, rlo, sph } from '../../engine/geometry.js';
-import { world } from '../layout.js';
-import { addObs, addObsRot } from '../physics.js';
-import { addZone } from '../zones.js';
-import { animated } from '../../engine/loop.js';
+import { definePlace } from '../place.js';
 import { flowers, tree } from '../nature.js';
 
-function fountain(x, z) {
+function fountain({ world, scene, addObs, onFrame }, x, z) {
   world.add(mesh(cyl(3.4, 3.6, 0.9, 32), mat('#D9D2E4'), x, 0.45, z));
   const water = mesh(cyl(3.0, 3.0, 0.1, 32), new THREE.MeshStandardMaterial({ color: 0x6FCBFF, roughness: 0.15, emissive: 0x2E9CE0, emissiveIntensity: 0.25, transparent: true, opacity: 0.9 }), x, 0.82, z, false, false);
   world.add(water);
@@ -22,7 +18,7 @@ function fountain(x, z) {
   const drops = [];
   const grp = new THREE.Group(); grp.userData.dynamic = true; scene.add(grp);
   for (let i = 0; i < 40; i++) { const m = new THREE.Mesh(sph(0.09, 6, 5), dm); grp.add(m); drops.push({ m, t: Math.random(), a: Math.random() * TAU }); }
-  animated.push((t, dt) => {
+  onFrame((t, dt) => {
     for (const d of drops) {
       d.t += dt * 0.7; if (d.t > 1) { d.t -= 1; d.a = Math.random() * TAU; }
       const r = 0.2 + d.t * 1.9, y = 2.9 + d.t * 3.2 - d.t * d.t * 5.2;
@@ -30,7 +26,7 @@ function fountain(x, z) {
     }
   });
 }
-function bench(x, z, ry) {
+function bench({ world, addObsRot, addZone }, x, z, ry) {
   const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry;
   const wood = mat('#E08A4F'), iron = mat('#3C4670');
   g.add(mesh(rlo(2.6, 0.18, 0.8, 0.06), wood, 0, 0.62, 0));
@@ -39,12 +35,13 @@ function bench(x, z, ry) {
   world.add(g); addObsRot(x, z, 2.6, 0.9, ry);
   addZone({ id: 'bench', x: x + Math.sin(ry) * 1.0, z: z + Math.cos(ry) * 1.0, r: 1.5, label: '🪑 Sentarse', bench: { x, z, ry } });
 }
-function park(cx, cz) {
+function park(ctx) {
+  const { world, addObs, onFrame } = ctx, cx = -20, cz = -20;
   world.add(mesh(cyl(7.2, 7.2, 0.04, 40), mat('#F3E4C6', { roughness: 1 }), cx, 0.025, cz, false, true));
   world.add(mesh(box(29, 0.035, 2.6), mat('#F3E4C6', { roughness: 1 }), cx, 0.022, cz, false, true));
   world.add(mesh(box(2.6, 0.035, 29), mat('#F3E4C6', { roughness: 1 }), cx, 0.023, cz, false, true));
-  fountain(cx, cz);
-  [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(([a, b]) => bench(cx + a * 5.2, cz + b * 5.2, Math.atan2(-a, -b)));
+  fountain(ctx, cx, cz);
+  [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(([a, b]) => bench(ctx, cx + a * 5.2, cz + b * 5.2, Math.atan2(-a, -b)));
   // flower beds
   [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(([a, b], i) => {
     const fx = cx + a * 9.5, fz = cz + b * 9.5;
@@ -70,10 +67,12 @@ function park(cx, cz) {
     [-1, 1].forEach(k => pv.add(mesh(cyl(0.025, 0.025, 2.3, 5), mat('#6D5A4A'), k * 0.35, -1.15, 0)));
     pv.add(mesh(rlo(0.9, 0.1, 0.45, 0.04), mat(i ? '#FF6FAE' : '#4FB6F5'), 0, -2.3, 0));
     world.add(pv);
-    animated.push(t => { pv.rotation.x = Math.sin(t * 1.7 + i * 1.4) * 0.28; });
+    onFrame(t => { pv.rotation.x = Math.sin(t * 1.7 + i * 1.4) * 0.28; });
   });
   // trees around
   [[-12, -12], [12, -12], [-12, 12], [12, 12], [-12.5, -6], [-6, -12.5], [13, 5]].forEach(([a, b], i) => tree(cx + a, cz + b, 1 + (i % 3) * 0.12, i % 3 === 0 ? 1 : 0));
 }
 
-export { park };
+definePlace({ id: 'parque', nombre: 'Parque Central', orden: 50, area: [-34.5, -5.5, -34.5, -5.5], build: park });
+
+export { bench };   // la plaza de juegos también tiene bancas

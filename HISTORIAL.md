@@ -5,6 +5,36 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Etapa 8 — Lugares y actividades como módulos (30-09-2026, terminada)
+
+- **Lugar nuevo: Plaza de Juegos** (`world/places/plaza.js`, pedido: plaza de juegos en una manzana de afuera). Es
+  la prueba de la etapa: un solo archivo, sin tocar `city.js` ni `game/`. En la manzana frente al Refugio, cruzando
+  la Avenida Menta (`area` 45,5…76 × 5,5…34,5; antes había una casa). Arco de entrada con el letrero mirando a la
+  avenida, piso de goma lila, carrusel girando con seis caballitos de colores que suben y bajan, cama elástica con una
+  pelota que rebota, sube y baja, arenero con castillo, balde y pala, dos bancas (la del parque, ahora exportada de
+  `park.js`, con su zona "🪑 Sentarse") y árboles y flores en las esquinas.
+  - `city.js`: la manzana de afuera que ocupa un lugar (su `area` está fuera del centro) no lleva casa ni árboles
+    sueltos (`ocupada`). Reemplaza lo que estaba escrito a mano para Autos Arcoíris; sin la plaza, las capturas con
+    `UUID_APARTE` salieron iguales.
+  - Colores: con la luz del juego, los colores muy claros (`#E6DAFF`) se ven blancos al sol; el piso quedó `#9C86D9`.
+  - Prueba nueva: nombre "Plaza de Juegos" y sentarse en una de sus bancas. Capturas regeneradas (la plaza no sale en
+    ellas, pero cambian los números al azar). Chromium (dev y web): **67/67**.
+
+- **Lugares con `definePlace`** (`world/place.js`): cada archivo de `world/places/` se registra con
+  `definePlace({ id, nombre, orden, area, build(ctx) })`; `city.js` los encuentra solo
+  (`import.meta.glob('./places/*.js', { eager: true })`) y `buildPlaces()` los arma por `orden` y registra su área
+  (`addArea(nombre, ...area)`). `ctx` = `{ world, scene, addObs, addObsRot, addZone, onFrame }` (`onFrame` =
+  `animated.push`). Agregar un lugar = agregar un archivo, sin tocar `city.js`.
+  - Pasados: Boutique (10), cartel (20, sin área: está en la manzana de la Boutique), Refugio (30), Heladería (40),
+    Parque (50), **Mi Casa** (60, nuevo archivo `places/casa.js`: antes vivía suelto en `city.js`) y Autos Arcoíris
+    (70). La posición de cada lugar pasó de argumento a constante dentro de su archivo. El parque pasa `ctx` a la
+    pileta y las bancas. `city.js` quedó con el suelo, las casas de afuera, los árboles y los autos estacionados.
+  - `orden` conserva el orden de antes: cambiarlo mueve los obstáculos, el orden de dibujo y los números al azar
+    (las gotas de la pileta usan `Math.random`). Un lugar sin `orden` se arma al final.
+  - Lo que otros módulos usan de un lugar se sigue exportando de su archivo (`CARTEL`, `cartelListo`, `TT`,
+    `SPAWNS`, `ttGroup`). `main.js` sigue importando los lugares en el orden original (orden de arranque).
+  - Con `UUID_APARTE`: las 8 capturas iguales antes y después. Chromium (dev y web): **65/65**.
+
 ## 30-09-2026 y antes
 
 - El proyecto se movió de OneDrive a `C:\proyectos\mi-ciudad`. La copia de OneDrive queda sólo como respaldo;
