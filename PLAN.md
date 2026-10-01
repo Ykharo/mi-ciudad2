@@ -306,9 +306,29 @@ sin romper lo que ya funciona. Es sólo un plan: todavía no se tocó ningún ar
     internet salvo las fuentes); la de "abrir con doble clic" se borró. Las secciones 4.2 y las decisiones de abajo
     que hablan del archivo único quedan como historia. Chromium (dev y web): **65/65**, en 3,8 min (antes 98 en 6 min,
     con el archivo único).
-  - Siguiente: peinados (ondulado largo con mechas rosadas, lacio y trenzas de la amiga; pelo largo desordenado del
-    amigo), lo que falta de las hojas (jeans baggy, reloj, zapatillas deportivas, clip de estrella, celular, botella), y
-    los nombres de la amiga y el amigo.
+  - **Peinados nuevos** (pedido: los de las hojas). Cinco:
+    - `pelo_lacio` (lacio largo): `pelo_largo.mjs` ahora exporta `construirLargo` con opciones (onda, puntas, largo
+      atrás y adelante, bulto, mechas) y `casquete` con prefijo de materiales; el lacio es liso, más largo y con las
+      puntas parejas.
+    - Mechas: el pelo largo tiene un canal nuevo "Color de las mechas" (`PeloLargo_Mechas`, un mechón entero de cada
+      tres y una columna del casquete), que si no se elige toma el color del pelo (`siFalta` con `sombra` 1): el pelo
+      largo de siempre no cambia. La amiga lleva sus ondas castaño claro con mechas rosadas, como en su hoja.
+    - `trenzas`: el casquete del pelo largo y dos trenzas de "eslabones" redondeados inclinados a un lado y al otro,
+      que nacen detrás de las orejas y caen por delante de los hombros (por fuera del cuerpo a 4 cm), con gomita
+      (canal "Color de las gomitas") y punta suelta. La primera versión, delgada, parecía un collar de cuentas.
+    - `pelo_largo_desordenado` (el "cabello largo" del amigo): `pelo_corto.mjs` exporta `construirMechones` con el
+      borde y una capa más de mechones largos (el pelo corto salió idéntico byte a byte); tapa las orejas y llega a la
+      mandíbula y la nuca; las puntas casi no se levantan (si no, se abrían como tablas).
+    - `pelo_rizado`: casquete + unos 170 rulos redondos (espiral de Fibonacci, 11 lados; aplastados y de 8 lados
+      parecían discos de panal). Los rulos de arriba van en `Pelo_Rizado_Tope`, que los tres gorros esconden: así el
+      volumen no agranda los gorros y bajo un gorro asoman los del borde. 644 KB: el tope por prenda subió de 450 a
+      650 KB (ya no hay archivo único; cada prenda se descarga sólo si alguien la usa).
+    - Gorra, jockey, gorro de lana y audífonos grandes regenerados para calzar por fuera de los peinados nuevos (el
+      de lana limita todos los peinados a 5 cm sobre la cabeza). En los vecinos: clásico con lacio, trenzas y rizado;
+      urbano con largo desordenado, lacio y rizado; las mechas salen al 25 % (los canales con `siFalta`).
+    - La prueba de prendas nuevas pasa por los cuatro peinados. Capturas regeneradas. Chromium (dev y web): **65/65**.
+  - Siguiente: lo que falta de las hojas (jeans baggy, reloj, zapatillas deportivas, clip de estrella, celular,
+    botella), y los nombres de la amiga y el amigo.
     Los peinados nuevos: sumarlos a `queTapa` (gorra.mjs) y regenerar gorra, jockey y audífonos grandes.
 - **Mejora (después de la etapa 5): joystick con zona lenta y zona rápida.** Pedido: más recorrido para caminar y
   manejar despacio. El joystick pasó de 156 a 200 px (164 en pantallas chicas); mientras la perilla está entera

@@ -29,7 +29,7 @@ const TABS = [
 const NOMBRE_CANAL = {
   principal: 'Color', panel: 'Color de los detalles', detalles: 'Color de los bordes',
   visera: 'Color de la visera', almohadillas: 'Color de las almohadillas', correas: 'Color de las correas',
-  mariposa: 'Color de la mariposa', franjas: 'Color de las franjas', dibujos: 'Color de los dibujos', lentes: 'Color de los lentes',
+  mariposa: 'Color de la mariposa', franjas: 'Color de las franjas', dibujos: 'Color de los dibujos', lentes: 'Color de los lentes', mechas: 'Color de las mechas', gomitas: 'Color de las gomitas',
 };
 let tab = 'arriba';
 const copia = o => JSON.parse(JSON.stringify(o));

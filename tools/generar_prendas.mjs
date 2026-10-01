@@ -14,6 +14,10 @@ import * as mochila from './prendas/mochila.mjs';
 import * as jockey from './prendas/jockey.mjs';
 import * as audifonosGrandes from './prendas/audifonos_grandes.mjs';
 import * as peloCorto from './prendas/pelo_corto.mjs';
+import * as peloLacio from './prendas/pelo_lacio.mjs';
+import * as trenzas from './prendas/trenzas.mjs';
+import * as peloLargoD from './prendas/pelo_largo_desordenado.mjs';
+import * as peloRizado from './prendas/pelo_rizado.mjs';
 import * as poleron from './prendas/poleron.mjs';
 import * as buzo from './prendas/buzo.mjs';
 import * as guantes from './prendas/guantes.mjs';
@@ -27,7 +31,7 @@ import * as gorroLana from './prendas/gorro_lana.mjs';
 import * as lentesSol from './prendas/lentes_sol.mjs';
 
 // (los peinados van antes que los gorros y los audífonos grandes, que se calzan por fuera de ellos: gorra.mjs, queTapa)
-const GENERADORES = [falda, chaqueta, peloLargo, peloCorto, gorra, lentes, audifonos, mochila, jockey, audifonosGrandes, poleron, buzo, guantes,
+const GENERADORES = [falda, chaqueta, peloLargo, peloCorto, peloLacio, trenzas, peloLargoD, peloRizado, gorra, lentes, audifonos, mochila, jockey, audifonosGrandes, poleron, buzo, guantes,
   polera.corta, polera.larga, poleronOversize, chaquetaOversize, topCorto, pantalonAncho, zapatillasPlataforma, gorroLana,
   lentesSol.aviador, lentesSol.clasicos, lentesSol.corazon];
 

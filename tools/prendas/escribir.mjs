@@ -6,7 +6,9 @@ import { statSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
 import { agregarFormas, formasCabeza, io, juntarFormas, normales } from './cuerpo.mjs';
 
-const TOPE_KB = 450;
+// tope por prenda: cada una se descarga sólo si alguien la usa (antes eran 450 KB, cuando además iban todas dentro
+// de la versión de un solo archivo, que se quitó)
+const TOPE_KB = 650;
 const lineal = hex => { const c = parseInt(hex.slice(1), 16); return [c >> 16, (c >> 8) & 255, c & 255].map(v => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); };
 
 // PNG en escala de grises (o RGB) sin dependencias: px(x, y) → 0–255 (o [r, g, b])

@@ -22,7 +22,7 @@ export const PERSONAJES = {
   amiga: { nombre: 'Amiga', ic: '👱‍♀️', look: {
     base: 'nina', piel: null, escala: 0.86, cabeza: 1.06,
     prendas: {
-      pelo: { id: 'pelo_largo', colores: { principal: '#E0A84E' } },
+      pelo: { id: 'pelo_largo', colores: { principal: '#C58A4E', mechas: '#FF8FC2' } },   // ondas con mechas rosadas
       torso: { id: 'top_corto' },
       abrigo: { id: 'chaqueta_oversize' },
       piernas: { id: 'pantalon_ancho' },
@@ -55,17 +55,18 @@ export const ORDEN_PERSONAJES = ['nina', 'amiga', 'amigo'];
 //   opcionales   [{ prob, ids }]: con esa probabilidad, una prenda de la lista (su espacio sale del catálogo; dos
 //                del mismo espacio se reemplazan: la última gana)
 //   colores      la piel (paleta piel); para cada canal de cada prenda, con probabilidad `colorProb` un color de la
-//                paleta del canal (si no, el de fábrica); los del pelo siempre se sortean
+//                paleta del canal (si no, el de fábrica); el color del pelo siempre; los canales con `siFalta`
+//                (las mechas, el detalle de las zapatillas) al 25 %
 //   extras       cada extra se ve con probabilidad 0,7
 //   escala, cabeza [mínimo, rango]; formaRedonda: probabilidad de la cabeza redonda
 // Todo sale del generador con semilla de game/npcs.js: cambiar las plantillas cambia a todos los vecinos (y las capturas).
 export const VECINOS = [
   { nombre: 'clásico', peso: 3, colorProb: 1,
-    prendas: { pelo: ['mono', 'pelo_largo', 'pelo_corto'], torso: ['peto', 'polera_corta', 'polera_larga'], piernas: ['pantalon_cargo', 'falda_tableada'], pies: ['zapatillas'] },
+    prendas: { pelo: ['mono', 'pelo_largo', 'pelo_corto', 'pelo_lacio', 'trenzas', 'pelo_rizado'], torso: ['peto', 'polera_corta', 'polera_larga'], piernas: ['pantalon_cargo', 'falda_tableada'], pies: ['zapatillas'] },
     opcionales: [{ prob: 0.3, ids: ['chaqueta'] }, { prob: 0.2, ids: ['lentes', 'lentes_corazon'] }, { prob: 0.15, ids: ['gorra'] }],
     escala: [0.86, 0.2], cabeza: [0.95, 0.12], formaRedonda: 0.15 },
   { nombre: 'urbano', peso: 3, colorProb: 0.55,
-    prendas: { pelo: ['pelo_corto', 'pelo_largo', 'mono'], torso: ['polera_corta', 'polera_larga', 'top_corto'], piernas: ['buzo', 'pantalon_ancho', 'pantalon_cargo'], pies: ['zapatillas', 'zapatillas_plataforma'] },
+    prendas: { pelo: ['pelo_corto', 'pelo_largo', 'mono', 'pelo_largo_desordenado', 'pelo_lacio', 'pelo_rizado'], torso: ['polera_corta', 'polera_larga', 'top_corto'], piernas: ['buzo', 'pantalon_ancho', 'pantalon_cargo'], pies: ['zapatillas', 'zapatillas_plataforma'] },
     opcionales: [
       { prob: 0.8, ids: ['poleron', 'poleron_oversize', 'chaqueta_oversize'] },
       { prob: 0.5, ids: ['gorra', 'jockey', 'gorro_lana'] },

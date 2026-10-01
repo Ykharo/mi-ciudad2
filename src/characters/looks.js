@@ -50,7 +50,11 @@ function randomLook(r = Math.random) {
   for (const [slot, sel] of Object.entries(look.prendas)) {
     const P = PRENDA[sel.id];
     sel.colores = {}; sel.extras = {};
-    for (const [canal, C] of Object.entries(P.canales)) if (slot === 'pelo' || r() < T.colorProb) sel.colores[canal] = elegir(PALETAS[C.paleta]);
+    // (el color principal del pelo siempre; los canales que se derivan si no se eligen, como las mechas, pocas veces)
+    for (const [canal, C] of Object.entries(P.canales)) {
+      const prob = C.siFalta ? 0.25 : slot === 'pelo' && canal === 'principal' ? 1 : T.colorProb;
+      if (r() < prob) sel.colores[canal] = elegir(PALETAS[C.paleta]);
+    }
     for (const e of Object.keys(P.extras || {})) sel.extras[e] = r() < 0.7;
   }
   look.escala = T.escala[0] + r() * T.escala[1];

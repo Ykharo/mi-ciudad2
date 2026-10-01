@@ -34,7 +34,8 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
   Las prendas **nuevas** (sin `mallas` en el catálogo: falda_tableada, chaqueta, pelo_largo y los accesorios gorra,
   jockey, lentes, audifonos, audifonos_grandes, mochila; del niño: pelo_corto, poleron, buzo, guantes; de la amiga:
   top_corto, chaqueta_oversize, pantalon_ancho, zapatillas_plataforma; y polera_corta, polera_larga,
-  poleron_oversize, gorro_lana; lentes de sol lentes_aviador, lentes_clasicos, lentes_corazon) salen de `node tools/generar_prendas.mjs [id…]`: un archivo por prenda en
+  poleron_oversize, gorro_lana; lentes de sol lentes_aviador, lentes_clasicos, lentes_corazon; peinados pelo_lacio,
+  trenzas, pelo_largo_desordenado, pelo_rizado) salen de `node tools/generar_prendas.mjs [id…]`: un archivo por prenda en
   `tools/prendas/`, que mide el cuerpo con rayos (`cuerpo.mjs`) y escribe/valida/cuantiza el .glb (`escribir.mjs`).
   Superficies con grosor: `orientar()` antes de `cascara()` (el grosor va hacia adentro según la normal). Sólidos
   cerrados (accesorios): `tubo()`, `revolucion()`, `caja()`. Los accesorios son rígidos: todos sus vértices pesan en un
@@ -42,7 +43,9 @@ Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
   `separar_glb.mjs` aparta partes en mallas propias para poder esconderlas (tabla `APARTAR`): las regiones del cuerpo
   `Body_Pies`, `Body_Piernas`, `Body_Brazos` (por hueso dominante; `Body_Base` queda con torso, cuello y manos) y el
   tope del moño `Pelo_Moño_Tope`. Si aparece otro peinado, sumarlo a `queTapa` (gorra.mjs) y regenerar gorra,
-  jockey y audifonos_grandes: se calzan por fuera de los peinados.
+  jockey, gorro_lana y audifonos_grandes: se calzan por fuera de los peinados. Un peinado con mucho volumen arriba
+  (como el rizado) pone esa parte en una malla `*_Tope` que los gorros esconden (`oculta`), en vez de ir a `queTapa`.
+  Tope por prenda: 650 KB (`escribir.mjs`).
   **Formas de cabeza** (morph targets, hoy `redonda`): `formasCabeza(C)` en `cuerpo.mjs` define cada una como un
   desplazamiento que depende sólo de la dirección desde el centro de la cabeza, y `agregarFormas` se la pone a toda
   malla que alcance a mover (cabeza, orejas y todo lo que va sobre la cabeza), así el pelo y los gorros siguen a la

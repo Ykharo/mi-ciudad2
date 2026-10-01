@@ -38,8 +38,9 @@ function envolvente(ys, R) {
   });
 }
 
-// casquete: como el del moño (grosor mayor arriba y atrás, rayita al medio); devuelve la malla para chocar con él
-function casquete(C, m, headR) {
+// casquete: como el del moño (grosor mayor arriba y atrás, rayita al medio); devuelve la malla para chocar con él.
+// P: prefijo de los materiales (P_Base, P_Claro, P_Oscuro)
+export function casquete(C, m, headR, P = 'PeloLargo', mechas = false) {
   const NP = 48, NR = 12, V = [], HC = C.HC;
   for (let r = 0; r < NR; r++) {
     const t = r / (NR - 1);
@@ -57,10 +58,10 @@ function casquete(C, m, headR) {
   for (let k = 0; k < NP; k++) G.push([(NR - 1) * NP + (k + 1) % NP, (NR - 1) * NP + k, top]);
   const F = orientar(V, G, () => HC);
   const f0 = m.F.length;
-  cascara(m, V, F, 0.008, 'PeloLargo_Base', 'PeloLargo_Oscuro', 'PeloLargo_Oscuro');
+  cascara(m, V, F, 0.008, P + '_Base', P + '_Oscuro', P + '_Oscuro');
   // franjas de brillo y sombra (como el moño): las caras de afuera van primero, 2 triángulos por cuadrilátero
   for (let q = 0; q < (NR - 1) * NP; q++) {
-    const c = q % NP, mt = c % 7 === 3 ? 'PeloLargo_Claro' : c % 9 === 6 ? 'PeloLargo_Oscuro' : null;
+    const c = q % NP, mt = mechas && c % 12 === 5 ? P + '_Mechas' : c % 7 === 3 ? P + '_Claro' : c % 9 === 6 ? P + '_Oscuro' : null;
     if (mt) m.M[f0 + 2 * q] = m.M[f0 + 2 * q + 1] = mt;
   }
   const g = new THREE.BufferGeometry().setFromPoints(V);
@@ -68,10 +69,16 @@ function casquete(C, m, headR) {
   return new THREE.Mesh(g, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
 }
 
-export function construir(C) {
+// Pelo largo suelto, con opciones (lo usan pelo_largo y pelo_lacio):
+//   P        prefijo de los materiales
+//   onda     amplitud de las ondas (0 = liso)
+//   puntas   cuánto bajan las puntas en el centro de cada mechón (más = puntas más marcadas)
+//   espalda  altura de las puntas atrás (u = 0..1 de oreja a oreja); frente: la de los mechones de adelante
+//   mechas   algunos mechones en el material P_Mechas (que por defecto tiene el color del pelo)
+export function construirLargo(C, { P, onda, puntas, espalda, frente, bulto = 0.006, mechas = false }) {
   const m = new Malla(), HC = C.HC;
   const headR = d => rayo(C.mallaCabeza, HC, d) ?? 0.16;
-  const cap = casquete(C, m, headR);
+  const cap = casquete(C, m, headR, P, mechas);
   const hombros = C.partes(['Spine', 'Chest', 'Neck', 'UpperArmL', 'UpperArmR']);
   const torso = C.partes(['Hips', 'Spine', 'Chest', 'Neck']);
 
@@ -83,7 +90,7 @@ export function construir(C) {
       const u = k / (cols - 1), phi = lerp(phi0, phi1, u);
       const el0 = hairline(phi) + 0.45, y0 = HC.y + Math.sin(el0) * 0.16;
       const lock = (k + fase) % LOCK, pico = 1 - Math.abs(lock - (LOCK - 1) / 2) / ((LOCK - 1) / 2);   // 1 al centro del mechón
-      const yP = yPunta(u) - 0.045 * pico + 0.015 * Math.sin(k * 2.3);
+      const yP = yPunta(u) - puntas * pico + puntas * 0.33 * Math.sin(k * 2.3);
       const ys = Array.from({ length: filas }, (_, i) => lerp(y0, yP, (i / (filas - 1)) ** 1.1));
       const dirs = [], ejes = [];
       const R = ys.map((y, i) => {
@@ -98,25 +105,27 @@ export function construir(C) {
       envolvente(ys, R).forEach((r, i) => {
         const t = i / (filas - 1);
         r -= 0.014 * (1 - smooth(i / 4));   // arriba nace desde dentro del casquete: sin escalón en el borde
-        const onda = 0.011 * Math.sin((HC.y - ys[i]) / 0.11 * 2 * Math.PI + k * 0.35) * smooth((t - 0.1) / 0.3);
-        const bulto = 0.006 * pico * smooth(t / 0.2);                                   // cada mechón un poco abombado
+        const ondula = onda * Math.sin((HC.y - ys[i]) / 0.11 * 2 * Math.PI + k * 0.35) * smooth((t - 0.1) / 0.3);
+        const abomba = bulto * pico * smooth(t / 0.2);                                   // cada mechón un poco abombado
         const cierra = i === filas - 1 ? -0.006 : 0;                                    // las puntas se juntan
-        V.push(dirs[i].clone().multiplyScalar(r + onda + bulto + cierra).add(ejes[i])); ejesV.push(ejes[i]);
+        V.push(dirs[i].clone().multiplyScalar(r + ondula + abomba + cierra).add(ejes[i])); ejesV.push(ejes[i]);
       });
     }
     // grilla con filas = columnas del pelo (cada columna es una tira de arriba abajo)
     const F = orientar(V, grilla(cols, filas, false), i => ejesV[i]), f0 = m.F.length;
-    cascara(m, V, F, grosor, 'PeloLargo_Base', 'PeloLargo_Oscuro', 'PeloLargo_Oscuro');
+    cascara(m, V, F, grosor, P + '_Base', P + '_Oscuro', P + '_Oscuro');
     for (let q = 0; q < F.length; q++) {
       const k = Math.floor(q / (filas - 1)), lock = (k + fase) % LOCK, n = Math.floor((k + fase) / LOCK);
-      const mt = lock === 1 && n % 2 === 0 ? 'PeloLargo_Claro' : lock === LOCK - 1 ? 'PeloLargo_Oscuro' : null;
+      // mechas: un mechón entero de cada tres (una sola columna no se notaba)
+      const mt = mechas && (lock === 1 || lock === 2) && n % 3 === 1 ? P + '_Mechas'
+        : lock === 1 && n % 2 === 0 ? P + '_Claro' : lock === LOCK - 1 ? P + '_Oscuro' : null;
       if (mt) m.M[f0 + 2 * q] = m.M[f0 + 2 * q + 1] = mt;
     }
   }
   // espalda: de oreja a oreja por detrás; abajo se junta un poco hacia el centro de la espalda
   cortina({ phi0: rad(98), phi1: rad(262), cols: 37, filas: 24, grosor: 0.012, fase: 0,
     psi: (u, t, phi) => lerp(phi, lerp(rad(128), rad(232), u), smooth((t - 0.2) / 0.5)),
-    yPunta: u => 0.93 + 0.03 * Math.abs(u - 0.5) });
+    yPunta: espalda });
   // adelante: de la raya, por el costado de la cara (sin taparla) y sobre el pecho, delante del hombro
   for (const s of [1, -1]) {
     cortina({ phi0: s * rad(26), phi1: s * rad(104), cols: 13, filas: 22, grosor: 0.011, fase: 1,
@@ -124,7 +133,7 @@ export function construir(C) {
         const cara = s * lerp(rad(74), rad(112), u), pecho = s * lerp(rad(34), rad(70), u);
         return t < 0.35 ? lerp(phi, cara, smooth(t / 0.3)) : lerp(cara, pecho, smooth((t - 0.35) / 0.35));
       },
-      yPunta: u => 0.99 + 0.03 * u });
+      yPunta: frente });
   }
 
   // pesos: a la altura de la cabeza sigue a la cabeza; hacia las puntas, al pecho (un poco al cuello entremedio)
@@ -132,12 +141,21 @@ export function construir(C) {
     const w = smooth((1.24 - p.y) / 0.16);
     return normalizar([['HeadBone', 1 - w], ['Neck', 0.7 * w * (1 - w)], ['Chest', w]]);
   });
+  return m;
+}
+
+// Ondas largas (la de siempre). Las mechas (P_Mechas) tienen por defecto el color del pelo: no se notan hasta que se
+// les elige otro color (la amiga las lleva rosadas).
+export function construir(C) {
+  const m = construirLargo(C, { P: 'PeloLargo', onda: 0.011, puntas: 0.045, mechas: true,
+    espalda: u => 0.93 + 0.03 * Math.abs(u - 0.5), frente: u => 0.99 + 0.03 * u });
   return {
     mallas: [{ nombre: 'Pelo_Largo', malla: m }],
     materiales: {   // mismos tonos que el moño
       PeloLargo_Base: { color: '#4D2C1F', rugosidad: 0.66 },
       PeloLargo_Claro: { color: '#5B3525', rugosidad: 0.7 },
       PeloLargo_Oscuro: { color: '#40231C', rugosidad: 0.72 },
+      PeloLargo_Mechas: { color: '#4D2C1F', rugosidad: 0.66 },
     },
   };
 }

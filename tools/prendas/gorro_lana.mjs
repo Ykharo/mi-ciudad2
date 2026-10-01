@@ -19,11 +19,11 @@ function borde(phi) {
 
 export function construir(C) {
   const m = new Malla(), HC = C.HC, tapar = queTapa(C);
-  // el pelo largo sólo hasta 5 cm sobre la cabeza: sus mechones que enmarcan la cara salen por debajo del doblez
+  // los peinados sólo hasta 5 cm sobre la cabeza: los mechones que enmarcan la cara salen por debajo del doblez
   // (si el gorro los tapara enteros, se abría como una campana a los costados)
   const alcance = d => {
     const cab = rayoDesdeAfuera(C.mallaCabeza, HC, d, 0.6) ?? 0;
-    return Math.max(...tapar.map(x => { const r = rayoDesdeAfuera(x, HC, d, 0.6) ?? 0; return x === tapar.largo ? Math.min(r, cab + 0.05) : r; }));
+    return Math.max(...tapar.map(x => { const r = rayoDesdeAfuera(x, HC, d, 0.6) ?? 0; return tapar.pelos.includes(x) ? Math.min(r, cab + 0.05) : r; }));
   };
   const dirs = [], R = [];
   for (let r = 0; r < NR; r++) for (let k = 0; k < NP; k++) {

@@ -11,20 +11,23 @@ import { Malla, cascara, grilla, lerp, orientar, orientarCaras, rayo, rayoDesdeA
 export const ID = 'pelo_corto';
 const rad = g => g * Math.PI / 180;
 const sph = (phi, el) => v3(Math.cos(el) * Math.sin(phi), Math.sin(el), Math.cos(el) * Math.cos(phi));
-// borde de abajo según el ángulo (0 = frente): sobre las cejas, a media oreja, en la nuca
-const BA = [0, 30, 60, 90, 130, 180], BE = [16, 12, 2, -8, -22, -34];
-function borde(phi) {
+// borde de abajo según el ángulo (0 = frente), elevaciones en grados en BA = 0, 30, 60, 90, 130, 180
+const BA = [0, 30, 60, 90, 130, 180];
+const bordeDe = BE => phi => {
   const a = Math.abs(Math.atan2(Math.sin(phi), Math.cos(phi))) * 180 / Math.PI;
   let k = 0; while (k < BA.length - 2 && a > BA[k + 1]) k++;
   return rad(lerp(BE[k], BE[k + 1], (a - BA[k]) / (BA[k + 1] - BA[k])));
-}
+};
 // azar con semilla (mulberry32)
 function azar(s) {
   return () => { s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 }
 
-export function construir(C) {
-  const m = new Malla(), HC = C.HC, r = azar(20260930);
+// Opciones (las usan pelo_corto y pelo_largo_desordenado, pelo_largo_desordenado.mjs):
+//   P: prefijo de los materiales; BE: el borde (ver BA); largo: una capa más de mechones largos que bajan hasta el
+//   borde (tapan las orejas y llegan a la mandíbula y la nuca)
+export function construirMechones(C, { P, BE, largo = false }) {
+  const m = new Malla(), HC = C.HC, r = azar(20260930), borde = bordeDe(BE);
   const entre = (a, b) => lerp(a, b, r());
   const bajo = d => Math.max(rayo(C.mallaCabeza, HC, d) ?? 0.16, rayoDesdeAfuera(C.mallaOrejas, HC, d, 0.5) ?? 0);
   // volumen del peinado según la altura: poco en el borde, más arriba
@@ -42,7 +45,7 @@ export function construir(C) {
   const top = V.length; V.push(v3(0, 1, 0).multiplyScalar(bajo(v3(0, 1, 0)) + volumen(0, rad(90))).add(HC));
   const G = grilla(NR, NP, true);
   for (let k = 0; k < NP; k++) G.push([(NR - 1) * NP + (k + 1) % NP, (NR - 1) * NP + k, top]);
-  cascara(m, V, orientar(V, G, () => HC), 0.008, 'PeloCorto_Oscuro', 'PeloCorto_Oscuro', 'PeloCorto_Oscuro');
+  cascara(m, V, orientar(V, G, () => HC), 0.008, P + '_Oscuro', P + '_Oscuro', P + '_Oscuro');
 
   // --- un mechón: de (phi0, el0) a (phi0 + dphi, el1) por la superficie, con giro `curva` y la punta levantada `alza`
   const N = 12, M = 7;   // segmentos a lo largo y puntos de la sección
@@ -76,7 +79,7 @@ export function construir(C) {
     for (let a = 0; a < M; a++) { F.push([N * M + a, punta, N * M + (a + 1) % M]); F.push([base, a, (a + 1) % M]); }
     m.add(Vm, orientarCaras(Vm, F, f => ejes[f[0]]), mat);
   }
-  const tono = () => { const x = r(); return x < 0.2 ? 'PeloCorto_Claro' : x < 0.32 ? 'PeloCorto_Oscuro' : 'PeloCorto_Base'; };
+  const tono = () => { const x = r(); return x < 0.2 ? P + '_Claro' : x < 0.32 ? P + '_Oscuro' : P + '_Base'; };
   const frente = phi => Math.abs(Math.atan2(Math.sin(phi), Math.cos(phi))) < rad(55);
 
   // coronilla: se abre hacia afuera desde arriba, más levantada (volumen desordenado)
@@ -90,14 +93,15 @@ export function construir(C) {
     const phi0 = rad(k * 22.5 + 11 + entre(-6, 6));
     if (frente(phi0)) continue;
     mechon({ phi0, el0: rad(entre(58, 66)), dphi: rad(entre(-14, 14)), el1: borde(phi0) + rad(entre(-2, 6)), ancho: entre(0.026, 0.034),
-      grueso: entre(0.008, 0.01), alza: entre(0.005, 0.012), curva: rad(entre(-12, 12)), mat: tono(), encima: 0.003 });
+      grueso: entre(0.008, 0.01), alza: entre(0.005, 0.012) * (largo ? 0.3 : 1), curva: rad(entre(-12, 12)), mat: tono(), encima: 0.003 });
   }
   // capa de abajo: puntas que cuelgan bajo el borde (sobre las orejas, en la nuca)
   for (let k = 0; k < 20; k++) {
     const phi0 = rad(k * 18 + entre(-5, 5));
     if (frente(phi0)) continue;
+    // (en el pelo largo las puntas caen: se levantan mucho menos, si no se abrían hacia afuera como tablas)
     mechon({ phi0, el0: rad(entre(30, 40)), dphi: rad(entre(-10, 10)), el1: borde(phi0) - rad(entre(4, 12)), ancho: entre(0.024, 0.032),
-      grueso: entre(0.007, 0.009), alza: entre(0.004, 0.014), curva: rad(entre(-14, 14)), mat: tono() });
+      grueso: entre(0.007, 0.009), alza: entre(0.004, 0.014) * (largo ? 0.2 : 1), curva: rad(entre(-14, 14)), mat: tono() });
   }
   // flequillo: de arriba hacia la frente, hasta las cejas, con un poco de barrido hacia los costados; dos capas
   // (una más corta encima) para que no se vea el casquete entre los mechones
@@ -109,7 +113,20 @@ export function construir(C) {
       grueso: entre(0.007, 0.009), alza: entre(0.002, 0.006) + capa * 0.004, curva: rad(entre(-9, 9)), mat: tono(), encima: 0.003 + capa * 0.003 });
   }
 
+  // capa larga: de la mitad de la cabeza hasta el borde (bajo), por los costados y atrás, sobre las demás
+  if (largo) for (let k = 0; k < 26; k++) {
+    const phi0 = rad(k * 360 / 26 + entre(-5, 5));
+    if (Math.abs(Math.atan2(Math.sin(phi0), Math.cos(phi0))) < rad(62)) continue;
+    mechon({ phi0, el0: rad(entre(18, 30)), dphi: rad(entre(-8, 8)), el1: borde(phi0) - rad(entre(2, 10)), ancho: entre(0.026, 0.034),
+      grueso: entre(0.008, 0.01), alza: entre(0.004, 0.016) * 0.15, curva: rad(entre(-12, 12)), mat: tono(), encima: 0.005 });
+  }
+
   m.pesos = m.V.map(() => [['HeadBone', 1]]);
+  return m;
+}
+
+export function construir(C) {
+  const m = construirMechones(C, { P: 'PeloCorto', BE: [16, 12, 2, -8, -22, -34] });
   return {
     mallas: [{ nombre: 'Pelo_Corto', malla: m }],
     materiales: {   // castaño, como en la hoja (mismos tonos y reglas que los otros peinados)

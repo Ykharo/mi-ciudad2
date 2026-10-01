@@ -138,7 +138,8 @@ test('las prendas nuevas se ponen desde el Vestidor (y la cadena se puede sacar)
   const tab = t => page.locator(`#wardrobeTabs [data-tab="${t}"]`).click();
   const prenda = id => muestra(page, `data-k="prenda"][data-v="${id}"`);
   await abrirVestidor(page);
-  for (const [t, slot, ids] of [['arriba', 'torso', ['top_corto', 'polera_corta', 'polera_larga']], ['chaqueta', 'abrigo', ['chaqueta_oversize', 'poleron_oversize']],
+  for (const [t, slot, ids] of [['pelo', 'pelo', ['pelo_lacio', 'trenzas', 'pelo_rizado', 'pelo_largo_desordenado']],
+    ['arriba', 'torso', ['top_corto', 'polera_corta', 'polera_larga']], ['chaqueta', 'abrigo', ['chaqueta_oversize', 'poleron_oversize']],
     ['abajo', 'piernas', ['pantalon_ancho']], ['zapatos', 'pies', ['zapatillas_plataforma']]]) {
     await tab(t);
     for (const id of ids) { await prenda(id).click(); await expect.poll(async () => (await puestas())[slot]).toBe(id); }
@@ -158,7 +159,7 @@ test('las prendas nuevas se ponen desde el Vestidor (y la cadena se puede sacar)
   expect(await visible(page, 'PantalonA_Cadena')).toBe(false);
   await page.locator('#wardrobeDone').click();
   const g = await page.evaluate(() => JSON.parse(localStorage.getItem('ciudadArcoiris.v2')).nina.look.prendas);
-  expect(g).toMatchObject({ torso: { id: 'polera_larga' }, abrigo: { id: 'poleron_oversize' }, piernas: { id: 'pantalon_ancho', extras: { PantalonA_Cadena: false } }, pies: { id: 'zapatillas_plataforma' }, cabeza: { id: 'gorro_lana' } });
+  expect(g).toMatchObject({ pelo: { id: 'pelo_largo_desordenado' }, torso: { id: 'polera_larga' }, abrigo: { id: 'poleron_oversize' }, piernas: { id: 'pantalon_ancho', extras: { PantalonA_Cadena: false } }, pies: { id: 'zapatillas_plataforma' }, cabeza: { id: 'gorro_lana' } });
 });
 
 test('Sorpréndeme y Original', async ({ page, jugar }) => {

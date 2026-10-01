@@ -8,6 +8,9 @@ import * as THREE from 'three';
 import { CENTRO_MOÑO, FIGURAS, Malla, RADIO_MOÑO, calcomania, cascara, grilla, lerp, mallaRayos, orientar, piezasCerca, rayoDesdeAfuera, revolucion, v3 } from './cuerpo.mjs';
 import * as peloLargo from './pelo_largo.mjs';
 import * as peloCorto from './pelo_corto.mjs';
+import * as peloLacio from './pelo_lacio.mjs';
+import * as trenzas from './trenzas.mjs';
+import * as peloLargoD from './pelo_largo_desordenado.mjs';
 
 export const ID = 'gorra';
 const rad = g => g * Math.PI / 180;
@@ -21,7 +24,7 @@ function borde(phi) {
   return rad(lerp(BE[k], BE[k + 1], (a - BA[k]) / (BA[k + 1] - BA[k])));
 }
 
-// lo que la copa tiene que tapar: cabeza, orejas, el moño sin su tope, el pelo largo y el corto (mallas para rayos)
+// lo que la copa tiene que tapar: cabeza, orejas, el moño sin su tope y los peinados (mallas para rayos)
 export function queTapa(C) {
   if (C.peinados) return C.peinados;
   const mallas = [C.mallaCabeza, C.mallaOrejas];
@@ -31,10 +34,12 @@ export function queTapa(C) {
     const idx = []; for (let t = 0; t < I.length; t += 3) if (!tope[t / 3]) idx.push(I[t], I[t + 1], I[t + 2]);
     mallas.push(mallaRayos(P, idx));
   }
-  for (const peinado of [peloLargo, peloCorto]) {
+  // (el rizado no: sus rulos de arriba se esconden con los gorros, y los de abajo asoman bajo el borde)
+  mallas.pelos = [];   // (el gorro de lana los trata aparte)
+  for (const peinado of [peloLargo, peloCorto, peloLacio, trenzas, peloLargoD]) {
     const p = peinado.construir(C).mallas[0].malla;
     mallas.push(mallaRayos(p.V.flatMap(v => [v.x, v.y, v.z]), p.F.flat()));
-    if (peinado === peloLargo) mallas.largo = mallas[mallas.length - 1];   // (el gorro de lana lo trata aparte)
+    mallas.pelos.push(mallas[mallas.length - 1]);
   }
   return (C.peinados = mallas);
 }
