@@ -15,7 +15,7 @@ import { G, cyl, mesh, rlo, sph } from '../../engine/geometry.js';
 import { makeSign } from '../../engine/textures.js';
 import { manzana } from '../layout.js';
 import { addPiso } from '../physics.js';
-import { definePlace } from '../place.js';
+import { ancla, definePlace } from '../place.js';
 import { cartelTextura } from './cartel.js';
 
 // en la Calle Mora, frente a la Plaza de Juegos, mirando hacia la calle
@@ -34,6 +34,11 @@ const JURADO_Z = 6.0, GRADAS = { lx: 5, lz: 6, alto: [0.45, 0.9, 1.35], fondo: 1
 const puesto = (lx, lz, alto) => { const p = local(lx, lz); return { ...p, alto, mira: hacia(p, ESCENARIO.tarima) }; };
 ESCENARIO.jurado = [-7.2, -5.5, -3.8].map(lx => puesto(lx, JURADO_Z, 0.72));
 ESCENARIO.publico = [[2.5, 0], [6.5, 0], [4, 1], [8, 1], [5.5, 2]].map(([lx, fila]) => puesto(lx, GRADAS.lz + fila * GRADAS.fondo, GRADAS.alto[fila] + 0.01));
+// los puestos libres de las graderías, para que la jugadora se siente a mirar (adelante o arriba)
+const LIBRES = { adelante: [[4.5, 0], [8.5, 0]], arriba: [[3, 2], [8, 2]] };
+// donde esperan sentadas las mascotas mientras la jugadora está en la tarima: al lado del escalón, mirando la tarima
+const ESPERA = local(-2.4, 3.6);
+ESCENARIO.espera = { ...ESPERA, mira: hacia(ESPERA, ESCENARIO.tarima) };
 
 function escenario({ world, addObsRot, addZone, onFrame }) {
   const g = new THREE.Group(); g.position.set(ESCENARIO.x, 0, ESCENARIO.z); g.rotation.y = ESCENARIO.giro;
@@ -47,9 +52,10 @@ function escenario({ world, addObsRot, addZone, onFrame }) {
   const bombilla = mat('#FFF3C4', { emissive: '#FFD66B', emissiveIntensity: 0.8 });
   for (let i = 0; i < 32; i++) { const a = i / 32 * TAU; g.add(mesh(sph(0.12, 8, 6), bombilla, tx + Math.cos(a) * (r - 0.12), h + 0.06, tz + Math.sin(a) * (r - 0.12), false, false)); }
   g.add(mesh(rlo(3.2, h / 2, 0.8, 0.06), mat('#3A2E66'), tx, h / 4, tz + r + 0.3));
-  addPiso({ ...ESCENARIO.tarima });
+  // (las mascotas no suben: esperan abajo, en ESCENARIO.espera)
+  addPiso({ ...ESCENARIO.tarima, espera: ESCENARIO.espera });
   const escalon = local(tx, tz + r + 0.3), deLado = Math.round(ESCENARIO.giro / (Math.PI / 2)) & 1;
-  addPiso({ x: escalon.x, z: escalon.z, hw: deLado ? 0.45 : 1.6, hd: deLado ? 1.6 : 0.45, h: h / 2 });
+  addPiso({ x: escalon.x, z: escalon.z, hw: deLado ? 0.45 : 1.6, hd: deLado ? 1.6 : 0.45, h: h / 2, espera: ESCENARIO.espera });
   // la pantalla gigante: el cartel al medio y un medidor de aura a cada lado que sube y baja
   const PZ = -9.2, marco = mat('#231C3D');
   g.add(mesh(rlo(11, 6.4, 0.5, 0.2), marco, 0, 4.7, PZ));
@@ -98,6 +104,14 @@ function escenario({ world, addObsRot, addZone, onFrame }) {
   // graderías de tres filas
   GRADAS.alto.forEach((alto, i) => g.add(mesh(rlo(8, alto, GRADAS.fondo, 0.06), mat(['#FF9B4A', '#FFD23F', '#3DD6A8'][i]), GRADAS.lx, alto / 2, GRADAS.lz + i * GRADAS.fondo)));
   caja(GRADAS.lx, GRADAS.lz + GRADAS.fondo, 8.2, GRADAS.fondo * 3 + 0.2, 1.5);
+  // sentarse a mirar el espectáculo: en la fila de adelante o en la de arriba (game/juegos.js, tipo 'asiento')
+  const asientos = {};
+  for (const [fila, lista] of Object.entries(LIBRES)) {
+    asientos[fila] = lista.map(([lx, f]) => { const p = puesto(lx, GRADAS.lz + f * GRADAS.fondo, GRADAS.alto[f] + 0.01); return ancla(world, p.x, p.alto, p.z, p.mira); });
+  }
+  const frente = local(GRADAS.lx, GRADAS.lz - 1.5);
+  const opciones = [{ id: 'adelante', label: '🪑 Sentarse adelante' }, { id: 'arriba', label: '⬆️ Sentarse arriba' }];
+  addZone({ id: 'juego', x: frente.x, z: frente.z, r: 2.4, label: opciones[0].label, opciones, juego: { tipo: 'asiento', asientos } });
   // arco de entrada con el letrero, mirando a la calle
   const arco = mat('#9B6BF0');
   [-1, 1].forEach(s => {

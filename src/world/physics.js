@@ -22,15 +22,18 @@ function collide(p, r, skip) {
 
 // Pisos más altos que el suelo (una tarima): círculos { x, z, r, h } o rectángulos { x, z, hw, hd, h }. Quien camina
 // encima queda a esa altura (la jugadora: game/player.js); se sube sin escalar, así que conviene que sean bajos.
+// Con `espera: { x, z, mira }`, las mascotas no suben: esperan sentadas en ese punto (main.js, pets/follow.js waitAt).
 const pisos = [];
 function addPiso(p) { pisos.push(p); }
-function sueloEn(x, z) {
-  let h = 0;
+// el piso más alto que hay en (x, z), o null
+function pisoEn(x, z) {
+  let mejor = null;
   for (const p of pisos) {
     const dentro = p.r ? Math.hypot(x - p.x, z - p.z) < p.r : Math.abs(x - p.x) < p.hw && Math.abs(z - p.z) < p.hd;
-    if (dentro && p.h > h) h = p.h;
+    if (dentro && (!mejor || p.h > mejor.h)) mejor = p;
   }
-  return h;
+  return mejor;
 }
+function sueloEn(x, z) { const p = pisoEn(x, z); return p ? p.h : 0; }
 
-export { addObs, addObsRot, addPiso, collide, obstacles, sueloEn };
+export { addObs, addObsRot, addPiso, collide, obstacles, pisoEn, sueloEn };

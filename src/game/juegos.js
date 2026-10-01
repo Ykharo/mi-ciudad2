@@ -1,8 +1,8 @@
 // Juegos de la plaza y del parque: carrusel, columpios, sube y baja, cama elástica y tobogán.
 // El lugar (world/places/) pone una zona { id: 'juego', juego } y en `juego` los puntos donde va la jugadora:
 // objetos vacíos ("anclas") que se mueven con el juego. Un ancla marca dónde van las caderas, y su +z hacia dónde mira.
-//   { tipo: 'asiento', asientos: [ancla…] }                sentarse en el asiento más cercano (carrusel, columpio,
-//                                                           sube y baja); el juego se mueve más con alguien arriba
+//   { tipo: 'asiento', asientos: [ancla…] }                sentarse en el asiento más cercano (carrusel, sube y
+//                                                           baja, graderías: `asientos` por opción { adelante: […] })
 //   { tipo: 'cama', centro: ancla }                         saltar en la cama elástica
 //   { tipo: 'tobogan', escalera, arriba, abajo, salida: ancla }   subir por la escalera y tirarse por el tobogán
 //   { tipo: 'columpio', asientos: [ancla…] }                columpiarse impulsándose con la palanca (ver columpio())
@@ -44,10 +44,13 @@ function empezar(juego, seat, ancla) {
   emit('zona', null); state.currentZone = null; emit('sonido', 'pop');
 }
 
-function asiento(juego) {
-  const ch = player.ch;
+// `asientos` puede ser una lista o, si la zona tiene opciones, una lista por opción (ej. graderías: 'adelante' y
+// 'arriba'); se sienta en el más cercano
+function asiento(juego, opcion) {
+  const ch = player.ch, A = juego.asientos;
+  const lista = Array.isArray(A) ? A : A[opcion] || Object.values(A)[0];
   let ancla = null, mejor = Infinity;
-  for (const a of juego.asientos) { a.getWorldPosition(_p); const d = Math.hypot(_p.x - player.pos.x, _p.z - player.pos.z); if (d < mejor) { mejor = d; ancla = a; } }
+  for (const a of lista) { a.getWorldPosition(_p); const d = Math.hypot(_p.x - player.pos.x, _p.z - player.pos.z); if (d < mejor) { mejor = d; ancla = a; } }
   avatarDo(ch, 'sit', { start: 0.95, ts: 1.2 });
   empezar(juego, {
     mover() { sentarEn(ch, ancla); },

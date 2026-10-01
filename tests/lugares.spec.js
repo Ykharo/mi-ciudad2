@@ -231,6 +231,26 @@ test('el Escenario del Aura: su nombre, la tarima (se sube) y "Competir"', async
   await expect(page.locator('#toast')).toContainText('¡Muy pronto!');
 });
 
+test('en la tarima la mascota espera abajo sentada; en las graderías se puede sentar a mirar', async ({ page, jugar }) => {
+  await jugar();
+  const toby = () => page.evaluate(() => { const m = window.__juego.player.pets[0]; return { x: m.pos.x, z: m.pos.z, sit: m.obj.sit || 0 }; });
+  await ir(page, 60.5, 49);
+  await page.waitForTimeout(800);
+  await ir(page, 60.5, 59);   // sube a la tarima
+  await expect.poll(async () => (await toby()).sit).toBeGreaterThan(0.9);
+  const t = await toby();
+  expect(Math.hypot(t.x - 60.5, t.z - 61)).toBeGreaterThan(5.2);   // fuera de la tarima (centro 60,5; 61, radio 5,2)
+  // baja: lo vuelve a seguir
+  await ir(page, 55, 50);
+  await expect.poll(async () => (await toby()).sit).toBeLessThan(0.2);
+  // las graderías: dos botones, adelante y arriba
+  await ir(page, 55.5, 53.5);
+  await expect(page.locator('#btnAction')).toHaveText('🪑 Sentarse adelante');
+  await page.locator('#btnAction2').click({ force: true });   // ⬆️ Sentarse arriba
+  await expect.poll(() => sentada(page)).toBe(true);
+  expect((await donde(page))[1]).toBeGreaterThan(0.9);   // en la fila de arriba (1,35 m)
+});
+
 test('quien lee el cartel da pistas de dónde es la competencia', async ({ page, jugar }) => {
   await jugar();
   await ir(page, 8.7, -5.5);

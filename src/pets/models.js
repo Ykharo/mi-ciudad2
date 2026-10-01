@@ -76,12 +76,21 @@ function setPetName(P, name) {
   P.label = labelSprite(name, { scale: 0.0042 }); P.label.position.y = P.labelY; P.root.add(P.label);
 }
 function disposePet(P) { scene.remove(P.root); P.disposables.forEach(g => g.dispose()); }
-function animatePet(P, t, speed01, dt) {
+// `sentada`: se sienta (quieta, esperando): el cuerpo se inclina con la cola abajo, las patas de adelante quedan
+// derechas y las de atrás se doblan hacia adelante. Pasa de una pose a la otra suavemente (P.sit, 0…1).
+function animatePet(P, t, speed01, dt, sentada = false) {
   const hop = speed01 > 0.05;
   P.phase += dt * (hop ? 9 + Math.min(speed01, 3) * 5 : 0);
   const k = P.kind === 'conejo' ? 1.7 : 1;
-  P.body.position.y = hop ? Math.abs(Math.sin(P.phase)) * 0.13 * k : Math.abs(Math.sin(t * 2.5)) * 0.01;
-  P.legs.forEach((l, i) => { l.rotation.x = hop ? Math.sin(P.phase + (i % 2 ? Math.PI : 0) + (i > 1 ? Math.PI / 2 : 0)) * 0.6 : 0; });
+  P.sit = (P.sit || 0) + ((sentada && !hop ? 1 : 0) - (P.sit || 0)) * Math.min(1, dt * 6);
+  const s = P.sit, incl = P.kind === 'conejo' ? 0.25 : 0.45;
+  P.body.position.y = (hop ? Math.abs(Math.sin(P.phase)) * 0.13 * k : Math.abs(Math.sin(t * 2.5)) * 0.01) * (1 - s) - 0.05 * s;
+  P.body.rotation.x = -incl * s;
+  P.legs.forEach((l, i) => {
+    const anda = hop ? Math.sin(P.phase + (i % 2 ? Math.PI : 0) + (i > 1 ? Math.PI / 2 : 0)) * 0.6 : 0;
+    l.rotation.x = anda * (1 - s) + (i > 1 ? incl : P.kind === 'conejo' ? 0 : -1.0) * s;   // (0 y 1: las de atrás; el conejo ya va sentado)
+  });
+  if (P.head) P.head.rotation.x = incl * 0.7 * s;   // la cabeza mira adelante aunque el cuerpo se incline
   if (P.tail) P.tail.rotation.z = Math.sin(t * (hop ? 16 : 7)) * (P.kind === 'conejo' ? 0.2 : 0.45);
   if (P.head) P.head.rotation.y = hop ? 0 : Math.sin(t * 0.9 + P.phase) * 0.28;
 }
