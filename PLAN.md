@@ -33,8 +33,8 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
 - **Competencia de aura, etapa A hecha** (sin commit): el Escenario del Aura en la Calle Mora frente a la Plaza de
   Juegos (`world/places/escenario_aura.js`; se cambia de lugar con `ESCENARIO`), jurado y público sentados, y pistas
   de quien lee el cartel ("💬 Preguntar dónde es"). En la tarima las mascotas esperan abajo sentadas; en las
-  graderías la jugadora se sienta a mirar (adelante o arriba), y al sentarse dos vecinos compiten (3 bailes cada uno,
-  notas del jurado, ganador). 85/85 en Chromium.
+  graderías la jugadora se sienta a mirar (adelante o arriba), y al sentarse dos vecinos compiten en la tarima, por
+  turnos, un baile cada vez (3 rondas, notas del jurado, ganador). 85/85 en Chromium.
 
 **Competencia de aura (plan por etapas)**
 - A. El lugar ✅.

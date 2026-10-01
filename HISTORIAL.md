@@ -24,6 +24,9 @@ el resumen.
   - Ganchos: `window.__juego.competencia` (`enCurso()`, `concursantes()`, `rapido(x)` para acelerarla).
 - Prueba nueva (acelerada ×4: los dos bailan y se anuncia quién gana). Capturas regeneradas (los concursantes mueven a
   un vecino). Chromium (dev y web): **85/85**.
+- Ajuste pedido: los concursantes esperan **arriba de la tarima**, uno a cada lado (local ±3,4; −4), mirando al
+  público, y se turnan **un movimiento a la vez**: uno pasa al centro, baila y vuelve a su lugar; después el otro;
+  tres rondas ("✨ Ronda 2: le toca a…"). Al final de su último baile cada uno saluda. Dura ~65 s. 85/85.
 
 ## Escenario: mascotas que esperan y graderías para sentarse (01-10-2026)
 

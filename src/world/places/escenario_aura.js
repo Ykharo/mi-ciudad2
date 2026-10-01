@@ -39,10 +39,11 @@ const LIBRES = { adelante: [[4.5, 0], [8.5, 0]], arriba: [[3, 2], [8, 2]] };
 // donde esperan sentadas las mascotas mientras la jugadora está en la tarima: al lado del escalón, mirando la tarima
 const ESPERA = local(-2.4, 3.6);
 ESCENARIO.espera = { ...ESPERA, mira: hacia(ESPERA, ESCENARIO.tarima) };
-// La competencia (game/aura.js): los dos concursantes esperan a los lados de la tarima (el 1, a la izquierda mirando
-// desde el público: su medidor es el de la izquierda) y bailan en `centro`, mirando al público (`mira`).
-// `medidor`: mientras hay competencia, el aura de cada uno (0…1) en los medidores de la pantalla; si no, se mueven solos.
-ESCENARIO.lados = [local(-7, -4), local(7, -4)].map(p => ({ ...p, mira: hacia(p, ESCENARIO.tarima) }));
+// La competencia (game/aura.js): los dos concursantes esperan arriba de la tarima, uno a cada lado (el 1, a la
+// izquierda mirando desde el público: su medidor es el de la izquierda), mirando al público, y bailan por turnos en
+// `centro`. `medidor`: mientras hay competencia, el aura de cada uno (0…1) en los medidores de la pantalla; si no, se
+// mueven solos.
+ESCENARIO.lados = [local(-3.4, -4), local(3.4, -4)].map(p => ({ ...p, mira: ESCENARIO.giro }));
 ESCENARIO.centro = { ...local(0, -2.2), mira: ESCENARIO.giro };
 ESCENARIO.medidor = null;
 // el juego de las graderías (sentarse a mirar): se crea aquí para que game/aura.js le ponga `alSentarse` antes de que

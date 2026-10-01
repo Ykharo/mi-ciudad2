@@ -33,7 +33,7 @@ function crearPublico(looks) {
     avatarDo(c, 'sit', { start: 9, instant: true, stopOnMove: false });
     sentados.push(c);
   });
-  // los concursantes, de pie a los lados de la tarima, esperando su turno
+  // los concursantes, de pie arriba de la tarima, uno a cada lado, esperando su turno
   ESCENARIO.lados.forEach((p, i) => {
     const c = makeAvatar(looks[P.length + i]);
     const q = { ch: c, x: p.x, z: p.z, facing: p.mira, vel: 0, lado: p, nombre: '' };
@@ -63,9 +63,10 @@ function decir(c, texto, seg = 2.5, sentado = false) {
 }
 
 /* ---------- la competencia: dos concursantes, tres movimientos cada uno ---------- */
-// Al sentarse la jugadora en las graderías (y si no hay una en curso): cada concursante sube al centro de la tarima,
-// hace tres bailes distintos del menú Acción (su nombre en un globo; el público grita), y vuelve a su lado; su aura
-// sube en su medidor de la pantalla. Después el jurado da las notas (del 5 al 10, una por juez), se anuncia quién gana
+// Al sentarse la jugadora en las graderías (y si no hay una en curso): los dos esperan arriba de la tarima, uno a
+// cada lado; por turnos, uno pasa al centro, hace un baile del menú Acción (su nombre en un globo; el público grita) y
+// vuelve a su lugar, y después el otro; tres rondas (tres bailes distintos cada uno). Su aura sube en su medidor de
+// la pantalla. Después el jurado da las notas (del 5 al 10, una por juez), se anuncia quién gana
 // y lo celebra. El resultado tiene azar (Math.random): sólo corre cuando alguien la mira, no en las capturas.
 const BAILES = ['aura', 'seis_siete', 'sigma', 'take_l', 'siuu', 'griddy', 'spin', 'fresh', 'floss', 'dance'];
 const NOMBRES = ['Rubí', 'Max', 'Sofi', 'Benja', 'Emi', 'Tomi', 'Isa', 'Mati', 'Flo', 'Lucas'];
@@ -126,13 +127,16 @@ function empezarCompetencia() {
     emit('aviso', `🎤 ¡Comienza la competencia de aura! ${turnos[0].q.nombre} contra ${turnos[1].q.nombre}`);
     turnos.forEach(t => decir(t.q.ch, `¡Soy ${t.q.nombre}!`, 2.2));
   }));
-  for (const t of turnos) {
-    const { q, k } = t;
-    pasos.push(esperar(1.2, () => emit('aviso', `✨ Le toca a ${q.nombre}`)));
-    pasos.push(caminar(q, C.x, C.z), girar(q, C.mira));
-    t.movs.forEach((id, i) => pasos.push(bailar(q, id, k, t.puntos[i]), esperar(0.4)));
-    pasos.push(esperar(0.6, () => { avatarDo(q.ch, 'wave', { start: 0.1, stopOnMove: false }); decir(q.ch, '¡Gracias!', 1.5); }));
-    pasos.push(caminar(q, q.lado.x, q.lado.z), girar(q, q.lado.mira));
+  // por turnos: uno pasa al centro, hace un movimiento y vuelve a su lugar; después el otro; tres rondas
+  for (let r = 0; r < 3; r++) {
+    for (const t of turnos) {
+      const { q, k } = t;
+      pasos.push(esperar(0.8, () => emit('aviso', `✨ Ronda ${r + 1}: le toca a ${q.nombre}`)));
+      pasos.push(caminar(q, C.x, C.z), girar(q, C.mira, 0.4));
+      pasos.push(bailar(q, t.movs[r], k, t.puntos[r]));
+      if (r === 2) pasos.push(esperar(0.6, () => { avatarDo(q.ch, 'wave', { start: 0.1, stopOnMove: false }); decir(q.ch, '¡Gracias!', 1.5); }));
+      pasos.push(caminar(q, q.lado.x, q.lado.z), girar(q, q.lado.mira, 0.4));
+    }
   }
   // el jurado: cada juez levanta su nota (cerca del puntaje de cada uno, del 5 al 10)
   const notas = turnos.map(t => sentados.slice(0, 3).map(() => Math.max(5, Math.min(10, Math.round(total(t) / 3 + (Math.random() * 2 - 1))))));
