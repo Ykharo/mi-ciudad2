@@ -3,7 +3,9 @@
 Juego 3D infantil para navegador (Three.js r149 desde npm, empaquetado con Vite). En español, pensado
 para niños, se juega con toque (joystick en pantalla) en tablet/teléfono y con teclado en computador.
 La protagonista es **Nina**, un avatar low-poly en `.glb` con esqueleto y animaciones.
-Se está reestructurando por etapas: ver `PLAN.md` (sección "Dónde quedamos").
+Se está reestructurando por etapas: estado actual y lo que sigue en `PLAN.md` (sección "Dónde quedamos", corta).
+El detalle de cada etapa está en `HISTORIAL.md` (largo: leerlo sólo si hace falta el porqué de algo). Al terminar
+un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo se actualiza el resumen.
 
 ## Archivos
 - `index.html` — HTML del juego. Sin `<!doctype>` a propósito (modo quirks, como siempre).

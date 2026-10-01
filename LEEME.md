@@ -36,6 +36,7 @@ Requiere Node (una vez: `npm install`).
   y `avatar_vestido.glb`, el modelo completo del que salen la base y las prendas.
 - Probador de ropa: con `npm run dev`, abre http://localhost:5173/src/debug/probador.html (elige prendas, colores y
   animaciones, y gira a Nina arrastrando).
-- `PLAN.md` — plan de la reestructuración y en qué etapa vamos. `CLAUDE.md` — contexto para Claude Code.
+- `PLAN.md` — plan de la reestructuración y en qué etapa vamos ("Dónde quedamos"). `HISTORIAL.md` — el detalle de
+  todo lo hecho. `CLAUDE.md` — contexto para Claude Code.
 - `juego_actual/` — la versión anterior (un solo HTML armado con Python), de referencia. Ya no se edita.
   La versión anterior del código fuente (`fuente/`) se borró al cerrar la etapa 1; está en la historia de Git.

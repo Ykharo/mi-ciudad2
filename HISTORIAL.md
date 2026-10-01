@@ -1,0 +1,521 @@
+# Historial — Ciudad Arcoíris
+
+Registro detallado de cada etapa y cambio (lo más nuevo arriba): qué se hizo, decisiones, tropiezos y números de las
+pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-09-2026, para que esa sección quede
+corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
+el resumen.
+
+## 30-09-2026 y antes
+
+- El proyecto se movió de OneDrive a `C:\proyectos\mi-ciudad`. La copia de OneDrive queda sólo como respaldo;
+  no se trabaja ahí.
+- Decidido: publicación en **GitHub Pages** (punto 4 de la sección 8).
+- Se usa **GitHub Desktop**, que trae Git incluido. Siguiente paso: conectar esta carpeta
+  (Add local repository → create a repository, Git ignore: Node, sin README) y hacer el primer commit
+  "Estado inicial antes de reestructurar". Los commits de cada etapa se hacen desde GitHub Desktop.
+- Repositorio conectado: `github.com/Ykharo/mi-ciudad2` (público), commit inicial subido.
+  Git no está en el PATH; Claude usa el Git que trae GitHub Desktop sólo para consultar.
+- **Decisiones pendientes aceptadas según las recomendaciones del plan** (ver sección 8): r149, Vite,
+  Three.js dentro del juego, migrar el guardado v1 → v2, un .glb por prenda, Vestidor en la Boutique,
+  nombres de código como hoy, Playwright con Chromium y WebKit, publicar en Pages desde este repositorio
+  con GitHub Actions, y borrar los archivos viejos cuando la etapa 1 esté verificada.
+  La 11 (Python) se deja para la etapa 6. La prueba en el iPad real queda para más adelante (decisión 10).
+- Hay una carpeta `mi-ciudad/` dentro del proyecto con un repositorio vacío (sólo `.gitattributes`,
+  remoto `Ykharo/mi-ciudad`): parece un intento anterior de GitHub Desktop. No se versiona; se puede borrar.
+- **Etapa 6: prendas nuevas listas**, probadas en el navegador y guardadas en el commit `9cdc8f6`
+  ("segunda ropa hecha 6 done"). Después se agregaron los accesorios rígidos (con commit) y las regiones de
+  `Body_Base` (sin commit todavía): ver los últimos puntos de esta etapa. Prendas de la hoja de referencia
+  (`referencias/ropa/hoja_de_referencia_nina.png`): **falda tableada**, **chaqueta** y **pelo largo**.
+  - Decisión 11: en vez de Python/Blender, un generador en Node: `node tools/generar_prendas.mjs [id…]`. Cada prenda
+    es un archivo en `tools/prendas/` (`falda.mjs`, `chaqueta.mjs`, `pelo_largo.mjs`) que mide el cuerpo de Nina con
+    rayos (three.js en Node) y arma la malla; `cuerpo.mjs` tiene las utilidades (rayos, pesos copiados del cuerpo,
+    grillas, grosor) y `escribir.mjs` escribe el .glb con el esqueleto del original, lo valida (pesos que suman 1,
+    los 17 huesos, materiales declarados en el catálogo, tope 450 KB) y lo cuantiza. Reemplaza al
+    `validar_prenda.mjs` que proponía el plan.
+  - Falda: 24 tablas, cuadrillé (textura gris 64×64 que se tiñe con el color elegido), pretina; pesos cadera→muslos
+    para que camine y se siente sin estirarse. 121 KB. Chaqueta: abierta adelante, mangas que siguen el brazo, borde,
+    puños y cuello en otro color ("Color de los bordes"). Nuevo espacio opcional `abrigo`. 182 KB. Pelo largo:
+    casquete con raya al medio, cortina ondulada por la espalda y mechones que enmarcan la cara y caen sobre el pecho;
+    tapa las orejas, hace sombra, mismos tonos y reglas de color que el moño. 163 KB.
+  - Error encontrado al hacer la chaqueta: el grosor (`cascara`) va hacia adentro según hacia dónde miran las caras,
+    y en la chaqueta miraban hacia adentro (el forro quedaba por fuera). Ahora `orientar()` las da vuelta si hace falta.
+  - Vestidor: pestaña **Chaqueta** con "Sin chaqueta" (los espacios opcionales tienen la opción de quedar vacíos).
+    Con 6 pestañas, van en dos filas si no caben. Prueba nueva (pelo largo + chaqueta + falda, sacarse la chaqueta,
+    se guarda). Captura del Vestidor regenerada (cambian las pestañas). 120/120.
+  - Revisadas en el probador (`?con=pelo:pelo_largo,abrigo:chaqueta,piernas:falda_tableada`) en 12 poses. Con los
+    brazos arriba (wave) el brazo puede cruzar el mechón de adelante; es aceptable por ahora.
+  - **Accesorios rígidos hechos (30-09-2026)**, probados en el navegador y en un commit, de la hoja del personaje
+    nuevo (`referencias/ropa/hoja_personaje_nuevo.png`): **gorra** (visera hacia atrás, 6 paños, estrella), **lentes**
+    (redondos, no están en la hoja), **audífonos** (al cuello) y **mochila** (bolsillo con mariposa, correas). 22–65 KB c/u.
+    - Decidido: el personaje nuevo usará el cuerpo de Nina, más bajita (escala ~0,85, cabeza algo más grande); en el
+      Vestidor los accesorios van en **una pestaña con varios a la vez**; se empezó por los accesorios.
+    - En vez de `attachToBone` (3.5), cada accesorio es una prenda skinneada con todos los pesos en un hueso (HeadBone
+      para gorra y lentes, Chest para audífonos y mochila): es rígido igual, y usa todo lo que ya existía (catálogo,
+      colores, extras, guardado, generador y validador). La gorra sigue el tamaño de la cabeza (`cabeza` del look).
+    - Espacios nuevos, todos opcionales: `cabeza`, `cara`, `cuello`, `espalda` (`SLOTS_ACCESORIOS`). Dos accesorios del
+      mismo espacio se reemplazan solos. Pestaña **Accesorios**: se prenden y apagan tocándolos; debajo, colores y
+      extras de cada uno puesto ("Gorra: Color de la visera", "Mochila: Mariposa"…).
+    - Nuevo en el catálogo: `oculta: [nombre de malla]` esconde partes de otras prendas mientras está puesta
+      (`applyOcultas`; se esconde el objeto del personaje, no el material compartido). La gorra esconde
+      `Pelo_Moño_Tope`: `separar_glb.mjs` ahora aparta el moño, sus lazadas, el coletero y su mechón en esa malla
+      (piezas conectadas cuyo centro queda a < 0,11 m del moño; ojo: con 0,12 entraba el casquete). Sólo cambió
+      `mono.glb` (155 → 162 KB); el resto salió idéntico byte a byte.
+    - La copa de la gorra se ajusta con rayos a la cabeza, las orejas, el moño (sin tope) y el pelo largo: el pelo sale
+      por debajo. Si se agrega un peinado, hay que regenerar la gorra.
+    - Encontrado: la luz del juego aclara tanto lo que mira hacia arriba que un rosado pálido se ve blanco (hasta un gris
+      `#999` se veía blanco en la copa). La estrella usa un rosado intenso.
+    - `cuerpo.mjs`: `tubo`, `revolucion`, `caja` (sólidos cerrados), `orientarCaras`, `mallaRayos`, `piezasCerca`.
+      Probador: `&dist=1.5&mira=1.8` para ver de cerca.
+    - Revisados en el probador con moño y con pelo largo + chaqueta, de frente, de lado y de atrás, y en 8 poses. En
+      `lie` y `candle` la mochila toca el suelo (acostada de espalda), aceptable. Los mechones de adelante del pelo
+      largo tapan en parte los audífonos.
+    - Prueba nueva (los 4 a la vez, la gorra esconde el moño y al sacarla vuelve, colores y extras, guardado y
+      recarga). `UUID_APARTE`: capturas 1–7 idénticas antes y después; la 8 sólo cambia en la fila de pestañas.
+      Capturas regeneradas (los objetos nuevos del moño mueven a los vecinos, y está la pestaña nueva). Chromium (dev,
+      web, archivo único): **77/77**. Archivo único: 3.615 KB.
+    - **WebKit no arranca en este PC** (30-09-2026): el `Playwright.exe` de WebKit termina al lanzarse con código
+      `0xC0E90002` (Windows lo bloquea), incluso en la prueba de humo y fuera del entorno aislado. El 28-09 corría.
+      Probablemente sea el Control inteligente de aplicaciones o el antivirus; revisar la seguridad de Windows o
+      reinstalar con `npx playwright install webkit`. Hasta entonces las pruebas de iPad (proyectos `-ipad`) no corren.
+  - **Regiones de `Body_Base` hechas (30-09-2026, probadas y con commit): con esto la etapa 6 queda
+    completa.** `separar_glb.mjs` tiene ahora una tabla `APARTAR` (partes que pasan a su propia malla, en orden) y
+    parte el cuerpo por el hueso que más pesa en cada vértice (un triángulo va a la región si sus 3 vértices son de
+    ella): `Body_Pies` (1.028 triángulos; llegan a 0,183 m, la zapatilla a 0,184), `Body_Piernas` (1.816: cadera,
+    muslos, canillas y tobillos; la cadera llega a 0,837 m, la cintura del pantalón a 0,856) y `Body_Brazos` (873:
+    brazo y antebrazo, sin las manos). `Body_Base` queda con el torso, el cuello y las manos. El torso no se separó:
+    ninguna prenda lo tapa entero (el peto es corto, la chaqueta es abierta). `nina_base.glb` 942 → 953 KB.
+    - Qué esconde cada prenda (`oculta`): pantalón → piernas, zapatillas → pies, chaqueta → brazos, pelo largo → orejas,
+      gorra → tope del moño. La falda no esconde nada (deja ver las piernas).
+    - Problema resuelto: en r149 lo escondido con `visible = false` tampoco hace sombra (y las capas de la cámara no
+      sirven: la pasada de sombras usa las de la cámara principal). Una parte del cuerpo escondida recibe el material
+      `FANTASMA` (`colorWrite` y `depthWrite` apagados): no pinta nada pero sigue haciendo su sombra, así la ropa pegada
+      sigue sin hacer sombra (el pantalón tiene 19 mil vértices). Las partes de prendas (tope del moño, orejas) sí se
+      esconden del todo. Todo pasa en `applyLook` (se llama también al quitar una prenda).
+    - Con `UUID_APARTE`, capturas con y sin esconder: idénticas (el dibujo y las sombras no cambian). Capturas de
+      referencia regeneradas (hay más objetos: los vecinos se mueven). Revisado en el probador en 8 poses, de fábrica
+      y con pelo largo + chaqueta + falda: sin hoyos en tobillos ni mangas.
+    - La prueba de cambiar prendas revisa además qué se ve de cada parte del cuerpo (se ve / escondida / fantasma).
+      Chromium (dev, web, archivo único): **77/77**. WebKit sigue sin arrancar (las 48 de iPad fallan al lanzar el
+      navegador, código `0xC0E90002`).
+  - Los moños (lazos) del pelo de la referencia quedan para más adelante.
+- **Etapa 7 en curso (30-09-2026; todo lo de abajo, hasta el cartel de la competencia, probado por el usuario y con
+  commit): dos personajes nuevos.** Con el cuerpo de
+  Nina y compartiendo la ropa: la niña de `referencias/ropa/hoja_personaje_nuevo.png` (1,40 m) y el niño de
+  `referencias/ropa/hoja_personaje_nino.png` (1,35 m; la cabeza "no tan plana, más redondeada" de perfil y los
+  audífonos grandes puestos sobre el jockey). Decidido: se empezó por la cabeza y los audífonos; la forma de cabeza es
+  del personaje, no se elige en el Vestidor.
+  - **Forma de cabeza `redonda`** (morph target). En el look: `formas: { redonda: 0..1 }` (lista en
+    `FORMAS_CABEZA`, `catalog/personajes.js`; `fixLook` descarta las que no existen). La cabeza de Nina es ancha pero
+    corta de adelante hacia atrás (0,35 × 0,27 m) y plana atrás. La forma infla la cabeza, en cada dirección desde su
+    centro, lo que le falta para llegar a un elipsoide que envuelve la parte de atrás (+3 cm a la altura de las
+    orejas, nada desde los 45° hacia arriba, ni en la cara ni en la coronilla). Primer intento (empujar un tanto fijo
+    por dirección): dejaba un escalón sobre la nuca.
+  - El desplazamiento depende sólo de la dirección desde el centro de la cabeza: la cabeza y todo lo que va encima en
+    esa dirección se corren lo mismo. Por eso **toda malla que alcanza a moverse lleva la forma** (cabeza, orejas,
+    moño, pelo largo, gorra, jockey, lentes, audífonos grandes): `agregarFormas` en `separar_glb.mjs` y `escribir.mjs`,
+    con la normal nueva calculada con la derivada. Así cualquier peinado o gorro sirve para las dos cabezas, sin
+    versiones aparte. `applyLook` pone la influencia en cada malla.
+  - Tropiezos: (1) las mallas de nodos descartados seguían en el documento, recibían la forma y el prune ya no las
+    sacaba (los .glb crecieron al triple): sólo se procesan las mallas que cuelgan de un nodo. (2) quantize copia los
+    datos de la forma para cada material y `dedup` no mira las formas: `juntarFormas` los vuelve a juntar.
+    Tamaños: base 953 → 975 KB, moño 162 → 236, pelo largo 163 → 236, gorra 65 → 92, lentes 22 → 29.
+  - **Jockey** (espacio `cabeza`, 101 KB): la misma copa que la gorra (`construirGorra` en `gorra.mjs`, que ahora
+    recibe visera adelante/atrás, figura y materiales) con visera adelante y mariposa al frente; negro. Colores: tela,
+    visera, mariposa; la mariposa se puede quitar. Esconde el tope del moño.
+  - **Audífonos grandes** (espacio nuevo `orejas`, 43 KB): auriculares sobre las orejas y cintillo ancho sobre la
+    cabeza, calzados por fuera de todo lo que puede ir en ella (cabeza, orejas, peinados, gorra y jockey): se pueden
+    llevar con cualquier gorro. Sin gorro, el cintillo queda un poco sobre el pelo. Los de antes pasan a llamarse
+    "Audífonos al cuello".
+  - Figuras para calcomanías en `cuerpo.mjs` (`FIGURAS.estrella/mariposa`, `calcomania`): las usan la gorra, el jockey
+    y la mochila. Probador: `&forma=redonda:1`.
+  - Revisado en el probador: perfil plano y redondo sin pelo, con moño, con pelo largo + gorra, con jockey +
+    audífonos grandes (+ mochila); de frente, de lado y de atrás. El cintillo pasa por delante del moño.
+  - Con `UUID_APARTE`: capturas con los modelos del último commit y con los nuevos (regiones + formas en 0),
+    idénticas. Capturas de referencia regeneradas. Pruebas nuevas: forma de cabeza guardada (se aplica a cabeza,
+    orejas, pelo, jockey y audífonos; una forma desconocida se descarta) y jockey + audífonos grandes en la de
+    accesorios. Chromium (dev, web, archivo único): **80/80** (WebKit sigue bloqueado). Archivo único: 4.010 KB
+    (3.615 antes de las regiones y las formas).
+  - **Personajes jugables** (decidido: jugables; nombres provisorios "Amiga" y "Amigo", se cambian en el catálogo).
+    `PERSONAJES` y `ORDEN_PERSONAJES` en `catalog/personajes.js`: Nina, Amiga (escala 0,86, cabeza 1,06) y Amigo
+    (0,83, 1,08, `formas.redonda`), cada uno con su look de fábrica.
+    - Se elige en la pantalla de inicio ("¿Con quién juegas?", cambia al personaje de fondo al instante) y jugando con
+      el botón redondo de arriba (junto a la música; muestra al personaje actual y abre un menú como el de Acción).
+      Manejando no: avisa "Bájate del auto para cambiar de personaje".
+    - `game/personajes.js`: `cargarPersonajes(saved)` y `cambiarPersonaje(id)` (arma al nuevo en el mismo lugar, le
+      pasa el helado, saca al anterior con `removeAvatar`, guarda). `player.personaje` y `player.looks` (el de cada
+      uno); `player.look` sigue siendo el del que se usa. Evento nuevo `personaje`.
+    - Guardado v2 ampliado sin romper lo anterior: `jugador` y `personajes: { amiga: { look }, amigo: { look } }`; Nina
+      sigue en `nina.look`. `fixLook(look, defecto)`: lo que no calza vuelve al look del personaje (no al de Nina) y un
+      espacio opcional que el look guardado no tiene queda vacío aunque el personaje venga con algo ahí.
+    - El Vestidor viste al que se usa y "Original" lo deja como es él. El menú de Acción dice "¿Qué hace Amigo?".
+    - Tropiezo: el servidor de Vite quedó con una versión a medio editar de `save.js` (comentario nuevo, cuerpo
+      viejo) y las pruebas fallaban sin sentido: se reinició el servidor.
+    - Pruebas nuevas (`tests/personajes.spec.js`, en todos los proyectos): elegir al empezar y jugando, se recuerda
+      al recargar, no quedan personajes de más; cada uno guarda su look y "Original" lo respeta; manejando no se cambia.
+    - Capturas regeneradas: el botón nuevo arriba (y la fila en la portada); se revisó que sólo cambie esa zona.
+  - **Ropa del niño**, todo en `tools/prendas/`:
+    - `pelo_corto` (primera versión, 119 KB; después se rehízo con mechones, ver más abajo): casquete con volumen y
+      puntas cada 4 columnas; flequillo sobre las cejas, tapa la parte de arriba de las orejas, hasta la nuca. Sumado a `queTapa`: gorra, jockey y audífonos grandes
+      regenerados para calzar por fuera de él.
+    - `poleron` (230 KB, espacio `abrigo`): `chaqueta.mjs` ahora exporta `cuerpoAbrigo`/`mangaAbrigo` con opciones
+      (abierto o cerrado, holgura, largo, franjas, `hombroCaido`); la chaqueta salió idéntica byte a byte. Cerrado,
+      holgado, hasta la cadera, dos franjas en las mangas, capucha caída (dos `caja`), cierre y mariposa en el pecho.
+      Las mangas holgadas asomaban una punta sobre el hombro: se afina el comienzo de la manga.
+    - `buzo` (247 KB, `piernas`): una pieza de cadera hasta la entrepierna y un tubo holgado por pierna que parte
+      dentro de ella; pretina, basta recogida sobre la zapatilla, dos franjas al costado, mariposa en el muslo.
+      Esconde las piernas. Revisado sentado, en split, acostado, en la vela y saltando.
+    - `guantes` (40 KB, espacio nuevo `manos`): funda de la muñeca a los nudillos con puño; el radio se engorda con
+      el máximo de los vecinos (con un promedio asomaban el pulgar y los nudillos). Corregido después (reporte del
+      usuario: "sólo están hasta la mitad"): llegaban a 5 cm de la muñeca y la mano mide 12; ahora llegan a 8,5 cm (los
+      nudillos), cada anillo se centra en el centro real de la mano en ese tramo (los dedos se curvan y una línea recta
+      se salía) y las dos últimas filas se ciñen a los dedos. 52 KB.
+    - La forma "redonda" ya no alcanza nada bajo la nuca (la capucha del polerón la recibía y pesaba 343 KB).
+    - Zapatillas: las de siempre, azul oscuro con detalles blancos.
+    - Chromium (dev, web, archivo único): **89/89** (WebKit sigue bloqueado). Archivo único: **4.979 KB** (4.010
+      antes de la ropa del niño): cada prenda nueva pesa 40–250 KB y el archivo único las lleva todas en base64.
+      Si molesta, se podrían comprimir los modelos (por ejemplo con meshopt, que Three.js r149 sabe leer con su
+      decodificador); el archivo único tiene que seguir llevándolo todo, porque abre sin red.
+  - **Cabeza redonda corregida** (pedido: comparar con la vista lateral de la hoja; "no tiene forma natural"). En la
+    hoja, de perfil la cabeza es casi una esfera y la nuca baja en curva hasta el cuello. La versión anterior dejaba un
+    bulto arriba atrás con una muesca abajo, como una bolsa colgando de la nuca. Se ajustó dibujando el contorno de
+    perfil y de arriba (antes y después) y fotografiando de costado exacto (cámara alineada al hueso de la cabeza, casi
+    sin perspectiva: probador `&fov=6&dist=14`, `window.__probador.orb`):
+    - elipsoide objetivo un poco detrás y sobre el centro de la cabeza (centro (0; 0,025; −0,025), semiejes
+      0,16 × 0,16 × 0,155), transición más ancha (2,5 cm): la parte de atrás es un solo arco de la coronilla a la nuca
+      (profundidad 0,27 → 0,32 m); de arriba, redonda sin ensanchar los costados (con 0,172 de ancho se ensanchaban
+      detrás de las orejas; con 0,15 la nuca quedaba en punta). Resguardos: nada adelante ni bajo −62° (la ropa del
+      cuello). Las orejas ya no se mueven.
+    - La forma sólo se guarda en mallas que se mueven más de 1,5 mm, y "sparse" (sólo los vértices que se mueven)
+      cuando mueve menos de un tercio: polerón 343 → 236 KB, lentes 29 → 23, moño 236 → 225.
+    - Chromium: 86/89; las 3 que fallaron eran las capturas (las orejas ya no llevan forma: cambia la cantidad de
+      objetos y se mueven vecinos; el diff mostró sólo vecinos). Capturas regeneradas; pasan en dev, web y archivo
+      único: **89/89**. Archivo único: 4.951 KB.
+  - **Comparador de referencias en el probador** (pedido: ver las vistas frontal y lateral de las hojas, superponerlas
+    con transparencia y ajustar posición y tamaño). `src/debug/referencias.js` + cambios en `probador.js/html`:
+    - Modo "Dos vistas lado a lado": izquierda y derecha elegibles (frente, lado mirando a la derecha o a la izquierda,
+      atrás, tres cuartos), mirando derecho, "casi sin perspectiva" (fov 6°). Rueda: acercar; arrastrar: subir o bajar.
+      "Pose de reposo" (los huesos como vienen en el modelo, sin animación). "Encuadrar cuerpo/cabeza": el cuerpo o la
+      cabeza ocupan el 90 % del alto, igual que los recortes de las hojas, así la referencia queda casi calzada.
+    - Referencias: hoja de `referencias/ropa/` (o cualquier imagen), una capa por vista: recorte listo por hoja,
+      transparencia, "Diferencia" (lo que coincide queda oscuro), reflejar, mostrar/ocultar, líneas guía; mover
+      arrastrando y agrandar con la rueda alrededor del mouse (botón 🖐 o Mayús), flechas de a 1 px (Mayús: 10);
+      "Alinear con 4 toques" (dos puntos en la referencia y los mismos en el modelo: escala y posición exactas). El
+      ajuste se guarda por hoja y vista en el navegador. Las vistas quedan a la derecha del panel; P lo oculta.
+    - Tropiezos: el panel es `position: fixed` y su `offsetParent` siempre es null (las vistas quedaban debajo); la
+      mezcla "diferencia" tiene que ir en la caja de la capa, no en la imagen (se mezclaba consigo misma).
+    - Primera observación con la hoja del niño: el amigo tiene la cabeza bastante más grande respecto al cuerpo que
+      el de la referencia.
+  - **Pelo corto rehecho con mechones** (pedido: más desordenado, como la hoja; con más vértices). Antes era un
+    casquete con puntas en el borde ("de tazón"). Ahora: casquete oscuro de base + ~60 mechones sueltos, cada uno una
+    mecha con volumen (sección de lente, ancha casi todo el largo y en punta al final) que sigue la curva de la cabeza
+    y se levanta en la punta, con giro. Capas: coronilla (12), medio (16), abajo (20, puntas bajo el borde sobre las
+    orejas y la nuca) y flequillo en dos capas (20, los del centro tapan las cejas y llegan justo sobre los ojos).
+    Azar con semilla fija. 7.000 vértices, 357 KB. Tropiezos: el borde del casquete se veía como una franja recta
+    sobre la frente (se subió adelante); los mechones se afinaban muy pronto y parecían palitos; donde dos quedaban a
+    la misma altura aparecían manchas (z-fighting): cada capa va un poco más afuera que la de abajo, como tejas.
+    Gorra, jockey y audífonos grandes regenerados. Comparado con la hoja en el comparador (con y sin jockey).
+  - **Bailes de "farmear aura"** (pedido: Pacu Jalur, Six Seven, mirada sigma). En el menú 🎬 Acción: "Farmear aura"
+    😎, "Six Seven" 🤲 y "Mirada sigma" 🗿. Sin Python con numpy/mathutils en este PC, así que se llevó a Node lo de
+    `reanimar_avatar.py` que hace falta (`tools/animaciones/pose.mjs`: poses, IK de dos huesos para pies y brazos,
+    curvas `K`); validado rehaciendo "wave" y comparándola con la guardada: diferencia máxima 0,03°. Los bailes
+    (`tools/animaciones/bailes.mjs`) se hornean en `nina_base.glb` desde `separar_glb.mjs` (14 animaciones; 969 →
+    1.070 KB): aura (4,4 s, en bucle: una mano sale rodando del pecho y barre hacia el lado, después la otra; las dos
+    giran frente al pecho; apunta adelante; cadera, rodillas y cabeza al ritmo), seis_siete (2,4 s, en bucle: manos
+    con las palmas arriba subiendo y bajando alternadas, hombros encogidos) y sigma (4,5 s, una vez: mira a un lado,
+    gira lento de frente con el mentón arriba, asiente). `AUTO_FACE` acepta caras que cambian con el tiempo
+    (`[[segundo, cara], …]`): la sigma se pone seria (ceño de "enojada") y termina con un guiño. Revisados por el
+    usuario: ok.
+  - **Seis bailes más** (pedido: Take the L, Siuuu, Griddy, Spin, Fresh, Floss), en el mismo archivo y en el menú:
+    take_l (2,4 s, bucle: mano en L en la sien por IK del brazo hasta la cabeza, saltitos sobre un pie y la otra
+    pierna pateando al lado; con la muñeca más al centro el antebrazo tapaba un ojo), siuu (3,8 s: carrerita, salto
+    con media vuelta, cae abierto con los brazos abajo y afuera y la cara de grito, sostiene y completa la vuelta; en
+    el juego queda mirando a la cámara), griddy (2,4 s, bucle: taloneos adelante alternados con brazos bombeando),
+    spin (1,8 s: vuelta completa en punta de pie con los brazos abiertos, "¡ta-da!" y guiño), fresh (2,4 s, bucle:
+    antebrazos cruzando frente a la cintura con golpe de muñeca, cadera al otro lado) y floss (2 s, bucle). Los que
+    giran rotan la cadera y los pies con ella. Revisados en el probador cuadro a cuadro (de frente y de lado).
+    `nina_base.glb`: 20 animaciones, 1.203 KB. Con `UUID_APARTE`, capturas con y sin bailes idénticas
+    (`SIN_BAILES=1 node tools/separar_glb.mjs` arma la base sin ellos); capturas regeneradas. Prueba nueva: cada
+    acción del menú tiene su animación, la sigma cambia de cara, un baile en bucle sigue hasta moverse.
+    Floss corregido (pedido: una mano por delante y la otra por detrás del cuerpo): los brazos van juntos hacia un
+    lado, uno cruzando por delante de la cadera y el otro detrás del cuerpo, y al volver pasan por el costado de la
+    cadera cambiando de adelante a atrás (antes el de atrás sólo se abría al costado y parecían los dos adelante).
+    El menú Acción tiene ahora 18 opciones (dos columnas de 9 filas, cabe en 720 px de alto): si molesta, se podría
+    separar en "Acciones" y "Bailes". Chromium: 89 + 3 que fallaron porque la prueba de humo contaba 9 opciones en
+    el menú (actualizada a 18: pasa en dev, web y archivo único) → **92/92**.
+  - **Cartel de la competencia de farmear aura** (pedido: cartel publicitario con la imagen y un personaje mirándolo).
+    `world/places/cartel.js`: letrero de 3,8 × 5,7 m sobre dos patas, con marco, bordes morados y corona dorada, en la
+    esquina de la Boutique (8,6; −10,2) mirando hacia la calle: se ve apenas empieza el juego. La imagen
+    (`src/assets/imagenes/cartel_aura.jpg`, 768 × 1152, 196 KB; el original en `referencias/carteles/`) se importa
+    desde el código: en la versión web es un archivo aparte y en la de un solo archivo queda incrustada. Material sin
+    sombreado (se ve con sus colores). `main.js` espera que cargue antes de "¡A jugar!" (así las capturas la ven).
+    - Animación nueva `mirar_cartel` (8 s, bucle; en `bailes.mjs`, no está en el menú): levanta la vista al título y
+      lo recorre de lado a lado, baja al medio y lo recorre, lee la franja de abajo por partes con pausitas, mano al
+      mentón, asiente y vuelve arriba. Cara: sorpresa con el título, feliz al final.
+    - `game/cartel.js`: un espectador frente al cartel leyéndolo en bucle: la amiga, o el amigo si la jugadora es la
+      amiga (cambia al cambiar de personaje). Zona "👀 Mirar el cartel": la jugadora se da vuelta hacia el cartel, lo
+      lee (hasta moverse) y sale el aviso "¡Competencia de farmear aura! Sábado 24 de mayo, 16:00 hrs".
+    - Prueba nueva en `lugares.spec.js`. Capturas regeneradas (el cartel se ve en varias). `window.__juego.espectador()`.
+  - **Ropa de la amiga + poleras, gorro y polerón** (pedido: la ropa de la hoja de la amiga, polera de manga corta y
+    larga, y el gorro de lana y el polerón de `referencias/ropa/hoja_ropa_gorro_poleron.png`). Nueve prendas nuevas:
+    `top_corto` (torso: blanco con tirantes, banda gris y estrella que se puede sacar), `chaqueta_oversize` (abrigo:
+    negra, abierta, hombros caídos, mariposas y estrellas rosadas en el frente, la espalda y las mangas: canal
+    "dibujos" y extra "Dibujos"), `pantalon_ancho` (piernas: cargo lila muy ancho hasta el zapato, bolsillos con tapa y
+    cadena de 24 eslabones en la cadera: extra "Cadena"), `zapatillas_plataforma` (pies: blancas, suela alta de dos
+    capas con la de abajo lila, borde del tobillo y talón lila, cordones), `polera_corta` y `polera_larga` (torso,
+    pegadas para caber bajo los abrigos; la larga esconde los brazos), `poleron_oversize` (abrigo: amarillo, cuello
+    redondo, muy holgado) y `gorro_lana` (cabeza: canales tejidos, doblez, un poco holgado atrás, etiqueta). El
+    polerón con capucha pasa a llamarse "Polerón con capucha". La amiga ya usa su ropa propia.
+    - Reutilización: `mangaAbrigo` acepta `hasta` (manga corta) y `puño`, y devuelve su `camino`; `buzo.mjs` exporta
+      `cadera`/`pierna` con opciones (el buzo salió idéntico byte a byte; también la chaqueta y el polerón tras el
+      primer cambio). `calcomaniaSobre` (cuerpo.mjs) pega una figura sobre cualquier superficie apuntando desde afuera;
+      `superficieDe` (chaqueta.mjs) hace la malla de rayos de una prenda.
+    - Corregido mirando fotos: el lila del pantalón se veía blanco (más saturado); la cadena casi no se veía (más larga,
+      apoyada en la cadera y el muslo); los cordones quedaban hundidos; en los hombros de los abrigos con `hombroCaido`
+      asomaban la polera y el peto (ahora nunca más adentro que el cuerpo + 3 cm; el polerón con capucha y la chaqueta
+      oversize también cambian un poco); la manga corta asomaba por el hombro de los abrigos y, al afinarla, dejaba ver
+      piel (las poleras van más pegadas: 0,9 cm el cuerpo, 0,3–0,5 cm las mangas); el gorro de lana terminaba en punta y
+      se abría como campana (domo redondo; el pelo largo cuenta sólo hasta 5 cm sobre la cabeza y sus mechones salen
+      bajo el doblez). Los audífonos grandes se calzan también por fuera del gorro de lana.
+    - Prueba nueva: cada prenda nueva se pone desde el Vestidor, la cadena se saca, y queda guardado. Capturas
+      regeneradas (la amiga del cartel cambió de ropa). Chromium: **98/98**. Archivo único: **7.821 KB** (crece con
+      cada prenda: ya conviene pensar en comprimir los modelos, por ejemplo con meshopt).
+  - **Lentes de sol, tres modelos** (`tools/prendas/lentes_sol.mjs`, espacio `cara`, 34–41 KB): aviador (gota, marco
+    dorado fino, doble puente; la primera gota salió redonda y se rehízo más honda abajo y hacia la nariz), clásicos
+    (marco negro grueso, más ancho arriba, con ceja) y corazón (rosados). Cada uno: el contorno de la lente como
+    función, el marco siguiéndolo, la lente teñida (una calcomanía con esa forma, pegada a la curva de la cara), puente
+    y patillas como los lentes redondos. Canales: marco y "Color de los lentes" (paletas nuevas `lentes` y `metal`).
+    La prueba de prendas nuevas los pone uno tras otro y cambia el color de los lentes.
+  - **Vecinos con la ropa nueva** (etapa 7). Antes había una sola plantilla (la ropa original de Nina, sólo cambiaban
+    los colores). Ahora `VECINOS` son estilos (`catalog/personajes.js`): "clásico" (moño, pelo largo o corto; peto o
+    poleras; pantalón cargo o falda; a veces chaqueta, lentes, gorra) y "urbano" (poleras o top; buzo, pantalón ancho o
+    cargo; zapatillas o plataformas; casi siempre polerón o chaqueta oversize; a veces gorro, audífonos, lentes de sol,
+    mochila, guantes; más seguido la cabeza redonda). Formato: `prendas` (una de cada lista), `opcionales`
+    ([{ prob, ids }], el espacio sale del catálogo), `colorProb` (cada canal con color al azar de su paleta o el de
+    fábrica; el pelo siempre), extras al 70 %, `escala`, `cabeza`, `formaRedonda`. `randomLook` lo aplica.
+    - Los looks de los 7 vecinos se sortean antes de cargar (`lookVecinos` en `game/npcs.js`, semilla 4321) y
+      `loadCharacters` carga sólo las prendas que usan (antes cargaba las de las plantillas); `spawnNPCs(looks)`.
+    - Probador: "Vecino al azar" (prendas y colores; antes sólo colores) y `?look=azar&seed=N` con la semilla
+      mezclada: el generador del juego (LCG) da primeros números casi iguales con semillas seguidas, y los 8 primeros
+      salían iguales de estilo.
+    - Revisados 16 vecinos al azar y las combinaciones nuevas (mochila sobre los abrigos holgados, audífonos al cuello
+      con polerones): sin choques. Con los abrigos holgados, las correas de la mochila quedan en parte por dentro.
+    - Capturas regeneradas (los vecinos cambiaron).
+  - **Se quitó la versión de un solo archivo** (decisión del usuario, 30-09-2026: no la usa y quiere seguir
+    agregando contenido; llevaba todo en base64 y ya pesaba 8 MB). Queda sólo la web (GitHub Pages): cada prenda se
+    descarga cuando alguien la usa. Fuera: `vite-plugin-singlefile`, `tools/vite-embed-assets.js`, el modo `unico`
+    de Vite, el proyecto `unico` de las pruebas y la lectura de bloques `<script id="asset:…">` en el cargador.
+    `npm run build` = `build:web`. La prueba "arranca sin red" pasó a la versión web (el juego no depende de nada de
+    internet salvo las fuentes); la de "abrir con doble clic" se borró. Las secciones 4.2 y las decisiones de abajo
+    que hablan del archivo único quedan como historia. Chromium (dev y web): **65/65**, en 3,8 min (antes 98 en 6 min,
+    con el archivo único).
+  - **Peinados nuevos** (pedido: los de las hojas). Cinco:
+    - `pelo_lacio` (lacio largo): `pelo_largo.mjs` ahora exporta `construirLargo` con opciones (onda, puntas, largo
+      atrás y adelante, bulto, mechas) y `casquete` con prefijo de materiales; el lacio es liso, más largo y con las
+      puntas parejas.
+    - Mechas: el pelo largo tiene un canal nuevo "Color de las mechas" (`PeloLargo_Mechas`, un mechón entero de cada
+      tres y una columna del casquete), que si no se elige toma el color del pelo (`siFalta` con `sombra` 1): el pelo
+      largo de siempre no cambia. La amiga lleva sus ondas castaño claro con mechas rosadas, como en su hoja.
+    - `trenzas`: el casquete del pelo largo y dos trenzas de "eslabones" redondeados inclinados a un lado y al otro,
+      que nacen detrás de las orejas y caen por delante de los hombros (por fuera del cuerpo a 4 cm), con gomita
+      (canal "Color de las gomitas") y punta suelta. La primera versión, delgada, parecía un collar de cuentas.
+    - `pelo_largo_desordenado` (el "cabello largo" del amigo): `pelo_corto.mjs` exporta `construirMechones` con el
+      borde y una capa más de mechones largos (el pelo corto salió idéntico byte a byte); tapa las orejas y llega a la
+      mandíbula y la nuca; las puntas casi no se levantan (si no, se abrían como tablas).
+    - `pelo_rizado`: casquete + unos 170 rulos redondos (espiral de Fibonacci, 11 lados; aplastados y de 8 lados
+      parecían discos de panal). Los rulos de arriba van en `Pelo_Rizado_Tope`, que los tres gorros esconden: así el
+      volumen no agranda los gorros y bajo un gorro asoman los del borde. 644 KB: el tope por prenda subió de 450 a
+      650 KB (ya no hay archivo único; cada prenda se descarga sólo si alguien la usa).
+    - Gorra, jockey, gorro de lana y audífonos grandes regenerados para calzar por fuera de los peinados nuevos (el
+      de lana limita todos los peinados a 5 cm sobre la cabeza). En los vecinos: clásico con lacio, trenzas y rizado;
+      urbano con largo desordenado, lacio y rizado; las mechas salen al 25 % (los canales con `siFalta`).
+    - La prueba de prendas nuevas pasa por los cuatro peinados. Capturas regeneradas. Chromium (dev y web): **65/65**.
+  - Siguiente: lo que falta de las hojas (jeans baggy, reloj, zapatillas deportivas, clip de estrella, celular,
+    botella), y los nombres de la amiga y el amigo.
+    Los peinados nuevos: sumarlos a `queTapa` (gorra.mjs) y regenerar gorra, jockey y audífonos grandes.
+- **Mejora (después de la etapa 5): joystick con zona lenta y zona rápida.** Pedido: más recorrido para caminar y
+  manejar despacio. El joystick pasó de 156 a 200 px (164 en pantallas chicas); mientras la perilla está entera
+  adentro del círculo punteado es lento (Nina camina 0,5–1,3 m/s; el auto va a 12–27 % de su máximo y retrocede
+  despacio) y en el anillo blanco de afuera es rápido (Nina corre, el auto llega a su máximo). La zona lenta ocupa
+  ~60 % del recorrido. Medidas en fracciones del radio (`ui/joystick.js`, el CSS usa las mismas). Además: el volante
+  sigue la dirección de la palanca (no cuánto se empuja), soltar un poco la palanca baja la velocidad suave (antes
+  cortaba de golpe), y la zona lenta tiene un tono azulado para verse sobre la vereda. El teclado no cambia.
+  Prueba nueva: caminar/correr y auto lento/rápido según la zona. 100/100, capturas regeneradas (cambia el joystick).
+  - Ajuste pedido para el auto (`acelerador()` en `game/driving.js`): el primer tercio del anillo blanco sigue siendo
+    lento; desde ahí la velocidad tope y la aceleración suben parejo hasta el máximo, que se alcanza sólo con la
+    perilla en el tope. Nina a pie no cambió (corre desde que entra al anillo). El límite de la zona lenta es un solo
+    valor, `INPUT_LENTO` en `game/actors.js`, que usan el joystick y el auto.
+  - Ayudas de manejo (pedidas: el auto costaba controlarlo con el joystick a alta velocidad):
+    **dirección según la velocidad** (hasta 4 m/s gira igual; después el giro máximo baja hasta 30 % a 16 m/s, y el
+    volante se mueve más suave) y **enderezado** (palanca a menos de 15° de la vertical = volante al centro; más
+    allá, el giro sube parejo). Antes, a cualquier velocidad sobre 4 m/s el auto giraba hasta 126°/s, y la palanca
+    ladeada 10° lo desviaba ~35° en 2 s; ahora sigue derecho. Prueba nueva (se comprobó que falla con lo anterior).
+    Descartada por ahora la opción C (mantener la velocidad al acercar la perilla al centro). 105/105.
+  - **Palanca fija al manejar** (a prueba; `PALANCA_FIJA` en `ui/joystick.js` la apaga): al soltar la perilla
+    manejando, queda fija (anillo amarillo + 🔒) y el auto mantiene dirección y velocidad. Se suelta con doble toque en
+    la bola (vuelve al centro y el auto se detiene solo), con el freno (✋ o espacio), llevándola al centro, al bajarse
+    o al abrir un panel. A pie no cambia. Aviso "Toca 2 veces la bola para soltar" las 2 primeras veces. Prueba nueva.
+  - Mientras se ajusta la conducción, sólo se corren las pruebas de manejo/joystick; la batería completa al terminar.
+  - Ajuste de sensibilidad (pedido): curva de respuesta "expo" en el volante (exponente 1,8 despacio → 1,2 rápido),
+    giro máximo 70 % despacio → 42 % a 16 m/s (antes 100 % → 30 %), y en el anillo blanco la velocidad sube gradual
+    con curva p² (⅓ ≈ 35 %, ⅔ ≈ 59 %, tope 100 %) en vez de quedarse plana el primer tercio y subir de golpe.
+  - Palanca fija "como el teclado" (pedido): al soltarla manejando, vuelve al centro en horizontal (suave, 0,18 s: las
+    ruedas quedan rectas y el auto sigue derecho) pero mantiene la altura (la velocidad, adelante o atrás). Si se
+    soltó casi a la altura del centro, no queda fija. La prueba de la palanca fija cubre el caso en diagonal.
+  - Pedido: las ruedas vuelven más lento al centro al soltar el giro (~1 s; perilla 0,4 s). Girar hacia un lado sigue
+    rápido. Aplica también al soltar A/D.
+  - Pedido: **controles de giro** sobre el anillo blanco (sólo al manejar), a la izquierda y derecha, en el tercio
+    central de cada costado: veladura azulada suave + flecha ‹ › blanca; amarilla al apretar. Funcionan como las
+    flechas del teclado (`input.giro`): giran sin cambiar la velocidad ni mover la perilla. SVG generado en
+    `ui/joystick.js` con radio 1; la zona para tocar es más grande que el dibujo. Prueba nueva.
+  - **Error arreglado:** con los controles de giro, la bola fija no se podía volver a mover ni soltar con doble clic.
+    La zona invisible para tocar las flechas tenía `pointer-events: all`, y su contorno (ancho por defecto 1 unidad =
+    el radio entero) tapaba la bola. Ahora sólo el relleno recibe toques. Las pruebas no lo vieron porque mandaban los
+    eventos directo al joystick: las de manejo pasaron a `tests/manejo.spec.js` y usan el mouse real (pasa por todas
+    las capas, como un dedo), con la herramienta `joystick()` de `tests/ayudantes.js`.
+  - Doble toque más estricto: dos toques cortos (< 0,3 s, casi sin arrastrar) con < 0,4 s entre ellos; agarrar la
+    bola apenas se soltó ya no la suelta.
+  - Pedidos: el auto un poco más rápido en la zona lenta (18–35 % de su máximo; antes 12–27 %) y los controles de
+    giro giran la mitad (volante al 50 %).
+  - Velocímetro en km/h dentro del círculo del joystick (sólo al manejar), un poco bajo el centro para que la perilla
+    —que sube al acelerar— no lo tape. Se alimenta del evento `motor`.
+  - **Conducción cerrada** con la batería completa: 115/115.
+  - Encontrado: `index.html` no tiene `<meta name="viewport">`, así que Safari de teléfono y de iPad dibuja la
+    página a 980 px de ancho y la achica (todo el HUD se ve más chico en el teléfono, y las reglas CSS para pantallas
+    de menos de 560 px nunca se aplican). Es así desde el original; agregarla es un cambio visible — pendiente de decidir.
+- **Arreglo (después de la etapa 5): retroceder en diagonal.** Reportado al manejar: con la palanca abajo-izquierda
+  o abajo-derecha el auto a veces avanzaba, y parecía girar distinto hacia cada lado. Causa: retroceder exigía
+  `|jx| < 0,7`, y a 45° es 0,707 (con teclado, S+A/S+D siempre avanzaba). Ahora cualquier palanca con componente
+  hacia abajo > 0,35 frena y retrocede (`game/driving.js`). Prueba nueva en `tests/lugares.spec.js` (teclado a los
+  dos lados + joystick a 45°); se comprobó que falla con el código anterior. 95/95.
+- **Etapa 5 lista** (falta: probar en el navegador y commit). Siguiente: etapa 6.
+  - Zona `boutique` en la alfombra de la entrada (👗 Vestidor), modo `wardrobe`, panel `ui/panels/wardrobe.js`.
+    Nina se pone en la alfombra mirando a la calle: la cámara queda al frente con la Boutique de fondo (4,6 m, más
+    cerca que en el refugio); arrastrar la gira, como en el refugio.
+  - Pestañas Pelo / Arriba / Abajo / Zapatos / Piel. Por prenda: opciones de prenda (hoy una por espacio), un bloque
+    de colores por canal con la muestra "↩" (el color con que viene, `factoryColor`) y los extras (mariposa sí/no).
+    Todo sale del catálogo: una prenda nueva aparece sola. "Sorpréndeme" (ropa y pelo al azar; la piel no se toca)
+    y "Original" (Nina de fábrica). Cada cambio se ve al instante, pone cara feliz y se guarda.
+  - Se agregó la pestaña **Piel** (no estaba en el plan; el look ya la tenía).
+  - Pruebas nuevas (`tests/vestidor.spec.js`): colores + mariposa + detalles de zapatillas + piel, guardado y
+    recarga; Sorpréndeme y Original. Captura nueva 8-vestidor. 90/90.
+  - Vertical revisado con WebKit (tamaños de iPad y de teléfono): el panel es hoja inferior y Nina se ve completa
+    arriba. Falta el iPad real (pendiente general).
+- **Etapa 4 terminada.**
+  - Decidido y hecho: el pelo **sí** proyecta sombra. Ahora lo dice el catálogo (`sombra: true` en la prenda) en vez de
+    un nombre de malla. Cambio visible a propósito: capturas regeneradas (difieren sólo alrededor de las sombras de
+    los personajes).
+  - `tools/separar_glb.mjs` (glTF-Transform) genera, desde `herramientas_avatar/avatar_vestido.glb`,
+    `assets/modelos/nina_base.glb` y `assets/modelos/prendas/{mono,peto,pantalon_cargo,zapatillas}.glb`. Qué mallas
+    van en cada prenda lo dice el catálogo (`mallas`). Tropiezos resueltos: registrar las extensiones (si no, se
+    perdía `KHR_texture_transform` del atlas de la cara) y soltar a mano los muestreadores de las animaciones (si no,
+    cada prenda llevaba 360 KB de animaciones que no usa).
+  - `assets/loader.js`: `loadGLB(id)` con caché (misma decodificación de siempre, con imágenes `data:`); ids
+    `nina_base` y `prenda:<id>` (convención: `modelos/prendas/<id>.glb`, no hace falta anotarlas en el manifiesto).
+    El plugin del archivo único incrusta la base y todas las prendas.
+  - `characters/wardrobe.js`: `attachPrenda` clona las mallas de la prenda (comparte la geometría) y las enlaza a los
+    huesos del personaje por nombre; `ponerPrenda` / `quitarPrenda` / `recolorear` para el Vestidor. Los materiales
+    compartidos se cambian (nunca se modifican) al recolorear. `makeAvatar(look)` = base + prendas del look, en el
+    mismo orden de antes.
+  - Verificación con `UUID_APARTE`: base + prendas contra el modelo completo de la etapa 3, idénticas salvo 1 píxel en
+    dos capturas (bordes de personajes lejanos: cambia el orden de dibujo de superficies a la misma profundidad).
+  - Cuantización (`KHR_mesh_quantization`: posición 14 bits, normales 10, pesos 8, UV 12): modelos 2.095 → 1.437 KB
+    (−31 %). Revisada con el probador en 12 poses × 3 vistas (`tools/fotos_poses.mjs`): a la vista no cambia nada ni
+    aparecen grietas (sí hay diferencias de pocos niveles de color en miles de píxeles de primer plano). Adoptada.
+  - Archivo único: 3.610 → **2.725 KB**. Versión web: base 942 KB + prendas 47–207 KB cada una.
+  - `src/debug/probador.html` (sólo desarrollo): animación, pausa en un segundo, prenda por espacio, colores al azar,
+    Nina de fábrica; también por la dirección (`?anim=split&t=1.2&vista=lado&look=azar&seed=3&sin=pelo`).
+  - Capturas de referencia regeneradas (la cuantización cambia algunos niveles de color en los personajes, y hay más
+    objetos de Three.js, así que los vecinos andan por otro lado). 80/80 pruebas.
+  - Encontrado: el pelo **nunca proyectó sombra** (`SHADOW_PARTS` busca `Pelo_Moño`, pero las mallas se llaman
+    `Pelo_Moño_1..3`). Se decidió arreglarlo (ver arriba).
+- **Etapa 3 terminada.**
+  - Catálogos de SÓLO DATOS en `src/characters/catalog/`: `paletas.js`, `prendas.js` (piel + 4 prendas del modelo
+    actual con canales, derivados y extras, como en 3.2), `personajes.js` (`LOOK_NINA`, `PERSONAJES`, plantillas
+    `VECINOS` con el orden del sorteo) y `acciones.js` (`ACTIONS`, `AUTO_FACE`, `HOLD`).
+  - `src/characters/looks.js`: `lookMaterials` (reemplaza a `recolor`), `randomLook` desde plantillas y `fixLook`.
+    Las reglas de color escritas a mano en `recolor()` quedaron como datos (`['sombra', k]`, `['contraste', k, blanco]`).
+    El look de fábrica de Nina no cambia colores (los tonos del modelo no salen de las reglas).
+  - Paso 1 (catálogo, clonando como antes): las 7 capturas **idénticas**: los vecinos salen iguales.
+  - Paso 2, materiales compartidos por (material, color, visible), salvo las capas de la cara: 152 → 102 materiales
+    con 8 personajes. Three.js r149 usa `Math.random` en cada UUID, así que clonar menos cambia la secuencia de
+    azar de las pruebas y mueve a los vecinos. Se agregó `UUID_APARTE=1` a las capturas (dev): con esa opción,
+    antes y después del cambio las capturas salieron idénticas (la 7, con el ruido de siempre de la GPU).
+    Después se regeneraron las capturas de referencia (sólo cambia dónde andan los vecinos).
+  - Guardado v2 (`ciudadArcoiris.v2`): `{ version: 2, nina: { look }, pets, cars, shop }`. Una partida v1 se migra
+    al cargar y se guarda enseguida en v2; la clave v1 no se borra. Pruebas nuevas (`tests/guardado.spec.js`):
+    migración v1 → v2 y guardado dañado.
+  - Pruebas: 80/80. En WebKit cada prueba usa ahora un navegador nuevo: WebKit no libera los contextos WebGL de
+    páginas cerradas y perdía el contexto en la carga número 16 (pasó a notarse con las pruebas nuevas).
+- **Etapa 2 terminada.**
+  - Primero, sobre el código de la 1b: ganchos de prueba `window.__juego` (`src/debug/hooks.js`, sólo en desarrollo
+    o con `?test`: state, player, npcs, cars, `teleport(x, z)`), 8 pruebas nuevas en `tests/lugares.spec.js`
+    (banca, helado, refugio, comprar y manejar, garaje, "Mi auto" con partida guardada, "Mi auto" sin auto,
+    auto de la calle) y 2 capturas nuevas (6-salon, 7-tienda). Con eso armado se desenredó.
+  - `core/events.js`: `game/` avisa (`zona`, `aviso`, `sonido`, `menu`, `auto`, `motor`) y `ui/`/`audio/` escuchan.
+    `game/` ya no toca el DOM ni el audio; `setEngine(velocidad, tono)` recibe todo por parámetro.
+  - `game/actors.js` guarda los datos compartidos (player, cam, input, ownedCars); `cars/driving.js` pasó a
+    `game/driving.js`; `main.js` elige cada cuadro entre `updateCar` y `updatePlayer`; `updateZones` está en
+    `game/interact.js`.
+  - Zonas con acción: `addZone(...)` en el lugar y `onZoneAction(id, fn)` en quien sabe hacerlo; el botón de acción
+    sólo hace `runZone(state.currentZone)`. Nombres de lugar: `addArea(...)` en `world/city.js`.
+  - `carFitsAt(…, skip, avoid)` recibe la posición a evitar. `svgI` pasó a `core/svg.js`. La cámara lee
+    `cam.dragging` y `state.preview` en vez de módulos de la interfaz.
+  - Código muerto quitado: `rand`, `hedge`, `player.phase`, rama `skin` de `swHTML`.
+  - ESLint (`npm run lint`, corre antes de `npm test`): `import/no-cycle` y `import/no-restricted-paths` con las
+    capas de la sección 2.1. Se comprobó que detecta ciclos e importaciones prohibidas. Resultado: **0 ciclos, 0 violaciones**.
+  - Pruebas: 70/70. Capturas 1–6 idénticas byte a byte a antes del refactor; la 7 (tienda) varía hasta 1 nivel de
+    color en unos pocos píxeles del parabrisas transparente aun sin cambiar el código (ruido de la GPU), por eso
+    el margen de las capturas pasó de 1 % de la imagen a 50 píxeles con el umbral por píxel normal.
+  - Recorrido extra sin errores: música, saludar, menú Acción que se cierra al abrir un panel, "Llevar a casa",
+    subirse con el botón, aviso "¡Maneja aquí!", bocina, freno, bajarse con el botón.
+- **Etapa 1 terminada** (salvo la prueba en el iPad real, pendiente).
+- **Etapa 1b terminada** (sus ciclos de importación se eliminaron en la etapa 2): probada en el navegador del PC y guardada en el commit "Etapa 1b: separar en módulos".
+  Después se borró `fuente/` (decisión 12): `juego_fuente.html`, `armar_juego.py` y la copia de
+  `avatar_vestido.glb` (idéntica a `assets/modelos/`). Quedan en la historia de Git.
+  - `src/main.js` se separó en 50 módulos (+ `core/state.js` y `engine/three.js`) con una herramienta de un solo uso
+    que usa análisis de alcance (espree + eslint-scope): mismas funciones, mismos cuerpos, importaciones calculadas.
+  - A `core/state.js` pasaron sólo los `let` que se reasignan desde otro módulo: `mode`, `clock`, `currentZone`,
+    `lastCar`, `shopSpec`, `ttModel`, `ttSpin`, `ttDrag`, `musicOn`, `joyId`. Cada uno se inicializa en su módulo
+    de origen en el mismo momento que antes. Los demás `let` (`driving`, `preview`, `ttGroup`, `AC`…) se exportan
+    tal cual (un import de ES es una referencia viva de lectura).
+  - `main.js` importa todos los módulos en el orden original de las secciones, así el orden de arranque
+    (renderer → mundo → autos…) y el de creación de objetos de Three.js no cambian.
+  - `window.__cityScript` pasó a `engine/three.js` para que siga marcándose antes de crear el renderer.
+  - Diferencias con la sección 2 (a propósito, para no rediseñar en la 1b): `collide` quedó en `world/physics.js`,
+    `RAINBOW` en `engine/materials.js`, los autos en `cars/models.js` (un archivo, no una carpeta), las paletas y
+    acciones siguen en sus módulos (el catálogo es de la etapa 3), y se agregó `ui/buttons.js` para los botones del HUD.
+  - Resultado: 30/30 pruebas; capturas **idénticas byte a byte** a la etapa 0 (dev y archivo único). Recorrido
+    extra en desarrollo sin errores: helado, banca, tienda (todas las pestañas), comprar, manejar, bocina, freno,
+    bajarse, "Mi auto", garaje (cambiar y devolver), subirse a un auto de la calle, música.
+  - **Ciclos de importación que quedan** (se eliminan en la etapa 2): un grupo de 8 módulos
+    (`cars/fleet`, `cars/driving`, `game/player`, `game/npcs`, `game/save`, `audio/engine`, `ui/joystick`,
+    `ui/action-menu`). Nace de dos dependencias "hacia arriba": `cars/fleet → game/player` (`carFitsAt` lee
+    `player.pos`) y `cars/driving` → game/ui/audio (manejar es un sistema de juego: probablemente pase a `game/`).
+- **Etapa 1a terminada.** Publicada en https://ykharo.github.io/mi-ciudad2/ (GitHub Actions ✓; arranca sin
+  errores en Chromium y WebKit). Probada en el navegador del PC con `npm run dev`.
+  - `index.html` + `src/styles/juego.css` + `src/main.js` generados por corte exacto de `juego_fuente.html`.
+    Único cambio de código: `loadNina()` lee los bytes con `readAsset('nina')` (`src/assets/loader.js`).
+  - Se agregó `<html><head><body>` (sin doctype, sigue en modo quirks): sin `<head>`, Vite ponía el script y
+    el CSS antes de `<meta charset>` y en el archivo único el charset quedaba después de ~740 kB.
+  - `npm run build:web` → `dist/web` (JS 739 kB + .glb 2,1 MB). `npm run build` → `dist/unico/ciudad-arcoiris.html`
+    (3,6 MB, Three.js y el modelo adentro, `<script id="asset:nina">`).
+  - `npm test` prueba 5 variantes (dev, dev-ipad, web, web-ipad, unico): 30 pruebas. Las capturas de las
+    versiones nuevas salieron **idénticas byte a byte** a las de la etapa 0. El archivo único abre como
+    `file://` y arranca sin red (sólo las fuentes de Google quedan afuera).
+  - `.github/workflows/pages.yml` publica `dist/web` en cada push a main. Hay que activar una vez
+    Settings → Pages → Source: "GitHub Actions".
+  - Pendiente de la 1a: prueba en el iPad real (se hace más adelante, ver decisión 10).
+- **Etapa 0 terminada.** Checklist manual en el PC: todo ✅; iPad pendiente.
+  - `package.json` con `vite`, `@playwright/test` y `three@0.149.0` (fijo). Navegadores Chromium y WebKit instalados.
+  - `npm test` corre 11 pruebas contra `juego_actual/ciudad-arcoiris-nina.html` (servido con `vite preview`):
+    5 de humo en Chromium de escritorio y en WebKit con emulación de iPad (arranca, camina con teclado,
+    joystick táctil, menú Acción, adoptar y recargar) + 5 capturas de referencia en Chromium
+    (`tests/capturas/`: portada, Nina, bailando, parque, panel de mascotas). Pasaron dos corridas seguidas.
+  - Las capturas son repetibles gracias a `Math.random` con semilla, el reloj de Playwright detenido y el
+    audio desactivado (el ruido del audio consume `Math.random` según el equipo). No hizo falta tocar el juego.
+  - Chromium usa la GPU del PC (con WebGL por software las capturas tardaban más de 2 minutos). Por eso
+    las capturas dependen de este PC: en otro equipo (o en GitHub Actions) hay que regenerarlas.
+  - Falta: el commit "Etapa 0: pruebas y capturas de referencia" desde GitHub Desktop.
+  - Las capturas del salón de autos y de la tienda se agregan en la etapa 2, cuando existan los ganchos
+    de prueba (`teleport`); sin ellos, llegar hasta allá caminando es frágil.
+
