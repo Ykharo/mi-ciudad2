@@ -7,18 +7,20 @@
 //   ya existen: el orden mueve los obstáculos, el dibujo y los números al azar de las capturas.
 // - `build(ctx)`: arma el lugar. `ctx` trae lo que un lugar necesita del mundo:
 //   world (el grupo de lo que no se mueve; lo que se mueve lleva userData.dynamic), scene, addObs, addObsRot,
-//   addZone (la acción la registra otro con onZoneAction(id, fn)) y onFrame(f(t, dt)) para animar algo en cada cuadro.
+//   addZone (la acción la registra otro con onZoneAction(id, fn)), addSenderos (los caminos por donde andan los
+//   vecinos adentro: world/senderos.js) y onFrame(f(t, dt)) para animar algo en cada cuadro.
 import { THREE } from '../engine/three.js';
 import { scene } from '../engine/renderer.js';
 import { animated } from '../engine/loop.js';
 import { world } from './layout.js';
 import { addObs, addObsRot } from './physics.js';
 import { addArea, addZone } from './zones.js';
+import { addSenderos } from './senderos.js';
 
 const places = [];
 function definePlace(def) { places.push(def); return def; }
 
-const ctx = { world, scene, addObs, addObsRot, addZone, onFrame: f => animated.push(f) };
+const ctx = { world, scene, addObs, addObsRot, addZone, addSenderos, onFrame: f => animated.push(f) };
 function buildPlaces() {
   const orden = p => (p.orden === undefined ? Infinity : p.orden);
   [...places].sort((a, b) => orden(a) - orden(b)).forEach(p => {

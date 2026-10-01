@@ -98,7 +98,15 @@ function arenero({ world, addObs }, x, z) {
 }
 
 function plaza(ctx) {
-  const { world, addObs } = ctx;
+  const { world, addObs, addSenderos } = ctx;
+  // por dónde andan los vecinos adentro: del arco (vereda de la Avenida Menta) al centro y entre los juegos; también se
+  // entra por las veredas de arriba y de abajo
+  addSenderos({
+    area: [45.5, 76, 5.5, 34.5],
+    nodos: { arco: [44.5, CZ], a1: [49.5, CZ], centro: [58.5, CZ], este: [70, CZ], norte: [61.5, 31], sur: [58.5, 8.5], vNorte: [60, 35.5], vSur: [60, 4.5] },
+    aristas: [['arco', 'a1'], ['a1', 'centro'], ['centro', 'este'], ['centro', 'norte'], ['centro', 'sur'], ['norte', 'vNorte'], ['sur', 'vSur'], ['este', 'norte']],
+    entradas: ['arco', 'vNorte', 'vSur'],
+  });
   // piso de goma, y el camino desde la vereda
   world.add(mesh(rlo(26, 0.06, 22, 0.03), mat('#9C86D9', { roughness: 0.95 }), CX, 0.03, CZ, false, true));
   world.add(mesh(box(3, 0.04, 3), mat('#EADCC6'), 46.6, 0.025, CZ, false, true));

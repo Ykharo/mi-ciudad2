@@ -29,6 +29,8 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
   - **Vecinos en los juegos** (`game/vecinosJuegos.js`): eligen al llegar a una esquina (gancho `onEsquina` de
     `npcs.js`; `n.uso` los maneja). Ocupación compartida con la jugadora: `ancla.userData.quien`, `bench.quien`,
     `juego.ocupado` (contador), `juego.reservado`; `privado` = sólo la jugadora; `pareja` = de a dos (sube y baja).
+    Adentro de un lugar caminan por sus senderos (`ctx.addSenderos`, `world/senderos.js`: nodos, aristas, entradas en
+    la vereda); a veces sólo lo cruzan de paseo.
   - **Escenario del Aura** (`places/escenario_aura.js`): se cambia de lugar sólo con `ESCENARIO = { x, z, giro }`
     (giro en múltiplos de 90°); jurado, público y las pistas del cartel (`game/aura.js`, `pistasEscenario`) se ajustan
     solos. El cartel tiene dos botones: mirar y "💬 Preguntar dónde es" (`game/cartel.js`). Al sentarse en las

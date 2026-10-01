@@ -5,6 +5,23 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Senderos: los vecinos entran y cruzan el parque y la plaza (01-10-2026)
+
+- Pregunta: ¿cómo entran los vecinos al parque? (sólo se los veía por el borde). Antes entraban sólo para usar un juego,
+  en línea recta desde la esquina. Pedido: que paseen cruzando por los senderos y que entren a los juegos por ellos.
+- `world/senderos.js`: un lugar declara sus caminos con `addSenderos({ area, nodos, aristas, entradas })` (nuevo en el
+  `ctx` de `definePlace`); `ruta(x0, z0, x1, z1)` da los puntos (si el origen o el destino está en el área: por la
+  entrada más cercana y el camino más corto, Dijkstra). El parque: las dos calles de tierra en cruz (entradas en las 4
+  veredas) y un círculo de 8 puntos a 5,6 m de la pileta; la plaza: del arco al centro y entre los juegos, con entradas
+  en la Avenida Menta y en las veredas de arriba y de abajo.
+- `game/vecinosJuegos.js`: los vecinos caminan por rutas (`recorrido`: de punto en punto con `collide`; si se atascan
+  saltan al siguiente). Para ir a un juego y volver a su esquina usan `ruta`. **Paseos** (`pasear`, probabilidad 0,3 en
+  cada esquina, si hay una entrada a menos de 20 m): van por la vereda a la entrada, cruzan por los senderos hasta otra
+  entrada (60 %: se detienen 2–5 s a mitad de camino) y siguen por la vereda hacia la esquina más cercana.
+- Prueba nueva: un vecino cruza el parque pasando a menos de 7 m del centro de la pileta y sale. Ganchos:
+  `vecinosJuegos.pasear(i)`; `estado()` incluye la posición. Capturas regeneradas (gotas de la pileta y un vecino
+  lejano). Chromium (dev y web): **97/97** (la batería completa ya tarda ~10,5 min).
+
 ## Los vecinos usan los juegos; todos los movimientos para competir (01-10-2026)
 
 - Pedido: que los vecinos usen los juegos y la plaza (columpiarse, sentarse en las bancas, el balancín de a dos…), y

@@ -56,7 +56,13 @@ function columpio(asiento, pv, angulo, onFrame) {
 }
 
 function park(ctx) {
-  const { world, addObs, addZone, onFrame } = ctx, cx = -20, cz = -20;
+  const { world, addObs, addZone, addSenderos, onFrame } = ctx, cx = -20, cz = -20;
+  // los senderos: las dos calles de tierra en cruz (de vereda a vereda) y un círculo alrededor de la pileta (a 5,6 m
+  // del centro: afuera de la pileta y adentro de las bancas). Las entradas están en la vereda (a 15,5 m del centro).
+  const nodos = {}, aristas = [], R = 5.6, V = 15.5;
+  for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; nodos['c' + i] = [cx + Math.cos(a) * R, cz + Math.sin(a) * R]; aristas.push(['c' + i, 'c' + ((i + 1) % 8)]); }
+  [[0, 'e'], [2, 's'], [4, 'o'], [6, 'n']].forEach(([i, id]) => { const a = i * Math.PI / 4; nodos[id] = [cx + Math.cos(a) * V, cz + Math.sin(a) * V]; aristas.push([id, 'c' + i]); });
+  addSenderos({ area: [-34.5, -5.5, -34.5, -5.5], nodos, aristas, entradas: ['e', 's', 'o', 'n'] });
   world.add(mesh(cyl(7.2, 7.2, 0.04, 40), mat('#F3E4C6', { roughness: 1 }), cx, 0.025, cz, false, true));
   world.add(mesh(box(29, 0.035, 2.6), mat('#F3E4C6', { roughness: 1 }), cx, 0.022, cz, false, true));
   world.add(mesh(box(2.6, 0.035, 29), mat('#F3E4C6', { roughness: 1 }), cx, 0.023, cz, false, true));

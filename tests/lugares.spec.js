@@ -394,6 +394,21 @@ test('los vecinos usan los juegos: columpio, banca y el sube y baja de a dos; y 
   await expect.poll(async () => { const b = (await estado())[1]; return !b || b.fase === 'volver'; }, { timeout: 30_000, intervals: [200] }).toBe(true);
 });
 
+test('un vecino cruza el parque por los senderos (pasa junto a la pileta) y sale a la vereda', async ({ page, jugar }) => {
+  await jugar();
+  await page.evaluate(() => { const n = window.__juego.npcs[0]; n.pos.set(-4.5, 0, -4.5); n.target.set(-4.5, 0, -4.5); });
+  expect(await page.evaluate(() => window.__juego.vecinosJuegos.pasear(0))).toBe(true);
+  let cerca = Infinity, salio = false;
+  for (let i = 0; i < 360 && !salio; i++) {   // (hasta ~55 m a ~1 m/s, más una parada a mirar)
+    await page.waitForTimeout(250);
+    const [x, z, uso] = await page.evaluate(() => { const n = window.__juego.npcs[0]; return [n.pos.x, n.pos.z, !!n.uso]; });
+    cerca = Math.min(cerca, Math.hypot(x + 20, z + 20));   // el centro de la pileta: (-20; -20)
+    salio = !uso;
+  }
+  expect(cerca).toBeLessThan(7);   // por el círculo de la pileta (a 5,6 m), no por el borde
+  expect(salio).toBe(true);
+});
+
 test('competir: el selector trae todos los movimientos del menú Acción', async ({ page, jugar }) => {
   await jugar();
   await ir(page, ...COMPETIR);

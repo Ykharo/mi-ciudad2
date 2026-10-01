@@ -1,3 +1,5 @@
+// (Adentro de un lugar con senderos —el parque, la plaza: world/senderos.js— caminan por ellos: entran por la entrada
+// más cercana. Además, a veces sólo lo cruzan de paseo: `pasear`.)
 // Los vecinos usan los juegos y las bancas: al llegar a una esquina, a veces (PROB) eligen uno libre que quede cerca
 // (a menos de LEJOS metros), caminan hasta él, lo usan un rato y vuelven a la vereda. El sube y baja es de a dos: quien
 // lo elige invita al vecino libre más cercano. Los juegos salen de las zonas que ponen los lugares (world/zones.js):
@@ -6,6 +8,8 @@
 // y tirándose por el tobogán. Nadie se sienta encima de otro: el ancla (o la banca) queda reservada desde que lo elige.
 import { lerpAngle, pick } from '../core/math.js';
 import { collide } from '../world/physics.js';
+import { LINES, WALK } from '../world/layout.js';
+import { camino, cercano, ruta, todasLasRedes } from '../world/senderos.js';
 import { zones } from '../world/zones.js';
 import { avatarDo, avatarStop } from '../characters/animator.js';
 import { npcs, onEsquina } from './npcs.js';
@@ -45,41 +49,89 @@ function soltarReserva(u, r) {
   else u.juego.reservado = null;
 }
 
-// Mandar a un vecino a un juego: camina hasta la zona (rodeando lo que haya), lo usa y vuelve a su esquina (n.target)
-function mandar(n, u) {
-  const r = reservar(u, n), Z = u.zona, vuelta = n.target.clone();
-  let fase = 'ir', mejor = Infinity, quieto = 0, t = 0, dur = 0, uso = null;
-  const caminar = (dt, x, z, lejosOK) => {
-    const dx = x - n.pos.x, dz = z - n.pos.z, d = Math.hypot(dx, dz);
-    if (d < lejosOK) return 'llego';
+// Caminar por una ruta (lista de puntos [x, z], world/senderos.js): de punto en punto, rodeando lo que haya
+// (collide). Si se atasca 2,5 s sin acercarse al punto, salta al siguiente (o, en el último, se da por llegado si está
+// cerca: `cerca`; si no, 'atascado'). `caminar(dt)` → 'anda', 'llego' o 'atascado'.
+function recorrido(n, puntos, cerca = 0.3) {
+  let i = 0, mejor = Infinity, quieto = 0;
+  return function caminar(dt) {
+    const [x, z] = puntos[i], ultimo = i === puntos.length - 1, d = Math.hypot(x - n.pos.x, z - n.pos.z);
+    if (d < (ultimo ? cerca : 0.6)) { if (ultimo) return 'llego'; i++; mejor = Infinity; quieto = 0; return 'anda'; }
     const st = Math.min(d, n.speed * dt);
-    n.pos.x += dx / d * st; n.pos.z += dz / d * st; collide(n.pos, 0.4);
-    n.facing = lerpAngle(n.facing, Math.atan2(dx, dz), 1 - Math.exp(-dt * 10));
-    // atascado (algo en el camino): si no se acerca en 2,5 s, se rinde (o, si está cerca, cuenta como llegar)
-    if (d < mejor - 0.05) { mejor = d; quieto = 0; } else if ((quieto += dt) > 2.5) return d < lejosOK + 2.5 ? 'llego' : 'atascado';
+    n.pos.x += (x - n.pos.x) / d * st; n.pos.z += (z - n.pos.z) / d * st; collide(n.pos, 0.4);
+    n.facing = lerpAngle(n.facing, Math.atan2(x - n.pos.x, z - n.pos.z), 1 - Math.exp(-dt * 10));
+    if (d < mejor - 0.05) { mejor = d; quieto = 0; } else if ((quieto += dt) > 2.5) {
+      if (!ultimo) { i++; mejor = Infinity; quieto = 0; return 'anda'; }
+      return d < cerca + 2.5 ? 'llego' : 'atascado';
+    }
     return 'anda';
   };
+}
+const rutaA = (n, x, z) => ruta(n.pos.x, n.pos.z, x, z);
+
+// Mandar a un vecino a un juego: camina hasta la zona (por los senderos, si el juego está en un lugar con senderos),
+// lo usa y vuelve a su esquina (n.target), también por los senderos
+function mandar(n, u) {
+  const r = reservar(u, n), Z = u.zona, vuelta = n.target.clone();
+  let fase = 'ir', t = 0, dur = 0, uso = null, caminar = recorrido(n, rutaA(n, Z.x, Z.z), Math.max(0.6, Z.r * 0.7));
+  const volver = () => { fase = 'volver'; caminar = recorrido(n, rutaA(n, vuelta.x, vuelta.z), 0.2); };
   n.uso = {
     tipo: u.tipo, juego: u.juego, ancla: r.ancla, get fase() { return fase; },
     update(dt) {
       if (fase === 'ir') {
-        const e = caminar(dt, Z.x, Z.z, Math.max(0.6, Z.r * 0.7));
-        if (e === 'atascado') { soltarReserva(u, r); fase = 'volver'; mejor = Infinity; quieto = 0; return { anda: n.speed }; }
+        const e = caminar(dt);
+        if (e === 'atascado') { soltarReserva(u, r); volver(); return { anda: n.speed }; }
         if (e === 'llego') { uso = empezar(n, u, r); dur = uso.dur; t = 0; fase = 'usar'; }
         else return { anda: n.speed };
       }
       if (fase === 'usar') {
         t += dt;
         const s = uso.mover(dt, t, dur);
-        if (s === 'fin' || (dur && t >= dur)) { uso.terminar(); fase = 'volver'; mejor = Infinity; quieto = 0; return {}; }
+        if (s === 'fin' || (dur && t >= dur)) { uso.terminar(); volver(); return {}; }
         return { raiz: true, sentado: true, cara: 'feliz' };
       }
       // volver a la vereda
-      const e = caminar(dt, vuelta.x, vuelta.z, 0.2);
-      if (e !== 'anda') { n.pos.x = vuelta.x; n.pos.z = vuelta.z; n.uso = null; n.wait = 0.4; }
+      if (caminar(dt) !== 'anda') { n.pos.x = vuelta.x; n.pos.z = vuelta.z; n.uso = null; n.wait = 0.4; }
       return { anda: n.speed };
     },
   };
+}
+
+// Un paseo: entra a un lugar con senderos por una entrada, lo cruza (a veces se detiene un rato a mirar a mitad de
+// camino) y sale por otra; después sigue por la vereda hacia la esquina más cercana.
+const ESQUINAS = [];
+for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) for (const sx of [-1, 1]) for (const sz of [-1, 1]) ESQUINAS.push({ i, j, sx, sz, x: LINES[i] + sx * WALK, z: LINES[j] + sz * WALK });
+function pasear(n, red, a, b) {
+  const ids = camino(red, a, b), puntos = [[n.pos.x, n.pos.z], ...ids.map(id => red.nodos[id])];
+  // dónde se detiene a mirar (un punto adentro: no la entrada ni la salida), si se detiene
+  const alto = puntos.length >= 4 && Math.random() < 0.6 ? 2 + Math.floor(Math.random() * (puntos.length - 3)) : -1;
+  let i = 0, espera = 0, caminar = recorrido(n, puntos.slice(1, alto > 0 ? alto + 1 : undefined), 0.4);
+  n.uso = {
+    tipo: 'paseo', get fase() { return espera > 0 ? 'mirar' : 'pasear'; },
+    update(dt) {
+      if (espera > 0) { espera -= dt; return { cara: 'feliz' }; }
+      const e = caminar(dt);
+      if (e === 'anda') return { anda: n.speed };
+      if (alto > 0 && i === 0) { i = 1; espera = 2 + Math.random() * 3; caminar = recorrido(n, puntos.slice(alto + 1), 0.4); return {}; }
+      // salió: sigue por la vereda hacia la esquina más cercana
+      let c = ESQUINAS[0], d0 = Infinity;
+      for (const q of ESQUINAS) { const d = Math.hypot(q.x - n.pos.x, q.z - n.pos.z); if (d > 1 && d < d0) { d0 = d; c = q; } }
+      Object.assign(n, { i: c.i, j: c.j, sx: c.sx, sz: c.sz }); n.target.set(c.x, 0, c.z);
+      n.uso = null;
+      return { anda: n.speed };
+    },
+  };
+}
+// ¿hay una entrada de un lugar con senderos a menos de 20 m (en la vereda)? va hacia ella y cruza hasta otra
+function quierePasear(n) {
+  for (const red of todasLasRedes()) {
+    const a = cercano(red, n.pos.x, n.pos.z, red.entradas), [x, z] = red.nodos[a];
+    if (Math.hypot(x - n.pos.x, z - n.pos.z) > 20 || red.entradas.length < 2) continue;
+    const b = pick(red.entradas.filter(e => e !== a));
+    pasear(n, red, a, b);
+    return true;
+  }
+  return false;
 }
 
 // usarlo: cada tipo pone al vecino en su lugar cada cuadro; `terminar` lo baja junto al juego
@@ -154,8 +206,11 @@ function invitar(n, u) {
   if (otro) mandar(otro, u);
 }
 
-// al llegar a una esquina: a veces se va a un juego cercano (true si se fue)
+// al llegar a una esquina: a veces cruza un parque o plaza por los senderos (PROB_PASEO), a veces se va a un juego
+// cercano (PROB) (true si se fue)
+const PROB_PASEO = 0.3;
 onEsquina(n => {
+  if (Math.random() < PROB_PASEO && quierePasear(n)) return true;
   if (Math.random() >= PROB) return false;
   const cerca = todos().filter(u => u.libre() && Math.hypot(u.zona.x - n.pos.x, u.zona.z - n.pos.z) < LEJOS);
   if (!cerca.length) return false;
@@ -173,7 +228,9 @@ const vecinosJuegos = {
     mandar(n, cand[0]); invitar(n, cand[0]);
     return true;
   },
-  estado: () => npcs.map(n => (n.uso ? { tipo: n.uso.tipo, fase: n.uso.fase, y: n.ch.root.position.y } : null)),
+  estado: () => npcs.map(n => (n.uso ? { tipo: n.uso.tipo, fase: n.uso.fase, y: n.ch.root.position.y, x: n.pos.x, z: n.pos.z } : null)),
+  // mandarlo a cruzar el lugar con senderos más cercano, de la entrada más cercana a otra
+  pasear(i) { const n = npcs[i]; return !!n && !n.uso && quierePasear(n); },
 };
 
 export { vecinosJuegos };
