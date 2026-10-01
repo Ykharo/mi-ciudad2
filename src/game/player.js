@@ -69,8 +69,10 @@ function updatePlayer(dt) {
 // sentarse en una banca del parque (la animación "sit" es en el suelo: la banca la levanta)
 function sitOnBench(b) {
   if (state.mode !== 'play' || player.air) return;
+  if (b.quien) { emit('aviso', '¡Está ocupado! Espera tu turno'); emit('sonido', 'bonk'); return; }   // (un vecino: game/vecinosJuegos.js)
+  b.quien = 'jugadora';
   const k = player.ch.k, fx = Math.sin(b.ry), fz = Math.cos(b.ry);
-  player.seat = { x: b.x + fx * (0.05 + 0.10 * k), y: 0.72 - 0.158 * k, z: b.z + fz * (0.05 + 0.10 * k), facing: b.ry };
+  player.seat = { x: b.x + fx * (0.05 + 0.10 * k), y: 0.72 - 0.158 * k, z: b.z + fz * (0.05 + 0.10 * k), facing: b.ry, salir() { b.quien = null; } };
   player.vel.set(0, 0, 0); player.pos.set(b.x + fx * 1.1, 0, b.z + fz * 1.1); player.facing = b.ry;
   avatarDo(player.ch, 'sit', { start: 0.95, ts: 1.2 });
   emit('zona', null); state.currentZone = null; emit('sonido', 'pop');

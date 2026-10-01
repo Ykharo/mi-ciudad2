@@ -5,6 +5,29 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Los vecinos usan los juegos; todos los movimientos para competir (01-10-2026)
+
+- Pedido: que los vecinos usen los juegos y la plaza (columpiarse, sentarse en las bancas, el balancín de a dos…), y
+  todos los movimientos en el selector de la competencia.
+- `game/vecinosJuegos.js`: al llegar a una esquina, con probabilidad 0,3 un vecino elige un juego o banca libre a
+  menos de 26 m (de las zonas `bench` y `juego`, salvo `privado`: las graderías), camina hasta él (con `collide`; si se
+  atasca 2,5 s, se rinde o, si está cerca, cuenta como llegar), lo usa (banca 10–20 s, carrusel/sube y baja 10–18 s,
+  columpio 14–22 s —se impulsa solo hacia donde va el columpio y deja de hacerlo los últimos 4 s; a veces de pie—, cama
+  elástica 6–10 s, tobogán hasta abajo —a veces de pie—) y vuelve a su esquina. El sube y baja (`pareja: true` en la
+  plaza) invita al vecino libre más cercano (60 m) al otro asiento.
+  - `npcs.js` sólo tiene un gancho (`onEsquina`) y `n.uso` (`update` → `{ anda, raiz, sentado, cara }`): así no hay
+    ciclo de imports (npcs → juegos → player → npcs). Sus mascotas los esperan sentadas.
+  - **Ocupación** (`game/juegos.js`): cada ancla anota `userData.quien`, la banca `bench.quien`, la cama y el tobogán
+    son de a uno (`juego.ocupado` pasó a ser un contador; `juego.reservado` mientras un vecino va). La jugadora elige el
+    ancla libre más cercana; si no hay: "¡Está ocupado! Espera tu turno". El vecino reserva desde que decide ir.
+  - `game/juegos.js` exporta lo que comparten: `sentarEnAncla`, `pararEnAncla`, `anclaLibre`, `ocupar`, `liberar`,
+    `mirada`, `secuenciaTobogan` (la secuencia del tobogán sin la jugadora: `mover(dt)` → 'subiendo', 'tirandose', 'fin').
+- Selector de la competencia: todos los movimientos del menú Acción menos "Quedarse quieta" (17).
+- Ganchos: `window.__juego.vecinosJuegos` (`mandar(i, tipo, pareja)`, `estado()`). Pruebas nuevas: vecinos en el
+  columpio, la banca y el sube y baja de a dos (y la jugadora usa el otro columpio); el selector completo. Capturas
+  regeneradas (los vecinos toman otras decisiones en las esquinas). Chromium (dev y web): **93/93** (de nuevo el error
+  de Chromium "Unable to capture screenshot" en una corrida larga; repetida, bien).
+
 ## Puntos en la pantalla, carteles del jurado y Auras de los vecinos (01-10-2026)
 
 - Pedido: en la pantalla, el puntaje acumulado de cada uno con números de calculadora, sólo en el extremo de arriba de

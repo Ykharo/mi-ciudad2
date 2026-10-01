@@ -8,8 +8,10 @@
 //   { tipo: 'columpio', asientos: [ancla…] }                columpiarse impulsándose con la palanca (ver columpio())
 // Opcional: `vista`, el giro de la cámara al subirse (cam.yaw: 0 = la cámara al lado +z de la jugadora), y
 // `alSentarse()`, que se llama al subirse (la pone otro módulo de game/, ej. game/aura.js en las graderías).
-// `juego.ocupado` lo pone este módulo (el ancla del asiento que se usa, o true; false al bajarse): el lugar lo lee
-// para moverse distinto mientras alguien juega. Las anclas se crean con `ancla()` de world/place.js.
+// `juego.ocupado`: cuántos lo están usando (la jugadora y los vecinos: game/vecinosJuegos.js); el lugar lo lee para
+// moverse distinto mientras alguien juega. Cada ancla anota quién está en ella (`userData.quien`): nadie se sienta
+// encima de otro. La cama elástica y el tobogán son de a uno. `juego.privado`: sólo la jugadora (las graderías).
+// Las anclas se crean con `ancla()` de world/place.js.
 // Para bajarse basta moverse (el tobogán no: termina solo; del columpio se salta).
 import { THREE } from '../engine/three.js';
 import { state } from '../core/state.js';
@@ -21,14 +23,29 @@ import { cam, player } from './actors.js';
 import { standUp } from './player.js';
 
 const _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _o = new THREE.Vector3(), _f = new THREE.Vector3();
-// la pose final de "sit" deja las caderas 0,158 m arriba y 0,10 m atrás de la raíz (por la escala del personaje)
-function sentarEn(ch, ancla, alto = 0) {
+// la pose final de "sit" deja las caderas 0,158 m arriba y 0,10 m atrás de la raíz (por la escala del personaje);
+// devuelve dónde está el ancla en el mundo
+function sentarEnAncla(ch, ancla, alto = 0) {
   ancla.getWorldPosition(_p); ancla.getWorldQuaternion(_q);
   _o.set(0, -0.158 * ch.k + alto, 0.10 * ch.k).applyQuaternion(_q);
   ch.root.position.copy(_p).add(_o); ch.root.quaternion.copy(_q);
-  player.pos.x = _p.x; player.pos.z = _p.z;   // la cámara y las mascotas la siguen
+  return _p;
+}
+function sentarEn(ch, ancla, alto = 0) {
+  const p = sentarEnAncla(ch, ancla, alto);
+  player.pos.x = p.x; player.pos.z = p.z;   // la cámara y las mascotas la siguen
 }
 function mirada(ancla) { ancla.getWorldQuaternion(_q); _f.set(0, 0, 1).applyQuaternion(_q); return Math.atan2(_f.x, _f.z); }
+
+// ocupación: el ancla libre más cercana a (x, z); ocupar / liberar un juego (y su ancla)
+function anclaLibre(lista, x, z) {
+  let ancla = null, mejor = Infinity;
+  for (const a of lista) { if (a.userData.quien) continue; a.getWorldPosition(_p); const d = Math.hypot(_p.x - x, _p.z - z); if (d < mejor) { mejor = d; ancla = a; } }
+  return ancla;
+}
+function ocupar(juego, ancla, quien) { juego.ocupado = (juego.ocupado || 0) + 1; if (ancla) ancla.userData.quien = quien; }
+function liberar(juego, ancla) { juego.ocupado = Math.max(0, (juego.ocupado || 0) - 1); if (ancla) ancla.userData.quien = null; }
+const ocupado = () => { emit('aviso', '¡Está ocupado! Espera tu turno'); emit('sonido', 'bonk'); };
 // al bajarse: parada junto al juego (collide la saca de su caja)
 function bajarEn(x, z, facing) {
   player.pos.set(x, 0, z); player.vel.set(0, 0, 0); player.y = 0; player.air = false;
@@ -36,11 +53,14 @@ function bajarEn(x, z, facing) {
   player.ch.root.rotation.set(0, facing, 0);
 }
 function empezar(juego, seat, ancla) {
-  juego.ocupado = ancla || true;
+  ocupar(juego, ancla, 'jugadora');
   player.vel.set(0, 0, 0);
   if (juego.vista !== undefined) cam.yaw = juego.vista;   // desde dónde se ve mejor (la cámara se acomoda sola)
+  let libre = false;
+  const soltar = () => { if (!libre) { libre = true; liberar(juego, ancla); } };
   player.seat = Object.assign(seat, {
-    salir() { juego.ocupado = false; if (seat.alSalir) seat.alSalir(); },
+    soltar,
+    salir() { soltar(); if (seat.alSalir) seat.alSalir(); },
   });
   emit('zona', null); state.currentZone = null; emit('sonido', 'pop');
   if (juego.alSentarse) juego.alSentarse();   // ej. las graderías del Escenario del Aura empiezan la competencia
@@ -51,8 +71,8 @@ function empezar(juego, seat, ancla) {
 function asiento(juego, opcion) {
   const ch = player.ch, A = juego.asientos;
   const lista = Array.isArray(A) ? A : A[opcion] || Object.values(A)[0];
-  let ancla = null, mejor = Infinity;
-  for (const a of lista) { a.getWorldPosition(_p); const d = Math.hypot(_p.x - player.pos.x, _p.z - player.pos.z); if (d < mejor) { mejor = d; ancla = a; } }
+  const ancla = anclaLibre(lista, player.pos.x, player.pos.z);
+  if (!ancla) return ocupado();
   avatarDo(ch, 'sit', { start: 0.95, ts: 1.2 });
   empezar(juego, {
     mascotas: ancla.userData.mascotas,   // si el asiento trae dónde se sientan sus mascotas (graderías: a su lado)
@@ -65,6 +85,7 @@ function asiento(juego, opcion) {
 
 const BOTE = 0.9, ALTURA = 1.2;   // segundos por bote y metros de alto
 function cama(juego) {
+  if (juego.ocupado) return ocupado();
   const ch = player.ch;
   let t = 0, bote = -1;
   empezar(juego, {
@@ -87,9 +108,11 @@ const ESCALERA = { ciclo: 0.8, peldano: 0.45, inicio: 0.49 - 0.18 * 1.4, ciclos:
 const PASO = 0.2, ARRIBA = 0.7, ESPERA = 0.35, BAJADA = 1.25;   // segundos: pisar el 1.er peldaño, pasar a la rampa…
 // De pie (opción 'de_pie'): arriba se para sobre la rampa (`juego.pieArriba`) y baja derecha hasta `pieAbajo`, con
 // "tobogan_de_pie".
-function tobogan(juego, opcion) {
-  const ch = player.ch, k = ch.k / 1.4;   // la animación está hecha para la escala de Nina
-  const subida = ESCALERA.ciclo * ESCALERA.ciclos, fin = subida + ARRIBA, dePie = opcion === 'de_pie';
+// la secuencia del tobogán para cualquier personaje (la jugadora o un vecino): `mover(dt)` lo pone en su lugar y
+// devuelve 'subiendo', 'tirandose' (el momento en que se tira) o 'fin'
+function secuenciaTobogan(ch, juego, dePie) {
+  const k = ch.k / 1.4;   // la animación está hecha para la escala de Nina
+  const subida = ESCALERA.ciclo * ESCALERA.ciclos, fin = subida + ARRIBA;
   let t = 0, sentada = false;
   avatarDo(ch, 'subir_escalera', { loop: true, stopOnMove: false, instant: false });
   const arriba = new THREE.Vector3(), abajo = new THREE.Vector3(), p0 = new THREE.Vector3(), p1 = new THREE.Vector3();
@@ -97,28 +120,42 @@ function tobogan(juego, opcion) {
   (dePie ? juego.pieArriba : juego.arriba).getWorldPosition(arriba); (dePie ? juego.pieAbajo : juego.abajo).getWorldPosition(abajo);
   juego.escalera.getWorldPosition(p0); juego.escalera.getWorldQuaternion(q0);
   const alto = s => (ESCALERA.inicio * Math.min(1, s / PASO) + ESCALERA.peldano * s / ESCALERA.ciclo) * k;
-  empezar(juego, {
-    fijo: true,
+  return {
     mover(dt) {
       t += dt;
       if (t < subida) {   // trepando
         ch.root.position.copy(p0).y += alto(t); ch.root.quaternion.copy(q0);
-      } else if (t < fin) {   // de la escalera a sentarse arriba de la rampa, con un saltito
+        return 'subiendo';
+      }
+      if (t < fin) {   // de la escalera a sentarse arriba de la rampa, con un saltito
         if (!sentada) {
           sentada = true;
           avatarDo(ch, dePie ? 'tobogan_de_pie' : 'tobogan', { loop: true, stopOnMove: false });
-          if (dePie) { p1.copy(arriba); juego.pieArriba.getWorldQuaternion(q1); } else { sentarEn(ch, juego.arriba); p1.copy(ch.root.position); q1.copy(ch.root.quaternion); }
+          if (dePie) { p1.copy(arriba); juego.pieArriba.getWorldQuaternion(q1); } else { sentarEnAncla(ch, juego.arriba); p1.copy(ch.root.position); q1.copy(ch.root.quaternion); }
         }
         const u = (t - subida) / ARRIBA, e = u * u * (3 - 2 * u);
         ch.root.position.copy(p0).setY(p0.y + alto(subida)).lerp(p1, e).y += 0.3 * Math.sin(Math.PI * u);
         ch.root.quaternion.copy(q0).slerp(q1, e);
-      } else {   // espera un poquito y se tira
-        const s = Math.min(1, Math.max(0, t - fin - ESPERA) / BAJADA), e = s * s;   // acelera al bajar
-        if (dePie) { ch.root.position.copy(arriba).lerp(abajo, e); ch.root.quaternion.copy(q1); }
-        else { sentarEn(ch, juego.arriba); ch.root.position.add(_p.copy(abajo).sub(arriba).multiplyScalar(e)); }   // con la inclinación de la rampa
-        if (t >= fin + ESPERA && t - dt < fin + ESPERA) emit('sonido', 'jump');
-        if (s >= 1) { avatarStop(ch); player.seat.salir(); player.seat = null; player.happy = 1.5; emit('sonido', 'adopt'); return; }
+        return 'subiendo';
       }
+      // espera un poquito y se tira
+      const s = Math.min(1, Math.max(0, t - fin - ESPERA) / BAJADA), e = s * s;   // acelera al bajar
+      if (dePie) { ch.root.position.copy(arriba).lerp(abajo, e); ch.root.quaternion.copy(q1); }
+      else { sentarEnAncla(ch, juego.arriba); ch.root.position.add(_p.copy(abajo).sub(arriba).multiplyScalar(e)); }   // con la inclinación de la rampa
+      if (s >= 1) { avatarStop(ch); return 'fin'; }
+      return t >= fin + ESPERA && t - dt < fin + ESPERA ? 'tirandose' : 'subiendo';
+    },
+  };
+}
+function tobogan(juego, opcion) {
+  if (juego.ocupado) return ocupado();
+  const ch = player.ch, seq = secuenciaTobogan(ch, juego, opcion === 'de_pie');
+  empezar(juego, {
+    fijo: true,
+    mover(dt) {
+      const r = seq.mover(dt);
+      if (r === 'tirandose') emit('sonido', 'jump');
+      if (r === 'fin') { player.seat.salir(); player.seat = null; player.happy = 1.5; emit('sonido', 'adopt'); return; }
       player.pos.x = ch.root.position.x; player.pos.z = ch.root.position.z;
     },
     alSalir() { juego.salida.getWorldPosition(_p); bajarEn(_p.x, _p.z, mirada(juego.salida)); },
@@ -134,15 +171,16 @@ function tobogan(juego, opcion) {
 // En el ancla, el lugar pone `userData.angulo` y `userData.vel` (rad y rad/s, + hacia adelante) y `userData.largo`;
 // este módulo pone `userData.impulso` (−1…1) y `userData.ocupado`.
 const SOBRE_ASIENTO = 0.05;   // el ancla del columpio (las caderas, sentada) está 5 cm sobre el asiento
-function pararEn(ch, ancla) {
+function pararEnAncla(ch, ancla) {
   ancla.getWorldPosition(_p); ancla.getWorldQuaternion(_q);
   ch.root.position.copy(_p).add(_o.set(0, -SOBRE_ASIENTO, 0).applyQuaternion(_q)); ch.root.quaternion.copy(_q);
-  player.pos.x = _p.x; player.pos.z = _p.z;
+  return _p;
 }
+function pararEn(ch, ancla) { const p = pararEnAncla(ch, ancla); player.pos.x = p.x; player.pos.z = p.z; }
 function columpio(juego, opcion) {
   const ch = player.ch, dePie = opcion === 'de_pie', anim = dePie ? 'columpio_de_pie' : 'columpio', poner = dePie ? pararEn : sentarEn;
-  let ancla = null, mejor = Infinity;
-  for (const a of juego.asientos) { a.getWorldPosition(_p); const d = Math.hypot(_p.x - player.pos.x, _p.z - player.pos.z); if (d < mejor) { mejor = d; ancla = a; } }
+  const ancla = anclaLibre(juego.asientos, player.pos.x, player.pos.z);
+  if (!ancla) return ocupado();
   avatarDo(ch, anim, { hold: true, stopOnMove: false });
   let pose = 0.5;
   const S = ancla.userData;
@@ -163,7 +201,7 @@ function columpio(juego, opcion) {
       const v = (S.vel || 0) * (S.largo || 2.2), a = S.angulo || 0, f = mirada(ancla);
       ancla.getWorldPosition(_p);
       const y = Math.max(0, ch.root.position.y);
-      player.seat = null; juego.ocupado = false; S.impulso = 0; S.ocupado = false;
+      player.seat.soltar(); player.seat = null; S.impulso = 0; S.ocupado = false;
       player.pos.set(_p.x, 0, _p.z); player.facing = f; player.y = y;
       const adelante = Math.max(-7, Math.min(7, v * Math.cos(a)));
       player.vel.set(Math.sin(f) * adelante, 0, Math.cos(f) * adelante);
@@ -179,6 +217,7 @@ function columpio(juego, opcion) {
 }
 
 const TIPOS = { asiento, cama, tobogan, columpio };
+export { BOTE, ALTURA, anclaLibre, liberar, mirada, ocupar, pararEnAncla, secuenciaTobogan, sentarEnAncla };
 // `opcion`: cuál de las `opciones` de la zona eligió (cada una tiene su botón; ej. 'sentada' o 'de_pie')
 onZoneAction('juego', (z, opcion) => {
   if (state.mode !== 'play' || player.air || player.seat) return;

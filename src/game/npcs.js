@@ -51,8 +51,20 @@ function npcSay(n, text) {
   n.bubble = labelSprite(text, { bubble: true, scale: 0.0062 }); n.bubble.position.y = 2.35 * n.ch.k / NINA_SCALE + 0.55; n.ch.root.add(n.bubble);
   if (!avatarBusy(n.ch, ['wave'])) avatarDo(n.ch, 'wave', { start: 0.1 });
 }
+// Los vecinos también usan los juegos y las bancas (game/vecinosJuegos.js): al llegar a una esquina pueden decidir ir
+// a uno (el gancho `alEsquina`); mientras tanto `n.uso` los maneja: `update(dt)` los mueve y dice
+// { anda: velocidad, raiz: true si ya los puso en su lugar, sentado, cara }.
+let alEsquina = null;
+function onEsquina(fn) { alEsquina = fn; }
 function updateNPCs(dt, t) {
   for (const n of npcs) {
+    if (n.uso) {
+      const r = n.uso.update(dt, t) || {};
+      if (!r.raiz) { n.ch.root.position.set(n.pos.x, 0, n.pos.z); n.ch.root.rotation.set(0, n.facing, 0); }
+      updateAvatar(n.ch, dt, r.anda || 0, r.cara || null);
+      if (n.pets.length) followChain(n.pets, n.pos, dt, t, 1.7, !!r.sentado);
+      continue;
+    }
     const px = player.pos.x - n.pos.x, pz = player.pos.z - n.pos.z, pd = Math.hypot(px, pz);
     n.cool -= dt;
     if (pd < 3.4 && n.cool <= 0 && state.mode === 'play') {
@@ -67,7 +79,10 @@ function updateNPCs(dt, t) {
     } else if (n.wait > 0) n.wait -= dt;
     else {
       const dx = n.target.x - n.pos.x, dz = n.target.z - n.pos.z, d = Math.hypot(dx, dz);
-      if (d < 0.15) { if (Math.random() < 0.35) n.wait = 1 + Math.random() * 2.5; npcTarget(n); }
+      if (d < 0.15) {
+        if (alEsquina && alEsquina(n)) continue;   // se fue a un juego
+        if (Math.random() < 0.35) n.wait = 1 + Math.random() * 2.5; npcTarget(n);
+      }
       else {
         const st = Math.min(d, n.speed * dt), nx = n.pos.x + dx / d * st, nz = n.pos.z + dz / d * st;
         if (cars.some(c => { const dn = carDist(c, nx, nz); return dn < 0.7 && dn < carDist(c, n.pos.x, n.pos.z); })) { n.blocked = (n.blocked || 0) + dt; if (n.blocked > 1.2) { n.blocked = 0; npcTarget(n); } }
@@ -75,12 +90,12 @@ function updateNPCs(dt, t) {
         n.facing = lerpAngle(n.facing, Math.atan2(dx, dz), 1 - Math.exp(-dt * 10));
       }
     }
-    n.ch.root.position.set(n.pos.x, 0, n.pos.z); n.ch.root.rotation.y = n.facing;
+    n.ch.root.position.set(n.pos.x, 0, n.pos.z); n.ch.root.rotation.set(0, n.facing, 0);
     updateAvatar(n.ch, dt, moving ? n.speed : 0, n.greet > 0 ? 'feliz' : null);
     if (n.pets.length) followChain(n.pets, n.pos, dt, t);
   }
 }
 // Nina saluda: los vecinos cercanos contestan
-function greetAround() { npcs.forEach(n => { if (n.pos.distanceTo(player.pos) < 9) { n.greet = 2.2; n.cool = 8; npcSay(n, '¡Hola!'); } }); }
+function greetAround() { npcs.forEach(n => { if (!n.uso && n.pos.distanceTo(player.pos) < 9) { n.greet = 2.2; n.cool = 8; npcSay(n, '¡Hola!'); } }); }
 
-export { greetAround, lookVecinos, npcSay, npcs, spawnNPCs, updateNPCs };
+export { greetAround, lookVecinos, npcSay, npcs, onEsquina, spawnNPCs, updateNPCs };

@@ -420,7 +420,8 @@ function abrirEleccion() {
   standUp(); player.vel.set(0, 0, 0);
   enterMenu('aura');
   cine.toma = 'general'; cine.objetivo = null; cam.cine = cine;
-  emit('aura', { que: 'elegir', bailes: BAILES.map(id => ACTIONS.find(a => a.id === id)) });
+  // todos los movimientos del menú Acción (menos "Quedarse quieta")
+  emit('aura', { que: 'elegir', bailes: ACTIONS.filter(a => a.id !== 'stop') });
 }
 function cancelarCompetir() { cam.cine = null; leaveMenu(); }
 

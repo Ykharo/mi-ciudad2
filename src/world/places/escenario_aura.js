@@ -58,7 +58,7 @@ ESCENARIO.local = local;   // (para que game/aura.js ubique sus cámaras)
 ESCENARIO.medidor = null;
 // el juego de las graderías (sentarse a mirar): se crea aquí para que game/aura.js le ponga `alSentarse` antes de que
 // se arme la ciudad; build() le agrega los asientos y la vista
-ESCENARIO.gradas = { tipo: 'asiento', asientos: {} };
+ESCENARIO.gradas = { tipo: 'asiento', asientos: {}, privado: true };   // (privado: los vecinos no lo usan)
 
 function escenario({ world, addObsRot, addZone, onFrame }) {
   const g = new THREE.Group(); g.position.set(ESCENARIO.x, 0, ESCENARIO.z); g.rotation.y = ESCENARIO.giro;

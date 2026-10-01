@@ -73,7 +73,7 @@ function subeBaja({ world, addObs, addZone, onFrame }, x, z) {
     g.add(mesh(cyl(0.04, 0.04, 0.5, 6), mat('#3C4670'), s * 1.65, 0.3, 0));
     const asa = mesh(cyl(0.04, 0.04, 0.5, 6), mat('#3C4670'), s * 1.65, 0.55, 0); asa.rotation.x = Math.PI / 2; g.add(asa);
   });
-  const juego = { tipo: 'asiento', asientos };
+  const juego = { tipo: 'asiento', asientos, pareja: true };   // (pareja: los vecinos lo usan de a dos)
   addZone({ id: 'juego', x, z, r: 2.0, label: '⚖️ Subirse al sube y baja', juego });
   // con alguien arriba sube y baja más
   let amp = 0.2;

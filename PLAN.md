@@ -64,7 +64,7 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
 - Menú Acción con 18 opciones: separar en "Acciones" y "Bailes" si molesta.
 - Cartel: que la cámara se ajuste al mirarlo, o abrir la imagen en grande.
 - Etapa 7 del plan: altura de sentarse medida del esqueleto (quitar el 0,158 fijo); caras alternativas.
-- Juegos: que los vecinos también los usen; el arenero (sentarse a jugar con la pala).
+- Juegos: el arenero (sentarse a jugar con la pala). (Los vecinos ya usan los juegos y las bancas.)
 
 **Pendientes y avisos**
 - **WebKit no arranca en este PC** (Windows lo bloquea, código `0xC0E90002`): las pruebas de iPad no corren. Revisar

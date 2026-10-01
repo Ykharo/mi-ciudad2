@@ -44,6 +44,7 @@ import { crearPublico, lookPublico, updatePublico } from './game/aura.js';
 import { PERSONAJES } from './characters/catalog/personajes.js';
 import { updatePlayer } from './game/player.js';
 import './game/juegos.js';
+import './game/vecinosJuegos.js';
 import { lookVecinos, spawnNPCs, updateNPCs } from './game/npcs.js';
 import { followChain, waitAt } from './pets/follow.js';
 import { updateCamera } from './game/camera.js';

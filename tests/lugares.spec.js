@@ -367,6 +367,45 @@ test('competir: si hay una competencia en curso, queda anotada y le toca al term
   expect((await C(page)).en).toBe(false);
 });
 
+test('los vecinos usan los juegos: columpio, banca y el sube y baja de a dos; y la jugadora no se les sienta encima', async ({ page, jugar }) => {
+  await jugar();
+  const mandar = (i, x, z, tipo, pareja = false) => page.evaluate(([i, x, z, tipo, pareja]) => {
+    const n = window.__juego.npcs[i]; n.pos.set(x, 0, z); n.target.set(x, 0, z);
+    return window.__juego.vecinosJuegos.mandar(i, tipo, pareja);
+  }, [i, x, z, tipo, pareja]);
+  const estado = () => page.evaluate(() => window.__juego.vecinosJuegos.estado());
+  // dos vecinos cerca del sube y baja: uno lo elige e invita al otro
+  await page.evaluate(() => { const n = window.__juego.npcs[4]; n.pos.set(66, 0, 31); n.target.set(66, 0, 31); });
+  expect(await mandar(3, 68, 31, 'asiento', true)).toBe(true);
+  expect(await mandar(0, -12, -27, 'columpio')).toBe(true);
+  expect(await mandar(1, -10, -15, 'banca')).toBe(true);
+  await expect.poll(async () => {
+    const e = await estado();
+    return [e[0] && e[0].fase, e[1] && e[1].fase, e[3] && e[3].fase, e[4] && e[4].tipo + ':' + e[4].fase];
+  }, { timeout: 20_000 }).toEqual(['usar', 'usar', 'usar', 'asiento:usar']);
+  const e = await estado();
+  expect(e[0].y).toBeGreaterThan(0.4);   // en el columpio, sobre el suelo
+  // la jugadora intenta columpiarse: queda el otro columpio libre
+  await ir(page, -14.2, -28.4);
+  await accion(page, '🙌 Columpiarse');
+  await expect.poll(() => sentada(page)).toBe(true);
+  await page.keyboard.press('Space');
+  // al rato se levanta y vuelve a la vereda (después puede elegir otro juego: es al azar)
+  await expect.poll(async () => { const b = (await estado())[1]; return !b || b.fase === 'volver'; }, { timeout: 30_000, intervals: [200] }).toBe(true);
+});
+
+test('competir: el selector trae todos los movimientos del menú Acción', async ({ page, jugar }) => {
+  await jugar();
+  await ir(page, ...COMPETIR);
+  await accion(page, '😎 Competir');
+  const total = await page.evaluate(() => document.querySelectorAll('#actMenu .act, #actMenu button').length);
+  const opciones = await page.locator('#auraPanel .opt').count();
+  expect(opciones).toBeGreaterThanOrEqual(17);
+  if (total) expect(opciones).toBe(total - 1);   // todos menos "Quedarse quieta"
+  await expect(page.locator('#auraPanel [data-b="split"]')).toBeVisible();
+  await expect(page.locator('#auraPanel [data-b="stop"]')).toHaveCount(0);
+});
+
 test('quien lee el cartel da pistas de dónde es la competencia', async ({ page, jugar }) => {
   await jugar();
   await ir(page, 8.7, -5.5);
