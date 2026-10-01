@@ -83,9 +83,12 @@ function park(ctx) {
   [-1, 1].forEach(s => { const rail = mesh(rlo(0.1, 0.3, 4.0, 0.04), mat('#FF6FAE'), s * 0.6, 1.5, 1.0); rail.rotation.x = 0.62; sl.add(rail); });
   world.add(sl); addObs(cx - 10, cz + 3, 2.0, 1.0);
   // sube por la escalera (los peldaños en z −2,1, cada 0,45 m: el ancla queda 0,14 m antes, ver game/juegos.js), se
-  // sienta arriba de la rampa y baja hasta abajo (la rampa va de z −0,6 a 2,6 en el grupo, a 2,5–0,2 m)
-  addZone({ id: 'juego', x: cx - 13, z: cz + 3, r: 1.8, label: '🎢 Tirarse por el tobogán', juego: {
-    tipo: 'tobogan', vista: -1.0, escalera: ancla(sl, 0, 0, -2.24), arriba: ancla(sl, 0, 2.62, -0.7, 0, 0.4), abajo: ancla(sl, 0, 0.3, 2.7, 0, 0.4), salida: ancla(sl, 0, 0, 4.2) } });
+  // sienta arriba de la rampa y baja hasta abajo (la rampa va de z −0,6 a 2,6 en el grupo, a 2,5–0,2 m). De pie: los
+  // pies sobre la rampa (`pieArriba` → `pieAbajo`, sobre la superficie y sin inclinar)
+  const opciones = [{ id: 'sentada', label: '🎢 Tirarse por el tobogán' }, { id: 'de_pie', label: '🏄 Tirarse de pie' }];
+  addZone({ id: 'juego', x: cx - 13, z: cz + 3, r: 1.8, label: opciones[0].label, opciones, juego: {
+    tipo: 'tobogan', vista: -1.0, escalera: ancla(sl, 0, 0, -2.24), arriba: ancla(sl, 0, 2.62, -0.7, 0, 0.4), abajo: ancla(sl, 0, 0.3, 2.7, 0, 0.4),
+    pieArriba: ancla(sl, 0, 2.36, -0.3), pieAbajo: ancla(sl, 0, 0.3, 2.6), salida: ancla(sl, 0, 0, 4.2) } });
   // swings (gently moving)
   const sx = cx + 5.8, sz = cz - 10;
   const frameM = mat('#FF9B4A');
@@ -103,7 +106,8 @@ function park(ctx) {
     world.add(pv);
     columpio(asiento, pv, i ? -0.18 : 0.25, onFrame);
   });
-  addZone({ id: 'juego', x: sx, z: sz, r: 2.4, label: '🙌 Columpiarse', juego: columpios });
+  const opcionesColumpio = [{ id: 'sentada', label: '🙌 Columpiarse' }, { id: 'de_pie', label: '🧍 Columpiarse de pie' }];
+  addZone({ id: 'juego', x: sx, z: sz, r: 2.4, label: opcionesColumpio[0].label, opciones: opcionesColumpio, juego: columpios });
   // trees around
   [[-12, -12], [12, -12], [-12, 12], [12, 12], [-12.5, -6], [-6, -12.5], [13, 5]].forEach(([a, b], i) => tree(cx + a, cz + b, 1 + (i % 3) * 0.12, i % 3 === 0 ? 1 : 0));
 }

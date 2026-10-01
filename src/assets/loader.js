@@ -3,6 +3,7 @@
 // se publicaba antes lo bloqueaba en Safari del iPad; se mantiene porque funciona en todos lados).
 import { GLTFLoader, THREE } from '../engine/three.js';
 import { assetFile } from './manifest.js';
+import HUELLAS from 'virtual:huellas-modelos';
 
 const bytesCache = new Map(), glbCache = new Map(), listos = new Map();
 
@@ -14,7 +15,11 @@ export function readAsset(id) {
 async function read(id) {
   const file = assetFile(id);
   if (!file) throw new Error('Modelo desconocido: ' + id);
-  const url = import.meta.env.BASE_URL + file;
+  // con la huella del archivo (vite.config.js): si el modelo cambió, la dirección es otra y el navegador no usa su copia
+  // vieja (pasó con un nina_base.glb sin las animaciones nuevas: Nina quedaba de pie en el columpio y el tobogán).
+  // (fetch con cache: 'no-cache' también servía, pero el orden en que llegaban los modelos variaba y las capturas de
+  // las pruebas dejaban de salir iguales.)
+  const url = import.meta.env.BASE_URL + file + (HUELLAS[file] ? '?v=' + HUELLAS[file] : '');
   const r = await fetch(url);
   if (!r.ok) throw new Error(`No se pudo cargar ${url} (${r.status})`);
   return new Uint8Array(await r.arrayBuffer());

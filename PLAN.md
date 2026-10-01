@@ -16,7 +16,8 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
 - Juegos que se usan: carrusel, cama elástica y sube y baja de la plaza; columpios y tobogán del parque
   (`game/juegos.js`, zonas `juego` con anclas). **Sin commit**: el tobogán se sube por la escalera (animaciones
   `subir_escalera` y `tobogan`) y el columpio tiene física de péndulo que se impulsa con la palanca (animación
-  `columpio`); se baja saltando. 75/75 en Chromium.
+  `columpio`); se baja saltando. Los dos se pueden usar sentada o de pie (dos botones). Los modelos se piden con su
+  huella (`?v=`), así el navegador no se queda con uno viejo. 77/77 en Chromium.
 - Repositorio `github.com/Ykharo/mi-ciudad2`; se publica sólo en GitHub Pages (Actions con `npm run build:web`).
   Commits desde GitHub Desktop (Git no está en el PATH).
 - **Una sola versión: la web.** La de un solo archivo se quitó (decisión del usuario: quiere seguir agregando
@@ -26,7 +27,7 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
 - Ropa y peinados: 32 prendas, 28 generadas por código (`tools/prendas/`) + las 4 originales. Accesorios en 6 espacios
   (cabeza, orejas, cara, cuello, espalda, manos). Cabeza redonda (forma `redonda`) para el amigo y algunos vecinos.
 - 24 animaciones: las 11 originales + 9 bailes (aura, Six Seven, sigma, Take the L, Siuuu, Griddy, Spin, Fresh,
-  Floss) + `mirar_cartel` + las de los juegos (`subir_escalera`, `tobogan`, `columpio`). Cartel de la competencia de farmear aura frente a la Boutique, con alguien leyéndolo.
+  Floss) + `mirar_cartel` + las de los juegos (`subir_escalera`, `tobogan`, `columpio` y sus versiones `_de_pie`). Cartel de la competencia de farmear aura frente a la Boutique, con alguien leyéndolo.
 - Probador (`src/debug/probador.html`) con comparador de referencias (vistas frente/lado, transparencia, alinear).
 
 **Siguiente (a elegir)**

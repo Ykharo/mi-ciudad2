@@ -9,6 +9,7 @@
 //   columpio        sentada agarrada de las cuerdas: t = 0 piernas recogidas bajo el asiento y el cuerpo adelante;
 //                   t = 1 piernas estiradas y el cuerpo echado atrás. El juego no la reproduce: elige el momento según
 //                   cómo se está impulsando (1 s).
+//   tobogan_de_pie, columpio_de_pie   las mismas, paradas (se elige con el segundo botón del juego).
 import * as THREE from 'three';
 import { E, K, TAU, lerp, smooth, crearPoses } from './pose.mjs';
 
@@ -97,9 +98,47 @@ export function juegos(S) {
     return p;
   }
 
+  // De pie en el tobogán, como surfeando: mirando hacia abajo, rodillas dobladas, los pies paralelos a la rampa
+  // (talones arriba) y los brazos abiertos haciendo equilibrio. La raíz va sobre la rampa, derecha (sin inclinar).
+  function toboganDePie(t, T) {
+    const p = new Pose(), a = Math.sin(TAU * t / T), b = Math.sin(TAU * 2 * t / T);
+    p.hips.set(SX.R * 0.02 * a, H0 - 0.13, -0.03);
+    p.rot.Hips = E({ x: 10, z: SX.R * 3 * a });
+    p.rot.Spine = E({ x: 8, z: -SX.R * 4 * a });
+    p.rot.Chest = E({ x: 2, z: -SX.R * 3 * a });
+    p.rot.Neck = E({ x: -2 });
+    p.rot.HeadBone = E({ x: -6 + 2 * b, z: SX.R * 4 * a });
+    for (const [sd, s] of [['R', 1], ['L', -1]]) {
+      brazo(p, sd, { lower: -70 + 18 * s * a, swing: 10, elbow: 14 + 6 * b, hand: -4 });   // un brazo sube, el otro baja
+      ponerPie(p, sd, SX[sd] * (FOOTX + 0.04), 0, { pitch: 30, yaw: SX[sd] * 6 });
+    }
+    return p;
+  }
+
+  // De pie en el columpio, agarrada de las cuerdas (a los lados, a la altura del pecho; la raíz va sobre el asiento):
+  // t = 0 agachada, con la cadera atrás y el pecho adelante; t = 1 parada, empujando la cadera adelante y el cuerpo
+  // atrás. Como el sentado, el juego elige el momento según el impulso (1 s).
+  function columpioDePie(t, T) {
+    const p = new Pose(), e = smooth(t / T);
+    p.hips.set(0, lerp(H0 - 0.21, H0 - 0.015, e), lerp(-0.07, 0.04, e));
+    p.rot.Hips = E({ x: lerp(14, -6, e) });
+    p.rot.Spine = E({ x: lerp(14, -8, e) });
+    p.rot.Chest = E({ x: lerp(6, -4, e) });
+    p.rot.Neck = E({ x: lerp(-10, 4, e) });
+    p.rot.HeadBone = E({ x: lerp(-8, 4, e) });   // mira hacia adelante
+    for (const sd of ['L', 'R']) {
+      ponerPie(p, sd, SX[sd] * FOOTX, 0, { yaw: SX[sd] * 5 });
+      brazo(p, sd, { lower: 20, swing: 30, elbow: 70 });
+      p.arm[sd] = [V3(SX[sd] * 0.25, 1.0, 0), null, V3(SX[sd], -0.6, -0.5), 1];
+    }
+    return p;
+  }
+
   return [
     { nombre: 'subir_escalera', fn: subirEscalera, T: ESCALERA.ciclo, loop: true },
     { nombre: 'tobogan', fn: tobogan, T: 1.2, loop: true },
+    { nombre: 'tobogan_de_pie', fn: toboganDePie, T: 1.6, loop: true },
     { nombre: 'columpio', fn: columpio, T: 1, loop: false },
+    { nombre: 'columpio_de_pie', fn: columpioDePie, T: 1, loop: false },
   ];
 }

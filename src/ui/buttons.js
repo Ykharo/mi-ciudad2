@@ -8,7 +8,7 @@ import { standUp } from '../game/player.js';
 import { greetAround, npcSay, npcs } from '../game/npcs.js';
 import { callCar, driving, exitCar } from '../game/driving.js';
 import { hornSound, initAudio, startMusic, stopMusic } from '../audio/audio.js';
-import { $, btnAction } from './dom.js';
+import { $, btnAction, btnAction2 } from './dom.js';
 import { soltarPalanca } from './joystick.js';
 import { openPets } from './panels/pets.js';
 
@@ -32,8 +32,10 @@ function honk() {
 $('#btnHorn').addEventListener('click', honk);
 $('#btnPets').addEventListener('click', openPets);
 $('#btnMyCar').addEventListener('click', callCar);
-// cada zona trae su acción (ver world/zones.js: onZoneAction)
-btnAction.addEventListener('click', () => runZone(state.currentZone));
+// cada zona trae su acción (ver world/zones.js: onZoneAction); con `opciones`, cada botón pasa la suya
+const opcion = (z, i) => z && z.opciones && z.opciones[i] ? z.opciones[i].id : undefined;
+btnAction.addEventListener('click', () => runZone(state.currentZone, opcion(state.currentZone, 0)));
+btnAction2.addEventListener('click', () => runZone(state.currentZone, opcion(state.currentZone, 1)));
 const btnMusic = $('#btnMusic');
 btnMusic.addEventListener('click', () => {
   initAudio(); state.musicOn = !state.musicOn;

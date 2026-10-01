@@ -82,6 +82,27 @@ test('columpiarse: la palanca a tiempo lo hace subir, y se baja saltando', async
   expect(await page.evaluate(() => window.__juego.player.air)).toBe(true);   // sale volando
 });
 
+test('el tobogán y el columpio también de pie (el segundo botón)', async ({ page, jugar }) => {
+  await jugar();
+  const anim = () => page.evaluate(() => window.__juego.player.ch.sp && window.__juego.player.ch.sp.name);
+  const segundo = async texto => { await expect(page.locator('#btnAction2')).toHaveText(texto); await page.locator('#btnAction2').click({ force: true }); };
+  await ir(page, -33, -17);
+  await expect(page.locator('#btnAction')).toHaveText('🎢 Tirarse por el tobogán');
+  await segundo('🏄 Tirarse de pie');
+  await expect.poll(anim, { timeout: 10_000 }).toBe('tobogan_de_pie');
+  await expect.poll(() => sentada(page), { timeout: 10_000 }).toBe(false);
+  await ir(page, -14.2, -28.4);
+  await segundo('🧍 Columpiarse de pie');
+  await expect.poll(() => sentada(page)).toBe(true);
+  expect(await anim()).toBe('columpio_de_pie');
+  await page.keyboard.press('Space');
+  await expect.poll(() => sentada(page)).toBe(false);
+  // donde no hay dos formas de jugar, el segundo botón no aparece
+  await ir(page, 56, 29.6);
+  await expect(page.locator('#btnAction')).toHaveText('🤸 Saltar en la cama elástica');
+  await expect(page.locator('#btnAction2')).toBeHidden();
+});
+
 test('el tobogán: sube por la escalera, se tira y queda parada abajo', async ({ page, jugar }) => {
   await jugar();
   await ir(page, -33, -17);   // al pie de la escalera; el tobogán baja hacia +x

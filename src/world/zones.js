@@ -10,7 +10,8 @@ const areas = [];
 
 function addZone(z) { zones.push(z); }
 function onZoneAction(id, fn) { zoneActions.set(id, fn); }
-function runZone(z) { const fn = z && zoneActions.get(z.id); if (fn) fn(z); }
+// `opcion`: cuál de las `opciones` de la zona se eligió (si tiene; cada una con su botón: { id, label })
+function runZone(z, opcion) { const fn = z && zoneActions.get(z.id); if (fn) fn(z, opcion); }
 
 function addArea(name, x0, x1, z0, z1) { areas.push({ name, x0, x1, z0, z1 }); }
 function areaName(x, z) {

@@ -5,6 +5,25 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Tobogán y columpio de pie o sentada; modelos con huella (01-10-2026)
+
+- El usuario veía a Nina **de pie** en el columpio y tirándose del tobogán: su navegador seguía con un
+  `nina_base.glb` viejo (sin las animaciones nuevas; `avatarDo` no hace nada si la animación no existe, y queda en
+  reposo). Los modelos se piden siempre con el mismo nombre. Arreglo: **huella de cada modelo** (md5, 10 letras)
+  calculada por `vite.config.js` (módulo `virtual:huellas-modelos`; en desarrollo se recalcula al cambiar un .glb) y
+  el cargador pide `modelo.glb?v=<huella>`. Primero se probó `fetch(url, { cache: 'no-cache' })`, pero el orden en que
+  llegaban los modelos variaba y las capturas dejaban de salir iguales entre corridas (90 píxeles en un parpadeo).
+- Pedido: poder elegir **sentada o de pie** en los dos. Una zona puede traer `opciones: [{ id, label }, …]`: el HUD
+  muestra un botón por opción (`#btnAction2`, celeste, a la izquierda del de siempre) y `runZone(z, opcion)` se la pasa
+  a la acción. Tobogán: "🎢 Tirarse por el tobogán" / "🏄 Tirarse de pie"; columpio: "🙌 Columpiarse" /
+  "🧍 Columpiarse de pie" (sin "sentada/sentado": hay personajes de los dos).
+  - `tobogan_de_pie` (1,6 s, bucle): como surfeando, rodillas dobladas, pies paralelos a la rampa, brazos abiertos
+    balanceándose. Anclas nuevas `pieArriba`/`pieAbajo` sobre la superficie de la rampa, sin inclinar.
+  - `columpio_de_pie` (1 s, la elige el impulso como la sentada): 0 agachada con la cadera atrás, 1 parada empujando
+    la cadera adelante; las manos fijas en las cuerdas. Parada sobre el asiento (`pararEn`: 5 cm bajo el ancla).
+- Prueba nueva (las dos de pie, y que el segundo botón no aparece donde no hay opciones). Capturas regeneradas (las
+  anclas nuevas mueven a un vecino). Chromium (dev y web): **77/77**.
+
 ## Tobogán con escalera y columpio con física (30-09-2026)
 
 - Pedido: que suba por la escalera del tobogán, se siente y se tire con los brazos arriba; y que el columpio responda

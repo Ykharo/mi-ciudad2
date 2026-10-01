@@ -33,7 +33,8 @@ export default [
       'import/no-cycle': 'error',
       'import/no-restricted-paths': ['error', { zones: zonas }],
       'import/named': 'error',
-      'import/no-unresolved': ['error', { ignore: ['^three'] }],   // three/addons usa "exports", que el resolvedor no entiende
+      // three/addons usa "exports", que el resolvedor no entiende; virtual:… son módulos de vite.config.js
+      'import/no-unresolved': ['error', { ignore: ['^three', '^virtual:'] }],
       'no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }],
       'no-empty': ['error', { allowEmptyCatch: true }],   // try { … } catch (_) { } a propósito (localStorage, pointer capture)
     },

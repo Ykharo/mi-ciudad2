@@ -27,7 +27,7 @@ export const AUTO_FACE = {
   mirar_cartel: [[0, 'normal'], [0.6, 'sorpresa'], [1.8, 'normal'], [6.6, 'feliz'], [7.8, 'normal']],
   take_l: 'guino', griddy: 'feliz', fresh: 'feliz', floss: 'feliz',
   // los juegos del parque (no están en el menú: los usa game/juegos.js)
-  subir_escalera: 'normal', tobogan: 'feliz', columpio: 'feliz',
+  subir_escalera: 'normal', tobogan: 'feliz', columpio: 'feliz', tobogan_de_pie: 'feliz', columpio_de_pie: 'feliz',
   siuu: [[0, 'feliz'], [1.05, 'sorpresa'], [2.9, 'feliz']],   // el grito, con la boca abierta
   spin: [[0, 'feliz'], [1.35, 'guino'], [T_SPIN, 'feliz']],
 };

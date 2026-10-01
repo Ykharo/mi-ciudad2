@@ -23,6 +23,8 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
     `onFrame`. `area` = `[x0, x1, z0, z1]` da el nombre del lugar; no cambiar el `orden` de los que existen.
     Un lugar en una manzana de afuera reemplaza su casa (`ocupada` en `city.js`). Ej.: `places/plaza.js`.
   - Zonas: el lugar hace `addZone({ id, x, z, r, label })` y quien sabe qué hacer registra `onZoneAction(id, fn)`.
+    Con `opciones: [{ id, label }, …]` el HUD muestra un botón por opción (`#btnAction2`) y la acción recibe
+    `fn(zona, opcion)` (tobogán y columpio: 'sentada' / 'de_pie').
   - Juegos que se usan (carrusel, columpio, tobogán…): zona `{ id: 'juego', juego: { tipo, … } }` con anclas
     (`ancla()` de `world/place.js`: dónde van las caderas, mirando a su +z); los mueve `game/juegos.js`
     (tipos `asiento`, `cama`, `tobogan`, `columpio`; `juego.ocupado`, `juego.vista`). Bajarse = moverse, salvo
@@ -38,7 +40,8 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
 - `src/styles/juego.css` — estilos.
 - Imágenes del juego en `src/assets/imagenes/` (se importan desde el código; Vite las publica como archivos aparte). Cartel de la competencia de farmear aura: `world/places/cartel.js` (letrero + zona "Mirar el
   cartel") y `game/cartel.js` (espectador que lo lee con la animación `mirar_cartel`); `main.js` espera la imagen.
-- `src/assets/loader.js` + `manifest.js` — `loadGLB(id)`: lee cada modelo (bloque base64 incrustado o `fetch`),
+- `src/assets/loader.js` + `manifest.js` — `loadGLB(id)`: lee cada modelo (`fetch` con `?v=<huella>`: la huella
+  md5 de cada .glb la calcula `vite.config.js`, módulo `virtual:huellas-modelos`, para que el navegador no use uno viejo),
   lo decodifica (texturas como imágenes `data:`, colores a sRGB) y lo guarda. Ids: `nina_base`, `prenda:<id>`.
 - `assets/modelos/nina_base.glb` (esqueleto, cuerpo, cabeza, cara, 11 animaciones) y `assets/modelos/prendas/<id>.glb`
   (una prenda cada uno). Generados, cuantizados: **no editar a mano**; se regeneran con `node tools/separar_glb.mjs`
