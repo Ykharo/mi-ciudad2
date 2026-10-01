@@ -21,7 +21,9 @@ const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
 // el juego, sobre el primer peldaño); `mano`: el tope de la mano A, sobre la cadera.
 export const ESCALERA = { ciclo: 0.8, peldano: 0.45 / 1.4, frente: 0.10, pie: 0.18, mano: 0.32, pasamanos: 0.38 / 1.4 };
 
-export function juegos(S) {
+// `base`: poses finales de animaciones del modelo ({ sit: { rot: { hueso: Quaternion }, hips: Vector3 } }), para las
+// que parten de ellas (aplaudir sentado)
+export function juegos(S, base = {}) {
   const { Pose, ponerPie, brazo } = crearPoses(S), { SX, FOOTX, H0, BALL } = S;
   const D = ESCALERA.peldano, Zr = ESCALERA.frente;
   const frac = x => x - Math.floor(x);
@@ -134,7 +136,45 @@ export function juegos(S) {
     return p;
   }
 
+  // De pie (sobre la silla del jurado), alzando con las dos manos algo sobre la cabeza (el letrero de estrella): las
+  // manos juntas arriba, los brazos casi estirados; un rebote alegre en las puntas de los pies y un vaivén de lado a
+  // lado (1,2 s, en bucle). El letrero lo pone el juego entre las dos manos.
+  function alzarEstrella(t, T) {
+    const p = new Pose(), a = Math.sin(TAU * t / T), b = Math.abs(Math.sin(TAU * 2 * t / T));
+    p.hips.set(SX.R * 0.015 * a, H0 - 0.01 + 0.025 * b, 0);
+    p.rot.Hips = E({ z: SX.R * 2 * a });
+    p.rot.Spine = E({ x: -4, z: -SX.R * 2 * a });
+    p.rot.Chest = E({ x: -5, z: -SX.R * 2 * a });
+    p.rot.Neck = E({ x: -6 });
+    p.rot.HeadBone = E({ x: -12, z: SX.R * 4 * a });   // mira hacia arriba, al letrero
+    for (const sd of ['L', 'R']) {
+      brazo(p, sd, { lower: -150, swing: 10, elbow: 15 });
+      // los brazos estirados hacia arriba, las muñecas a los lados de lo alto de la cabeza (la cabeza es grande: más
+      // juntas quedaban encima de ella); el letrero va entre ellas, sobre la cabeza (en el espacio del pecho, que se mece)
+      p.arm[sd] = [(P, W) => P.Chest.clone().add(V3(SX[sd] * 0.2, 0.37, 0.05).applyQuaternion(W.Chest)), null, V3(SX[sd], 0, -0.6), 1];
+      ponerPie(p, sd, SX[sd] * (FOOTX + 0.01), 0, { pitch: 14 * b, yaw: SX[sd] * 6 });
+    }
+    return p;
+  }
+
+  // Sentada (la pose final de "sit"), aplaudiendo: las manos se juntan y se separan delante del pecho, ~3 veces por
+  // segundo, con el cuerpo un poco adelante y la cabeza que asiente (0,8 s, en bucle)
+  function aplaudir(t, T) {
+    const p = new Pose(), sit = base.sit;
+    if (sit) { for (const [b, q] of Object.entries(sit.rot)) p.rot[b] = q.clone(); p.hips.copy(sit.hips); }
+    const golpe = Math.abs(Math.sin(TAU * 1.25 * t / T)), animo = Math.sin(TAU * t / T);
+    p.rot.Chest = (p.rot.Chest || E()).clone().multiply(E({ x: 4 + 2 * animo }));
+    p.rot.HeadBone = E({ x: 4 * golpe - 4, z: 3 * animo });
+    for (const sd of ['L', 'R']) {
+      brazo(p, sd, { lower: 20, swing: 40, elbow: 80 });
+      p.arm[sd] = [(P, W) => P.Chest.clone().add(V3(SX[sd] * (0.012 + 0.07 * golpe), 0.06, 0.2).applyQuaternion(W.Chest)), null, V3(SX[sd], -1, -0.2), 1];
+    }
+    return p;
+  }
+
   return [
+    { nombre: 'alzar_estrella', fn: alzarEstrella, T: 1.2, loop: true },
+    { nombre: 'aplaudir', fn: aplaudir, T: 0.8, loop: true },
     { nombre: 'subir_escalera', fn: subirEscalera, T: ESCALERA.ciclo, loop: true },
     { nombre: 'tobogan', fn: tobogan, T: 1.2, loop: true },
     { nombre: 'tobogan_de_pie', fn: toboganDePie, T: 1.6, loop: true },

@@ -21,7 +21,8 @@ import { cam, player } from './actors.js';
 import { standUp } from './player.js';
 import { enterMenu, leaveMenu } from './modes.js';
 import { nuevoCodigo, revisar } from './codigoAura.js';
-import { efectoAura } from '../engine/efectoAura.js';
+import { efectoAura, estrellaAura } from '../engine/efectoAura.js';
+import { scene } from '../engine/renderer.js';
 
 /* ---------- jurado, público y concursantes ---------- */
 const sentados = [], concursantes = [], RESERVA = 6, reserva = [];
@@ -36,10 +37,9 @@ function crearPublico(looks) {
   const P = [...ESCENARIO.jurado, ...ESCENARIO.publico];
   reserva.push(...looks.slice(P.length + ESCENARIO.lados.length));   // (sus avatares se arman cuando les toca)
   P.forEach((p, i) => {
-    const c = makeAvatar(looks[i]), k = c.k;
-    c.root.position.set(p.x + Math.sin(p.mira) * 0.10 * k, p.alto - 0.158 * k, p.z + Math.cos(p.mira) * 0.10 * k);
-    c.root.rotation.y = p.mira;
-    avatarDo(c, 'sit', { start: 9, instant: true, stopOnMove: false });
+    const c = makeAvatar(looks[i]);
+    c.userData = { puesto: p };
+    sentar(c);
     sentados.push(c);
   });
   // los concursantes, de pie arriba de la tarima, uno a cada lado, esperando su turno
@@ -50,6 +50,55 @@ function crearPublico(looks) {
     concursantes.push(q);
   });
 }
+function sentar(c) {
+  const p = c.userData.puesto, k = c.k;
+  c.root.position.set(p.x + Math.sin(p.mira) * 0.10 * k, p.alto - 0.158 * k, p.z + Math.cos(p.mira) * 0.10 * k);
+  c.root.rotation.y = p.mira;
+  avatarDo(c, 'sit', { start: 9, instant: true, stopOnMove: false });
+}
+
+/* ---------- ¡se logró un Aura! ---------- */
+// Un juez se para de un salto sobre su silla y alza la estrella dorada con la "A"; el público aplaude. Dura `CELEBRA`
+// segundos de verdad (en cámara lenta, sus movimientos van lentos) y vuelven a sentarse.
+const CELEBRA = 6, SILLA = 0.68;   // alto del asiento de las sillas del jurado (world/places/escenario_aura.js)
+let celebra = null, estrella = null;
+const _hl = new THREE.Vector3(), _hr = new THREE.Vector3();
+function celebrarAura() {
+  if (celebra) terminarCelebra();
+  const juez = sentados[Math.floor(Math.random() * 3)], p = juez.userData.puesto;
+  if (!estrella) { estrella = estrellaAura(); estrella.visible = false; scene.add(estrella); }
+  const y0 = juez.root.position.y;
+  avatarDo(juez, 'alzar_estrella', { loop: true, stopOnMove: false });
+  sentados.slice(3).forEach((c, i) => avatarDo(c, 'aplaudir', { loop: true, stopOnMove: false, start: i * 0.13 }));
+  decir(juez, '¡AURA!', 2.2);
+  celebra = { t: 0, juez, p, y0 };
+}
+function actualizarCelebra(dt, dl) {
+  const C = celebra; C.t += dt;
+  const { juez, p } = C, k = juez.k;
+  // el salto a la silla (0,35 s en tiempo del escenario: en cámara lenta se ve lento)
+  C.s = Math.min(1, (C.s || 0) + dl / 0.35);
+  const u = C.s, x0 = p.x + Math.sin(p.mira) * 0.10 * k, z0 = p.z + Math.cos(p.mira) * 0.10 * k;
+  juez.root.position.set(x0 + (p.x - x0) * u, C.y0 + (SILLA - C.y0) * u + Math.sin(Math.PI * u) * 0.35, z0 + (p.z - z0) * u);
+  // la estrella entre las manos, un poco más arriba, mirando hacia donde mira el juez
+  const b = juez.bones;
+  if (u > 0.6 && b.HandL && b.HandR) {
+    b.HandL.getWorldPosition(_hl); b.HandR.getWorldPosition(_hr);
+    estrella.position.copy(_hl).add(_hr).multiplyScalar(0.5); estrella.position.y += 0.4;
+    estrella.rotation.set(0, p.mira + Math.sin(C.t * 3) * 0.12, Math.sin(C.t * 2.3) * 0.08);
+    estrella.scale.setScalar(1.6 * Math.min(1, (u - 0.6) / 0.4 + 0.2));   // (grande: se ve desde la tarima)
+    estrella.userData.halo.material.opacity = 0.45 + 0.25 * Math.sin(C.t * 6);
+    estrella.visible = true;
+  }
+  if (C.t >= CELEBRA) terminarCelebra();
+}
+function terminarCelebra() {
+  estrella.visible = false;
+  sentar(celebra.juez);
+  sentados.slice(3).forEach(sentar);
+  celebra = null;
+}
+
 // sólo se anima a quien se ve (cullAvatars los esconde lejos o fuera de la cámara)
 function updatePublico(dt) {
   // cámara lenta (al acertar un código o al ganar): todo el escenario va más despacio, y vuelve suave
@@ -70,6 +119,7 @@ function updatePublico(dt) {
     if (q.ch.model.visible || show) updateAvatar(q.ch, dl * velocidad, q.vel, q.cara || null);
   }
   for (let i = auras.length - 1; i >= 0; i--) if (!auras[i].update(dl)) auras.splice(i, 1);
+  if (celebra) actualizarCelebra(dt, dl);
   globos.forEach(g => { g.t -= dt * velocidad; if (g.t <= 0) g.c.root.remove(g.s); });
   for (let i = globos.length - 1; i >= 0; i--) if (globos[i].t <= 0) globos.splice(i, 1);
 }
@@ -228,9 +278,9 @@ function terminarReto(acerto) {
     emit('aura', { que: 'acierto', puntos: `+${t.puntos[r] * 100} pts` });
     emit('sonido', 'adopt');
     auras.push(efectoAura(t.q.ch.root, { color: rapido ? 'dorado' : 'celeste', alto: 3.2 }));
-    R.lento = true; camaraLenta(3.2);
-    if (Math.random() < 0.9) decir(pick(sentados.slice(3)), pick(GRITOS), 2.5, true);
-    paso.dur = S.t + 4.2;    // festejo: el criptex se abre con el hechizo y los puntos (~3,6 s)
+    R.lento = true; camaraLenta(CELEBRA); celebrarAura();
+    if (Math.random() < 0.9) decir(pick(sentados.slice(4)), pick(GRITOS), 2.5, true);
+    paso.dur = S.t + CELEBRA + 0.4;   // festejo: la vuelta de la cámara, la estrella del jurado y el aplauso
   } else {
     emit('aura', { que: 'tiempo', correctas: R.codigo.palabras.map(p => p.id) });
     paso.dur = S.t + 3;      // ver la respuesta
@@ -286,8 +336,8 @@ function competir2(turnos, pasos, J) {
     sentados.slice(3).forEach((c, i) => { if (i % 2 === 0) decir(c, pick(GRITOS), 3, true); });
     anuncio.objetivo = G;
     if (G === J) {
-      anuncio.dur = 5.5; anuncio.toma = 'lenta';
-      camaraLenta(4.2); auras.push(efectoAura(J.ch.root, { color: 'dorado', alto: 3.6 }));
+      anuncio.dur = CELEBRA + 0.4; anuncio.toma = 'lenta';
+      camaraLenta(CELEBRA); celebrarAura(); auras.push(efectoAura(J.ch.root, { color: 'dorado', alto: 3.6 }));
     }
   }), 'ganador');
   pasos.push(anuncio);
@@ -410,12 +460,17 @@ function actualizarCamara(dt) {
     const a = f + cine.t * 0.55, r = 3.0;
     cine.pos.set(q.x + Math.sin(a) * r, y + 1.9, q.z + Math.cos(a) * r); cine.look.set(q.x, y + 1.0, q.z); cine.k = 4;
   } else if (cine.toma === 'lenta') {
-    // cámara lenta, como en los juegos 3D de Nintendo: parte baja y cerca, por un costado, y barre lento por delante
-    // hasta el otro costado mientras sube y se aleja un poco, siguiendo el aura (sin pasar por detrás)
-    const u = Math.min(1, cine.t / 4), e = u * u * (3 - 2 * u);
-    const a = f - 1.1 + e * 2.2, r = 2.3 + e * 0.8;
-    cine.pos.set(q.x + Math.sin(a) * r, y + 0.35 + e * 1.4, q.z + Math.cos(a) * r);
-    cine.look.set(q.x, y + 1.15 + e * 0.25, q.z); cine.k = 5;
+    // cámara lenta, como en los juegos 3D de Nintendo: parte baja y cerca, de frente, y da una vuelta entera (360°)
+    // a su alrededor mientras sube y se abre; al pasar por detrás de ella se ven el jurado (con la estrella) y el
+    // público aplaudiendo; termina de frente, alta
+    // (empieza lenta, de frente, mientras el criptex lanza el hechizo; pasa por detrás de ella —mirando un poco hacia
+    // el jurado y el público, que quedan delante de ella— cuando el criptex ya se fue)
+    const u = Math.min(1, cine.t / CELEBRA), v = Math.pow(u, 1.6), e = v * v * (3 - 2 * v);
+    const abre = Math.sin(Math.PI * Math.min(1, u * 1.1));
+    const a = f + 0.35 + e * Math.PI * 2, r = 2.2 + abre * 4.4 + u * 1.2;
+    cine.pos.set(q.x + Math.sin(a) * r, y + 0.35 + e * 2.6, q.z + Math.cos(a) * r);
+    const atras = Math.max(0, -Math.cos(a - f)) * abre, A = ESCENARIO.publicoCentro;
+    cine.look.set(q.x + (A.x - q.x) * atras * 0.45, y + 1.1 + abre * 0.2, q.z + (A.z - q.z) * atras * 0.45); cine.k = 6;
   }
 }
 

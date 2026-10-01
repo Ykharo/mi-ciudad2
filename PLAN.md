@@ -27,7 +27,8 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
 - Ropa y peinados: 32 prendas, 28 generadas por código (`tools/prendas/`) + las 4 originales. Accesorios en 6 espacios
   (cabeza, orejas, cara, cuello, espalda, manos). Cabeza redonda (forma `redonda`) para el amigo y algunos vecinos.
 - 24 animaciones: las 11 originales + 9 bailes (aura, Six Seven, sigma, Take the L, Siuuu, Griddy, Spin, Fresh,
-  Floss) + `mirar_cartel` + las de los juegos (`subir_escalera`, `tobogan`, `columpio` y sus versiones `_de_pie`). Cartel de la competencia de farmear aura frente a la Boutique, con alguien leyéndolo.
+  Floss) + `mirar_cartel` + las de los juegos (`subir_escalera`, `tobogan`, `columpio` y sus versiones `_de_pie`) +
+  las de la competencia (`alzar_estrella`, `aplaudir`): 28. Cartel de la competencia de farmear aura frente a la Boutique, con alguien leyéndolo.
 - Probador (`src/debug/probador.html`) con comparador de referencias (vistas frente/lado, transparencia, alinear).
 
 - **Competencia de aura, etapa A hecha** (sin commit): el Escenario del Aura en la Calle Mora frente a la Plaza de
@@ -39,8 +40,9 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
   tarima (se anota si hay una en curso), elige 3 movimientos en una ventana y compite contra un vecino, por ahora
   automático, con cámaras de cerca, desde abajo y girando. 91/91 en Chromium.
 - **Código Aura en la competencia (sin commit)**: en cada movimiento de la jugadora, un código de 3 palabras y el
-  criptex 3D (`ui/criptex3d.js`, `ui/codigoAura.js`, `game/codigoAura.js`); acertar da aura, puntos y cámara lenta;
-  ganar, cámara lenta con aura dorada. El prototipo sigue en `src/debug/criptex.html`. Falta: probar en el iPad,
+  criptex 3D (`ui/criptex3d.js`, `ui/codigoAura.js`, `game/codigoAura.js`); acertar da aura, puntos y una vuelta de
+  360° en cámara lenta, con un juez de pie alzando la estrella dorada con la "A" y el público aplaudiendo (también al
+  ganar). El prototipo sigue en `src/debug/criptex.html`. Falta: probar en el iPad,
   el set de imágenes propio, la dificultad que se ajusta sola y el botón 🔊 de ayuda.
 
 **Competencia de aura (plan por etapas)**

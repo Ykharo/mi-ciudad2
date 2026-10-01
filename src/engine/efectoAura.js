@@ -36,6 +36,33 @@ function texturas() {
   texAnillo = new THREE.CanvasTexture(c);
 }
 
+// El letrero del jurado cuando alguien logra un Aura: una estrella dorada gruesa (5 puntas) con una "A" grande al
+// centro por los dos lados y un halo que brilla detrás. Mide ~0,8 m de punta a punta. El grupo mira hacia +z.
+export function estrellaAura() {
+  texturas();
+  const g = new THREE.Group(), forma = new THREE.Shape();
+  for (let i = 0; i < 10; i++) {
+    const a = Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 0.17 : 0.4;
+    i ? forma.lineTo(Math.cos(a) * r, Math.sin(a) * r) : forma.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  const geo = new THREE.ExtrudeGeometry(forma, { depth: 0.05, bevelEnabled: true, bevelThickness: 0.025, bevelSize: 0.025, bevelSegments: 2 });
+  geo.translate(0, 0, -0.025);
+  const oro = new THREE.MeshStandardMaterial({ color: 0xFFC83D, metalness: 0.6, roughness: 0.28, emissive: 0x8A5A00, emissiveIntensity: 0.55 });
+  g.add(new THREE.Mesh(geo, oro));
+  // la "A" (y su sombra violeta), por delante y por detrás
+  const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d');
+  x.font = '800 200px "Baloo 2", "Trebuchet MS", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.lineJoin = 'round'; x.lineWidth = 22; x.strokeStyle = '#FFFFFF'; x.strokeText('A', 128, 146);
+  x.fillStyle = '#7A3FE0'; x.fillText('A', 128, 146);
+  const tex = new THREE.CanvasTexture(c), letra = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
+  for (const s of [1, -1]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.3), letra); m.position.z = s * 0.054; m.rotation.y = s > 0 ? 0 : Math.PI; g.add(m); }
+  // el halo
+  const halo = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.3), new THREE.MeshBasicMaterial({ map: texChispa, color: 0xFFD66B, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending }));
+  halo.position.z = -0.06; g.add(halo); g.userData.halo = halo;
+  g.traverse(o => { o.castShadow = false; o.receiveShadow = false; });
+  return g;
+}
+
 export function efectoAura(padre, { color = 'dorado', alto = 3 } = {}) {
   texturas();
   const C = COLORES[color] || COLORES.dorado, g = new THREE.Group(); padre.add(g);

@@ -285,11 +285,23 @@ export function bailes(S) {
 
 // Agrega los bailes y las animaciones de los juegos (juegos.mjs) al documento (el de nina_base.glb): rotación de los
 // 17 huesos y posición de la cadera, a 30 cuadros por segundo, como las demás animaciones.
+// la pose del último cuadro de una animación del modelo: { rot: { hueso: Quaternion }, hips: Vector3 }
+function poseFinal(doc, nombre) {
+  const a = doc.getRoot().listAnimations().find(x => x.getName() === nombre); if (!a) return null;
+  const r = { rot: {}, hips: null };
+  for (const c of a.listChannels()) {
+    const o = c.getSampler().getOutput(), v = o.getElement(o.getCount() - 1, []), n = c.getTargetNode().getName();
+    if (c.getTargetPath() === 'rotation') r.rot[n] = new THREE.Quaternion(...v);
+    else if (c.getTargetPath() === 'translation' && n === 'Hips') r.hips = new THREE.Vector3(...v);
+  }
+  return r;
+}
+
 export function agregarBailes(doc) {
   const S = esqueleto(doc), { resolver } = crearPoses(S), buf = doc.getRoot().listBuffers()[0];
   const acc = (arr, tipo) => doc.createAccessor().setArray(arr).setType(tipo).setBuffer(buf);
   const hechos = [];
-  for (const { nombre, fn, T, loop } of [...bailes(S), ...juegos(S)]) {
+  for (const { nombre, fn, T, loop } of [...bailes(S), ...juegos(S, { sit: poseFinal(doc, 'sit') })]) {
     const n = Math.round(T * FPS), tiempos = Float32Array.from({ length: n + 1 }, (_, i) => (i === n ? T : i / FPS));
     const rot = Object.fromEntries(S.HUESOS.map(b => [b, new Float32Array((n + 1) * 4)])), pos = new Float32Array((n + 1) * 3);
     const antes = {};

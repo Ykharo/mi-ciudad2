@@ -34,6 +34,8 @@ const JURADO_Z = 6.0, GRADAS = { lx: 5, lz: 6, alto: [0.45, 0.9, 1.35], fondo: 1
 const puesto = (lx, lz, alto) => { const p = local(lx, lz); return { ...p, alto, mira: hacia(p, ESCENARIO.tarima) }; };
 ESCENARIO.jurado = [-7.2, -5.5, -3.8].map(lx => puesto(lx, JURADO_Z, 0.72));
 ESCENARIO.publico = [[2.5, 0], [6.5, 0], [4, 1], [8, 1], [5.5, 2]].map(([lx, fila]) => puesto(lx, GRADAS.lz + fila * GRADAS.fondo, GRADAS.alto[fila] + 0.01));
+// entre el jurado y las graderías (hacia donde mira la cámara lenta al pasar por detrás de quien baila)
+ESCENARIO.publicoCentro = local(0, 6.5);
 // los puestos libres de las graderías, para que la jugadora se siente a mirar (adelante o arriba): [lx, fila, y el lx
 // donde se sienta su mascota, al lado y en el mismo escalón]
 const LIBRES = { adelante: [[4.5, 0, 5.4], [8.5, 0, 7.6]], arriba: [[3, 2, 3.9], [8, 2, 7.1]] };

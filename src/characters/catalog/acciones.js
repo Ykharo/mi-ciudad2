@@ -28,6 +28,8 @@ export const AUTO_FACE = {
   take_l: 'guino', griddy: 'feliz', fresh: 'feliz', floss: 'feliz',
   // los juegos del parque (no están en el menú: los usa game/juegos.js)
   subir_escalera: 'normal', tobogan: 'feliz', columpio: 'feliz', tobogan_de_pie: 'feliz', columpio_de_pie: 'feliz',
+  // la competencia de aura (game/aura.js): el jurado alza la estrella y el público aplaude
+  alzar_estrella: 'feliz', aplaudir: 'feliz',
   siuu: [[0, 'feliz'], [1.05, 'sorpresa'], [2.9, 'feliz']],   // el grito, con la boca abierta
   spin: [[0, 'feliz'], [1.35, 'guino'], [T_SPIN, 'feliz']],
 };

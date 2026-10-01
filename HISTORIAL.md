@@ -5,6 +5,27 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## ¡Aura!: vuelta de 360° en cámara lenta, el jurado con la estrella y el público aplaudiendo (01-10-2026)
+
+- Pedido: al emitir un Aura, el giro "tipo Nintendo" subiendo y girando 360° en cámara lenta, viendo al jurado y al
+  público; un juez de pie sobre la silla alzando un letrero de estrella dorada con una "A"; el público aplaudiendo.
+- Animaciones nuevas (`tools/animaciones/juegos.mjs`; 28 en total): `alzar_estrella` (de pie, los brazos estirados
+  hacia arriba, las muñecas a los lados de lo alto de la cabeza —más juntas quedaban encima de ella—, rebote en las
+  puntas de los pies y vaivén) y `aplaudir` (parte de la pose final de "sit": `poseFinal()` en `bailes.mjs` la lee del
+  modelo; las manos se juntan delante del pecho ~3 veces por segundo).
+- `estrellaAura()` (`engine/efectoAura.js`): estrella dorada de 5 puntas extruida con biselado, "A" violeta con borde
+  blanco por los dos lados y un halo que late. En el juego, 1,6 veces (se ve desde la tarima).
+- `celebrarAura()` (`game/aura.js`), al acertar un código y al ganar: un juez al azar salta a su silla (0,68 m) y alza
+  la estrella, que sigue entre sus manos (bailando un poco); el público aplaude; ~6 s (`CELEBRA`) y vuelven a sentarse.
+  La cámara lenta dura lo mismo.
+- Toma 'lenta' nueva: una vuelta entera (360°) alrededor de ella, empezando lenta de frente (mientras el criptex lanza
+  el hechizo) y subiendo de 0,35 a ~3 m; en la mitad se abre (hasta ~7,8 m) y al pasar por detrás mira un poco hacia
+  el jurado y el público (`ESCENARIO.publicoCentro`); termina de frente, alta.
+- El criptex festeja más rápido (AURA 0,3–1,6 s, puntos 1,3–2,7 s, se va a los 3 s): así ya no está cuando la cámara
+  pasa por detrás.
+- Capturas regeneradas (los dos clips nuevos usan Math.random al cargarse: cambian unas gotas de la pileta).
+  Chromium (dev y web): **91/91**.
+
 ## El Código Aura en la competencia, con cámara lenta (01-10-2026)
 
 - Pedido: llevar el criptex y el aura al juego, con movimientos de cámara en cámara lenta "tipo Nintendo" al ganar.

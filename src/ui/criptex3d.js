@@ -244,8 +244,8 @@ export function crearCriptex({ camera, dom, anillos, alConfirmar, alGirar }) {
       A.forEach((a, i) => { const u = Math.min(1, Math.max(0, (T - i * 0.15) / 0.6)); a.g.rotation.x = a.rot + (u * u * (3 - 2 * u)) * Math.PI * 2; });
       abriendo.brillo = Math.min(1, T * 1.5);
       const { hechizo, puntos } = abriendo;
-      // AURA: 0,5 → 2,0 s
-      const h = (T - 0.5) / 1.5;
+      // AURA: 0,3 → 1,6 s
+      const h = (T - 0.3) / 1.3;
       hechizo.visible = h > 0 && h < 1;
       if (hechizo.visible) {
         const entra = Math.min(1, h / 0.25), sale = h > 0.6 ? (h - 0.6) / 0.4 : 0;
@@ -254,8 +254,8 @@ export function crearCriptex({ camera, dom, anillos, alConfirmar, alGirar }) {
         hechizo.position.y = 0.42 + h * 0.08;
         hechizo.rotation.z = Math.sin(T * 3) * 0.03;
       }
-      // +puntos: 1,7 → 3,3 s (rebote al entrar, como en los juegos de Nintendo)
-      const p = (T - 1.7) / 1.6;
+      // +puntos: 1,3 → 2,7 s (rebote al entrar, como en los juegos de Nintendo)
+      const p = (T - 1.3) / 1.4;
       puntos.visible = p > 0 && p < 1;
       if (puntos.visible) {
         const u = Math.min(1, p / 0.22), rebote = u < 1 ? 1 - Math.pow(1 - u, 2) * Math.cos(u * 9) * 1 : 1;
@@ -265,9 +265,9 @@ export function crearCriptex({ camera, dom, anillos, alConfirmar, alGirar }) {
         puntos.position.y = 0.3 + p * 0.04 + sale * 0.08;
         puntos.rotation.z = Math.sin(p * Math.PI * 2) * 0.04;
       }
-      // el criptex se va: 3,2 → 3,6 s
-      if (T > 3.2) { const u = Math.min(1, (T - 3.2) / 0.4); cuerpo.scale.setScalar(Math.max(0.001, (1 - u) * (1 + 0.8 * u))); }
-      if (T > 3.6) { const fin = abriendo.fin; abriendo = null; quitar(); if (fin) fin(); }
+      // el criptex se va: 2,6 → 3,0 s
+      if (T > 2.6) { const u = Math.min(1, (T - 2.6) / 0.4); cuerpo.scale.setScalar(Math.max(0.001, (1 - u) * (1 + 0.8 * u))); }
+      if (T > 3.0) { const fin = abriendo.fin; abriendo = null; quitar(); if (fin) fin(); }
     }
   }
 

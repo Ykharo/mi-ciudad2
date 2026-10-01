@@ -36,7 +36,8 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
     `ui/panels/aura.js` (evento `'aura'`), `competir(movs)`; modo `'aura'`, la mueve un `player.seat` fijo y la cámara
     `cam.cine` (tomas por paso: `toma`/`objetivo`; `game/camera.js` se desliza hacia ellas). Cada movimiento suyo es
     un Código Aura (`retoAura`): `ui/codigoAura.js` muestra la ventana y el criptex (evento `'aura'`) y responde con
-    `responderCodigo`; acertar: `efectoAura` (`engine/efectoAura.js`) + `camaraLenta` + toma 'lenta'.
+    `responderCodigo`; acertar: `efectoAura` (`engine/efectoAura.js`) + `camaraLenta` + toma 'lenta' (vuelta de 360°)
+    + `celebrarAura` (un juez de pie con `estrellaAura()` y `alzar_estrella`; el público con `aplaudir`).
   - Zonas: el lugar hace `addZone({ id, x, z, r, label })` y quien sabe qué hacer registra `onZoneAction(id, fn)`.
     Con `opciones: [{ id, label }, …]` el HUD muestra un botón por opción (`#btnAction2`) y la acción recibe
     `fn(zona, opcion)` (tobogán y columpio: 'sentada' / 'de_pie').
@@ -151,7 +152,8 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
   walk_back (−0,32 m/s), candle. Sólo el hueso Hips tiene traslación (en Y/Z), no hay root motion.
   Más 9 bailes (aura, seis_siete, sigma, take_l, siuu, griddy, spin, fresh, floss) armados en Node:
   `tools/animaciones/pose.mjs` (las utilidades de `reanimar_avatar.py` en JavaScript: poses, IK de pies y brazos,
-  curvas `K`; validado contra "wave") y `tools/animaciones/bailes.mjs` (+ `juegos.mjs`: escalera, tobogán, columpio); `separar_glb.mjs` los hornea en
+  curvas `K`; validado contra "wave") y `tools/animaciones/bailes.mjs` (+ `juegos.mjs`: escalera, tobogán, columpio,
+  alzar_estrella, aplaudir —éste parte de la pose final de "sit"—); `separar_glb.mjs` los hornea en
   `nina_base.glb` (`SIN_BAILES=1` para armarla sin ellos). En el menú Acción: `characters/catalog/acciones.js`
   (`AUTO_FACE` puede cambiar la cara con el tiempo: `[[segundo, cara], …]`).
 - Las texturas de los .glb se cargan como imágenes `data:` (no `blob:`): venía del visor donde se publicaba antes,
