@@ -34,7 +34,9 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
     `DESCANSO` llegan otros dos (reserva de looks, `relevo()`). Un asiento con `userData.mascotas` sienta a las
     mascotas a su lado (`waitAt`). La jugadora compite con "😎 Competir" (delante de la tarima): ventana
     `ui/panels/aura.js` (evento `'aura'`), `competir(movs)`; modo `'aura'`, la mueve un `player.seat` fijo y la cámara
-    `cam.cine` (tomas por paso: `toma`/`objetivo`; `game/camera.js` se desliza hacia ellas).
+    `cam.cine` (tomas por paso: `toma`/`objetivo`; `game/camera.js` se desliza hacia ellas). Cada movimiento suyo es
+    un Código Aura (`retoAura`): `ui/codigoAura.js` muestra la ventana y el criptex (evento `'aura'`) y responde con
+    `responderCodigo`; acertar: `efectoAura` (`engine/efectoAura.js`) + `camaraLenta` + toma 'lenta'.
   - Zonas: el lugar hace `addZone({ id, x, z, r, label })` y quien sabe qué hacer registra `onZoneAction(id, fn)`.
     Con `opciones: [{ id, label }, …]` el HUD muestra un botón por opción (`#btnAction2`) y la acción recibe
     `fn(zona, opcion)` (tobogán y columpio: 'sentada' / 'de_pie').
@@ -108,6 +110,8 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
   transparencia, "Diferencia", reflejar, recortes por hoja (`RECORTES`: frontal, lateral, cabeza, cabeza de lado),
   mover arrastrando y agrandar con la rueda (botón 🖐 o Mayús), "Alinear con 4 toques", líneas guía, cargar otra
   imagen. El ajuste se guarda en el navegador por hoja. Tecla P: ocultar el panel.
+- `src/debug/criptex.html` — prototipo del criptex del "Código Aura" (sólo `npm run dev`): `ui/criptex3d.js` (criptex
+  3D colgado de la cámara) y `game/palabras.js` (palabras, sílabas, emoji provisorio, "parecidas" = distractores).
 - `tests/` — Playwright: humo, lugares (con los ganchos), manejo (joystick con el mouse real), guardado, vestidor,
   capturas de referencia (`tests/capturas/`), sin red.
   Checklist manual en `tests/checklist_manual.md`.

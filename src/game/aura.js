@@ -20,6 +20,8 @@ import { PERSONAJES } from '../characters/catalog/personajes.js';
 import { cam, player } from './actors.js';
 import { standUp } from './player.js';
 import { enterMenu, leaveMenu } from './modes.js';
+import { nuevoCodigo, revisar } from './codigoAura.js';
+import { efectoAura } from '../engine/efectoAura.js';
 
 /* ---------- jurado, público y concursantes ---------- */
 const sentados = [], concursantes = [], RESERVA = 6, reserva = [];
@@ -50,21 +52,31 @@ function crearPublico(looks) {
 }
 // sólo se anima a quien se ve (cullAvatars los esconde lejos o fuera de la cámara)
 function updatePublico(dt) {
+  // cámara lenta (al acertar un código o al ganar): todo el escenario va más despacio, y vuelve suave
+  lento += ((lentoHasta > 0 ? LENTO : 1) - lento) * Math.min(1, dt * 6);
+  lentoHasta = Math.max(0, lentoHasta - dt);
+  if (J) J.ch.mixer.timeScale = lento;   // (a la jugadora la anima game/player.js, con el tiempo normal)
+  const dl = dt * lento;
   if (show) avanzar(dt * velocidad);
   // si se anotó para competir, le toca apenas termina la que está en curso (si está cerca y jugando)
   else if (inscrita && state.mode === 'play' && cerca()) abrirEleccion();
   // si la jugadora sigue sentada en las graderías, después de un descanso viene otra competencia (con otros vecinos)
   else if (descanso > 0 && (descanso -= dt * velocidad) <= 0 && ESCENARIO.gradas.ocupado) empezarCompetencia();
   if (cam.cine === cine) actualizarCamara(dt);
-  for (const c of sentados) if (c.model.visible) updateAvatar(c, dt, 0, null);
+  for (const c of sentados) if (c.model.visible) updateAvatar(c, dl, 0, null);
   for (const q of concursantes) {
     if (q.fuera) continue;   // (su lugar lo ocupa la jugadora)
     q.ch.root.position.set(q.x, sueloEn(q.x, q.z), q.z); q.ch.root.rotation.y = q.facing;
-    if (q.ch.model.visible || show) updateAvatar(q.ch, dt * velocidad, q.vel, q.cara || null);
+    if (q.ch.model.visible || show) updateAvatar(q.ch, dl * velocidad, q.vel, q.cara || null);
   }
+  for (let i = auras.length - 1; i >= 0; i--) if (!auras[i].update(dl)) auras.splice(i, 1);
   globos.forEach(g => { g.t -= dt * velocidad; if (g.t <= 0) g.c.root.remove(g.s); });
   for (let i = globos.length - 1; i >= 0; i--) if (globos[i].t <= 0) globos.splice(i, 1);
 }
+// cámara lenta: `LENTO` es la velocidad (0,3 = 30 %); dura `seg` segundos de verdad
+const LENTO = 0.3, auras = [];
+let lento = 1, lentoHasta = 0;
+function camaraLenta(seg) { lentoHasta = seg; }
 
 // un globo de diálogo sobre la cabeza (más abajo si está sentado), por unos segundos
 const globos = [];
@@ -166,13 +178,70 @@ const puntuar = movs => movs.map(() => 6 + Math.round(Math.random() * 4));
 const total = t => t.puntos.reduce((a, b) => a + b, 0);
 // con la jugadora: qué toma de cámara va en cada paso (`toma`: un nombre, o una función del avance del paso)
 const con = (paso, toma, objetivo) => Object.assign(paso, { toma, objetivo });
-// sus movimientos se ven de cerca: de frente, desde abajo, girando alrededor, de costado
-const TOMAS_BAILE = [u => (u < 0.5 ? 'cerca' : 'abajo'), () => 'orbita', u => (u < 0.5 ? 'abajo' : 'lado')];
+
+/* ---------- el Código Aura: en cada movimiento de la jugadora ---------- */
+// Mientras baila (en bucle), aparece un código de 3 palabras y el criptex (ui/codigoAura.js, con el evento 'aura':
+// 'codigo', 'reloj', 'acierto', 'error', 'tiempo', 'cerrar'); responde con responderCodigo(ids). Acertar: el aura sube
+// por ella (dorada si fue rápido), cámara lenta girando a su alrededor, y más puntos. Si se acaba el tiempo, se muestra
+// la respuesta y el movimiento vale lo base. Puntos del movimiento (como los de los vecinos, de 6 a 10): 5 base, +3 si
+// acierta, +2 si acierta al primer intento con más de la mitad del tiempo (+1 si le sobra algo).
+const TIEMPO_CODIGO = 30, FIGURAS = 4;
+let reto = null;
+function retoAura(t, r) {
+  const { q, k } = t, id = t.movs[r];
+  const paso = {
+    dur: Infinity,   // hasta que acierta o se acaba el tiempo; después, lo que dure el festejo
+    toma: () => (reto && reto.lento ? 'lenta' : 'reto'), objetivo: q,
+    inicio() {
+      avatarDo(q.ch, id, { loop: true, stopOnMove: false });
+      ESCENARIO.medidor.activo = k;
+      const codigo = nuevoCodigo({ figuras: FIGURAS });
+      reto = { codigo, quedan: TIEMPO_CODIGO, intentos: 0, fin: false, lento: false, t, r, paso, antes: ESCENARIO.medidor.niveles[k] };
+      emit('aura', { que: 'codigo', palabras: codigo.palabras, anillos: codigo.anillos, tiempo: TIEMPO_CODIGO });
+    },
+    cada(dt) {
+      if (!reto || reto.paso !== paso || reto.fin) return;
+      reto.quedan -= dt;
+      emit('aura', { que: 'reloj', quedan: Math.max(0, reto.quedan), total: TIEMPO_CODIGO });
+      if (reto.quedan <= 0) terminarReto(false);
+    },
+    fin() { avatarStop(q.ch); emit('aura', { que: 'cerrar' }); reto = null; },
+  };
+  return paso;
+}
+// la respuesta del criptex (o de las pruebas): ids de las figuras elegidas, en orden
+function responderCodigo(ids) {
+  if (!reto || reto.fin) return;
+  reto.intentos++;
+  const res = revisar(reto.codigo, ids);
+  if (res.every(Boolean)) terminarReto(true);
+  else { emit('aura', { que: 'error', res }); emit('sonido', 'bonk'); }
+}
+function terminarReto(acerto) {
+  const R = reto, { t, r, paso } = R, S = show;
+  R.fin = true;
+  const rapido = acerto && R.intentos === 1 && R.quedan > TIEMPO_CODIGO / 2;
+  const extra = acerto ? 3 + (R.intentos === 1 ? (rapido ? 2 : R.quedan > 0 ? 1 : 0) : 0) : 0;
+  t.puntos[r] = 5 + extra;
+  ESCENARIO.medidor.niveles[t.k] = R.antes + t.puntos[r] / 30;
+  if (acerto) {
+    emit('aura', { que: 'acierto', puntos: `+${t.puntos[r] * 100} pts` });
+    emit('sonido', 'adopt');
+    auras.push(efectoAura(t.q.ch.root, { color: rapido ? 'dorado' : 'celeste', alto: 3.2 }));
+    R.lento = true; camaraLenta(3.2);
+    if (Math.random() < 0.9) decir(pick(sentados.slice(3)), pick(GRITOS), 2.5, true);
+    paso.dur = S.t + 4.2;    // festejo: el criptex se abre con el hechizo y los puntos (~3,6 s)
+  } else {
+    emit('aura', { que: 'tiempo', correctas: R.codigo.palabras.map(p => p.id) });
+    paso.dur = S.t + 3;      // ver la respuesta
+  }
+}
 
 // La competencia en sí (para vecinos o con la jugadora): presentación, tres rondas por turnos (uno pasa al centro,
 // hace un movimiento y vuelve a su lugar; después el otro), las notas del jurado y quién gana. Agrega los pasos a `pasos`.
+// Los puntos de la jugadora se saben recién al terminar cada código: las notas y quién gana se calculan al votar.
 function competir2(turnos, pasos, J) {
-  if (total(turnos[0]) === total(turnos[1])) turnos[1].puntos[2] += turnos[1].puntos[2] < 10 ? 1 : -1;
+  if (!J && total(turnos[0]) === total(turnos[1])) turnos[1].puntos[2] += turnos[1].puntos[2] < 10 ? 1 : -1;
   const C = ESCENARIO.centro;
   ESCENARIO.medidor = { niveles: [0, 0], activo: -1 };
   pasos.push(con(esperar(2.5, () => {
@@ -184,34 +253,46 @@ function competir2(turnos, pasos, J) {
       const { q, k } = t, mia = q === J;
       pasos.push(con(esperar(0.8, () => emit('aviso', `✨ Ronda ${r + 1}: le toca a ${mia ? `ti (${q.nombre})` : q.nombre}`)), 'general'));
       pasos.push(con(caminar(q, C.x, C.z), mia ? 'cerca' : 'general', q), con(girar(q, C.mira, 0.4), mia ? 'cerca' : 'general', q));
-      pasos.push(con(bailar(q, t.movs[r], k, t.puntos[r]), mia ? TOMAS_BAILE[r] : 'general', q));
+      pasos.push(mia ? retoAura(t, r) : con(bailar(q, t.movs[r], k, t.puntos[r]), 'general', q));
       if (r === 2) pasos.push(con(esperar(0.6, () => { avatarDo(q.ch, 'wave', { start: 0.1, stopOnMove: false }); decir(q.ch, '¡Gracias!', 1.5); }), mia ? 'cerca' : 'general', q));
       pasos.push(con(caminar(q, q.lado.x, q.lado.z), 'general'), con(girar(q, q.lado.mira, 0.4), 'general'));
     }
   }
   // el jurado: cada juez levanta su nota (cerca del puntaje de cada uno, del 5 al 10)
-  const notas = turnos.map(t => sentados.slice(0, 3).map(() => Math.max(5, Math.min(10, Math.round(total(t) / 3 + (Math.random() * 2 - 1))))));
-  pasos.push(con(esperar(1.5, () => { ESCENARIO.medidor.activo = -1; emit('aviso', '🧑‍⚖️ ¡El jurado está votando!'); }), 'jurado'));
+  const res = { notas: null, suma: null, G: null, P: null };
+  pasos.push(con(esperar(1.5, () => {
+    ESCENARIO.medidor.activo = -1; emit('aviso', '🧑‍⚖️ ¡El jurado está votando!');
+    res.notas = turnos.map(t => sentados.slice(0, 3).map(() => Math.max(5, Math.min(10, Math.round(total(t) / 3 + (Math.random() * 2 - 1))))));
+    res.suma = res.notas.map(ns => ns.reduce((a, b) => a + b, 0));
+    // si el jurado empata, gana quien tiene más aura en la pantalla (y si también empatan, la jugadora)
+    const gana = res.suma[0] !== res.suma[1] ? (res.suma[0] > res.suma[1] ? 0 : 1)
+      : total(turnos[0]) !== total(turnos[1]) ? (total(turnos[0]) > total(turnos[1]) ? 0 : 1) : turnos.findIndex(t => t.q === J) >= 0 ? turnos.findIndex(t => t.q === J) : 0;
+    res.gana = gana; res.G = turnos[gana].q; res.P = turnos[1 - gana].q;
+  }), 'jurado'));
   // (en el globo sólo la nota, para que no se tapen; para quién es lo dice el aviso)
   turnos.forEach((t, n) => pasos.push(con(esperar(3, () => {
-    sentados.slice(0, 3).forEach((j, i) => decir(j, `⭐ ${notas[n][i]}`, 2.8, true));
-    emit('aviso', `🧑‍⚖️ Notas para ${t.q.nombre}: ${notas[n].join(' · ')}`);
+    sentados.slice(0, 3).forEach((j, i) => decir(j, `⭐ ${res.notas[n][i]}`, 2.8, true));
+    emit('aviso', `🧑‍⚖️ Notas para ${t.q.nombre}: ${res.notas[n].join(' · ')}`);
     emit('sonido', 'pop');
   }), 'jurado')));
-  const suma = notas.map(ns => ns.reduce((a, b) => a + b, 0));
-  // si el jurado empata, gana quien tiene más aura en la pantalla
-  const gana = suma[0] !== suma[1] ? (suma[0] > suma[1] ? 0 : 1) : (total(turnos[0]) > total(turnos[1]) ? 0 : 1);
-  const G = turnos[gana].q, P = turnos[1 - gana].q;
-  pasos.push(con(esperar(4, () => {
+  // quién gana: si es la jugadora, en cámara lenta girando a su alrededor y con su aura dorada
+  const anuncio = con(esperar(4, () => {
+    const { G, P, suma, gana } = res;
     emit('aviso', G === J ? `🏆 ¡Ganaste! ${suma[gana]} puntos contra ${suma[1 - gana]} de ${P.nombre}`
       : `🏆 ¡Gana ${G.nombre} con ${suma[gana]} puntos! (${P.nombre}: ${suma[1 - gana]})`);
     emit('sonido', 'adopt');
     avatarDo(G.ch, 'spin', { stopOnMove: false }); decir(G.ch, '🏆 ¡Gané!', 3.5); G.cara = 'feliz';
     avatarDo(P.ch, 'wave', { start: 0.1, stopOnMove: false }); decir(P.ch, '¡Bien jugado!', 3);
     sentados.slice(3).forEach((c, i) => { if (i % 2 === 0) decir(c, pick(GRITOS), 3, true); });
-  }), 'ganador', G));
-  pasos.push(esperar(0.1, () => { G.cara = null; }));
-  return { ganador: G.nombre, notas: suma };
+    anuncio.objetivo = G;
+    if (G === J) {
+      anuncio.dur = 5.5; anuncio.toma = 'lenta';
+      camaraLenta(4.2); auras.push(efectoAura(J.ch.root, { color: 'dorado', alto: 3.6 }));
+    }
+  }), 'ganador');
+  pasos.push(anuncio);
+  pasos.push(esperar(0.1, () => { res.G.cara = null; }));
+  return res;
 }
 
 // una competencia entre los dos vecinos que están en la tarima (si ya compitieron, primero llegan otros dos)
@@ -226,7 +307,7 @@ function empezarCompetencia() {
     const movs = [...BAILES].sort(() => Math.random() - 0.5).slice(0, 3);
     return { q, k, movs, puntos: puntuar(movs) };
   });
-  show = { pasos, i: -1, t: 0, ...competir2(turnos, pasos) };
+  show = { pasos, i: -1, t: 0, res: competir2(turnos, pasos) };
 }
 
 /* ---------- la jugadora compite ---------- */
@@ -290,10 +371,11 @@ function competir(movs) {
   pasos.push(con(juntos(girar(q0, q0.lado.mira, 0.5), girar(J, F.mira, 0.4)), 'general'));
   pasos.push(esperar(0.1, () => terminarJugadora()));
   hechas++;
-  show = { pasos, i: -1, t: 0, jugadora: true, ...info };
+  show = { pasos, i: -1, t: 0, jugadora: true, res: info };
 }
 function terminarJugadora() {
   player.pos.set(J.x, 0, J.z); player.facing = J.facing; player.seat = null; player.vel.set(0, 0, 0);
+  J.ch.mixer.timeScale = 1; lentoHasta = 0;
   J = null; cam.cine = null;
   leaveMenu();
 }
@@ -323,9 +405,17 @@ function actualizarCamara(dt) {
   else if (cine.toma === 'abajo') poner(2.1, -0.6, 0.28, 1.5);                  // desde el suelo de la tarima, mirando hacia arriba
   else if (cine.toma === 'lado') poner(0.7, 2.7, 1.2, 1.1);
   else if (cine.toma === 'ganador') poner(3.2, 0.8, 1.7, 1.2);
+  else if (cine.toma === 'reto') poner(2.35, 0.55, 0.28, 1.5, 3);              // el Código Aura: desde abajo, el criptex delante
   else if (cine.toma === 'orbita') {                                           // girando alrededor
     const a = f + cine.t * 0.55, r = 3.0;
     cine.pos.set(q.x + Math.sin(a) * r, y + 1.9, q.z + Math.cos(a) * r); cine.look.set(q.x, y + 1.0, q.z); cine.k = 4;
+  } else if (cine.toma === 'lenta') {
+    // cámara lenta, como en los juegos 3D de Nintendo: parte baja y cerca, por un costado, y barre lento por delante
+    // hasta el otro costado mientras sube y se aleja un poco, siguiendo el aura (sin pasar por detrás)
+    const u = Math.min(1, cine.t / 4), e = u * u * (3 - 2 * u);
+    const a = f - 1.1 + e * 2.2, r = 2.3 + e * 0.8;
+    cine.pos.set(q.x + Math.sin(a) * r, y + 0.35 + e * 1.4, q.z + Math.cos(a) * r);
+    cine.look.set(q.x, y + 1.15 + e * 0.25, q.z); cine.k = 5;
   }
 }
 
@@ -355,6 +445,10 @@ const competencia = {
   hechas: () => hechas,
   jugando: () => !!J,
   toma: () => (cam.cine ? cine.toma : null),
+  // el Código Aura en curso: las ids correctas (o null), y responder como si fuera el criptex
+  codigo: () => (reto && !reto.fin ? reto.codigo.palabras.map(p => p.id) : null),
+  responder: responderCodigo,
+  lento: () => lento,
   concursantes: () => concursantes.map(q => ({ nombre: q.nombre, anim: q.ch.sp && q.ch.sp.name, x: q.x, z: q.z, id: q.ch.root.uuid })),
   rapido(v) { velocidad = v; },
 };
@@ -410,4 +504,4 @@ function pistasEscenario(desde, mira) {
   return pistas;
 }
 
-export { cancelarCompetir, competencia, competir, crearPublico, lookPublico, pistasEscenario, updatePublico };
+export { cancelarCompetir, competencia, competir, crearPublico, lookPublico, pistasEscenario, responderCodigo, updatePublico };

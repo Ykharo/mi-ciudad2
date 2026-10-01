@@ -38,6 +38,10 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
   dos vecinos. Su mascota se sienta a su lado en las graderías. **La jugadora compite**: "😎 Competir" delante de la
   tarima (se anota si hay una en curso), elige 3 movimientos en una ventana y compite contra un vecino, por ahora
   automático, con cámaras de cerca, desde abajo y girando. 91/91 en Chromium.
+- **Código Aura en la competencia (sin commit)**: en cada movimiento de la jugadora, un código de 3 palabras y el
+  criptex 3D (`ui/criptex3d.js`, `ui/codigoAura.js`, `game/codigoAura.js`); acertar da aura, puntos y cámara lenta;
+  ganar, cámara lenta con aura dorada. El prototipo sigue en `src/debug/criptex.html`. Falta: probar en el iPad,
+  el set de imágenes propio, la dificultad que se ajusta sola y el botón 🔊 de ayuda.
 
 **Competencia de aura (plan por etapas)**
 - A. El lugar ✅.

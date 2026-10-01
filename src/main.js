@@ -62,6 +62,7 @@ import { MAX_PETS, updatePreview } from './ui/panels/pets.js';
 import { refreshTT } from './ui/panels/shop.js';
 import './ui/panels/wardrobe.js';
 import './ui/panels/aura.js';
+import './ui/codigoAura.js';
 import { mostrarPersonajes } from './ui/personajes.js';
 import { installTestHooks } from './debug/hooks.js';
 

@@ -5,6 +5,66 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## El Código Aura en la competencia, con cámara lenta (01-10-2026)
+
+- Pedido: llevar el criptex y el aura al juego, con movimientos de cámara en cámara lenta "tipo Nintendo" al ganar.
+- Cada uno de los 3 movimientos de la jugadora es ahora un **reto** (`retoAura` en `game/aura.js`): baila en bucle
+  mientras aparecen el código (3 palabras, 4 figuras por anillo, 30 s) y el criptex; el paso dura hasta que acierta o
+  se acaba el tiempo (+ el festejo). Los vecinos siguen como antes.
+  - `game/codigoAura.js` (sin DOM): `nuevoCodigo({ figuras, azar })` y `revisar`; también lo usa el prototipo.
+  - `ui/codigoAura.js`: la ventana `#codigoAura` (index.html + juego.css: palabras alineadas con los anillos, tiempo
+    debajo; mientras está, no se muestra el aviso de arriba) y el criptex colgado de la cámara del juego (se agrega la
+    cámara a la escena). Evento `'aura'`: `codigo`, `reloj`, `error`, `acierto`, `tiempo`, `cerrar`; la respuesta vuelve
+    con `responderCodigo(ids)`.
+  - Puntos del movimiento: 5 base; +3 si acierta; +2 si es al primer intento con más de la mitad del tiempo (+1 con
+    menos). Se muestran ×100 ("+1000 pts"). Las notas del jurado y quién gana se calculan al votar (antes, al armar la
+    competencia). Si empatan en todo, gana la jugadora.
+  - **Acierto**: aura sobre ella (dorada si fue rápido), el criptex se abre con "AURA" y los puntos, un grito del
+    público y **cámara lenta** (`camaraLenta`: el escenario al 30 % durante 3,2 s y vuelve suave; a la jugadora vía
+    `mixer.timeScale`, y las auras también) con la toma **'lenta'**: baja y cerca por un costado, barre por delante
+    hasta el otro costado mientras sube y se aleja (antes terminaba detrás de ella). **Ganar la competencia**: lo mismo
+    con su aura dorada mientras hace el spin (4,2 s).
+  - Toma **'reto'** mientras lee: desde abajo, el criptex delante (como en el prototipo).
+- "AURA" pasó a fundido normal con borde morado (sobre la luz del aura, el aditivo quedaba blanco e ilegible).
+- Ganchos: `competencia.codigo()`, `responder(ids)`, `lento()`. La prueba de competir ahora contesta los 3 códigos
+  (uno con un error primero) y revisa la ventana, la cámara lenta y las tomas. Chromium (dev y web): **91/91**.
+
+## Prototipo del criptex del "Código Aura" (01-10-2026)
+
+- Propuesta aceptada en lo general: mientras la jugadora compite, un código de 3 palabras (lectura de palabras de 3
+  sílabas o más) y un criptex donde elegir sus figuras en orden; acertar da un aura y puntos extra. Pedido: criptex
+  **3D hexagonal de cristal mágico**, flotando delante de la cámara; las palabras en una ventana 2D sobria y
+  semitransparente. Por ahora sólo el prototipo (no está en el juego).
+- `ui/criptex3d.js` (`crearCriptex`): 3 prismas hexagonales en un eje (6 caras = hasta 6 figuras; las que sobran
+  llevan una runa), entre separadores y tapas doradas con puntas; va **colgado de la cámara** (siempre abajo al centro,
+  escalado al ancho y alto de la pantalla). Cristal simulado (violeta semitransparente con brillo que late, halo
+  aditivo, aristas claras, reflejo que cruza el marco, chispitas que suben); las figuras opacas sobre medallones claros.
+  Flota (sube, baja y se mece) y se calma mientras se gira. Se gira arrastrando con el dedo (con inercia y encaje con
+  rebote) o tocando arriba/abajo del anillo; teclado ←→ ↑↓ y Enter. La gema "¡Aura!" confirma. `marcar` (aristas
+  verdes fijas / rojas que tiemblan), `abrir` (los anillos dan una vuelta uno tras otro, brilla y desaparece).
+  Imágenes: `img` (la propia, cuando exista) o el emoji dibujado en un canvas.
+- `game/palabras.js`: 69 palabras con sílabas, emoji provisorio y "parecidas" (los distractores de su anillo, que
+  empiezan igual: canguro → cangrejo, caracol, camello).
+- `src/debug/criptex.html` + `criptex.js` (sólo `npm run dev`): Nina baila en una tarima, cámara desde abajo / de frente
+  / girando, la ventana del código (palabras alineadas con los anillos, sílabas opcionales) y el tiempo (anillo
+  semitransparente, naranja los últimos 5 s). Acertar abre el criptex y trae otro código; un error marca el anillo y la
+  palabra en rojo; sin tiempo, los anillos giran a la respuesta. `?toma=&figuras=3..6&silabas=1&tiempo=&semilla=`.
+- Revisado en tablet (horizontal y vertical) y teléfono: en el teléfono queda chico. Chromium: 91/91 (el juego no cambia).
+- Ajustes pedidos: al acertar, antes de que se vaya el criptex, aparece **"AURA" como hechizo** (letras luminosas con
+  degradado y resplandor, brillo aditivo; crece, sube y se desvanece) y después **los puntos** ("+800 pts", estilo
+  juegos 3D de Nintendo: amarillo-dorado con borde blanco y otro oscuro; entra con rebote y se va). Van colgados del
+  criptex (en la cámara), por encima de todo. Secuencia: anillos 0–0,9 s, AURA 0,5–2 s, puntos 1,7–3,3 s, el criptex
+  se va 3,2–3,6 s. `abrir(fin, '+800 pts')`; en la página de prueba los puntos son de ejemplo (según el tiempo que sobra).
+- Temporizador: más grande (86 px), **debajo** de la ventana del código, un **sector de círculo** que se achica con el
+  número al centro; naranja y parpadeando los últimos 5 s. Las palabras largas ya no achican la letra de las tres
+  (columnas de al menos 190 px, cada palabra con su tamaño, mínimo 26 px).
+- Se quitó el rótulo "¡Aura!" de la gema (la gema sigue confirmando). **Aura sobre el personaje** al acertar:
+  `engine/efectoAura.js` (`efectoAura(padre, { color, alto })`, se cuelga del grupo del personaje y `update(dt)`
+  devuelve false al terminar): columna de luz de dos capas que crece desde los pies, gira y con vetas que suben, un
+  anillo en el suelo que se expande con destello y 90 chispas en espiral; ~2,8 s. Dorada si acierta con más de la
+  mitad del tiempo, celeste si no. Primero quemaba al personaje en blanco (brillo aditivo con colores claros): ahora
+  colores saturados y oscuros, opacidades bajas y la capa de adentro más ancha y tenue.
+
 ## La jugadora compite en el Escenario del Aura (01-10-2026)
 
 - Pedido: al acercarse al escenario poder elegir participar; si hay una competencia en curso, que le toque al

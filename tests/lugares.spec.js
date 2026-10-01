@@ -305,7 +305,7 @@ test('competir: la ventana para elegir 3 movimientos, y cancelar', async ({ page
   await expect.poll(async () => (await C(page)).modo).toBe('play');
 });
 
-test('competir: elige 3 movimientos, los baila con cámaras de cerca y vuelve a jugar', async ({ page, jugar }) => {
+test('competir: en cada movimiento un Código Aura; acertar da aura y cámara lenta, y al final vuelve a jugar', async ({ page, jugar }) => {
   await jugar();
   await page.evaluate(() => window.__juego.competencia.rapido(4));
   await ir(page, ...COMPETIR);
@@ -314,17 +314,35 @@ test('competir: elige 3 movimientos, los baila con cámaras de cerca y vuelve a 
   await page.locator('#auraGo').click();
   await expect(page.locator('#auraPanel')).toBeHidden();
   const anims = new Set(), tomas = new Set();
-  let s;
-  for (let i = 0; i < 400; i++) {
+  let s, codigos = 0, errores = 0, lento = 1;
+  for (let i = 0; i < 600; i++) {
     s = await C(page);
     if (s.anim) anims.add(s.anim);
     if (s.toma) tomas.add(s.toma);
+    const cod = await page.evaluate(() => window.__juego.competencia.codigo());
+    if (cod) {
+      // la ventana con las 3 palabras y el criptex
+      await expect(page.locator('#codigoAura')).toBeVisible();
+      await expect(page.locator('#codigoAura .palabra').first()).toHaveText(/\S/);
+      codigos++;
+      if (codigos === 1 && !errores) {   // primero una respuesta mala: marca el error
+        errores++;
+        await page.evaluate(c => window.__juego.competencia.responder(['x', c[1], c[2]]), cod);
+        await expect(page.locator('#codigoAura .palabra.mal')).toHaveCount(1);
+      }
+      await page.evaluate(c => window.__juego.competencia.responder(c), cod);
+      await expect(page.locator('#codigoAura .msg')).toHaveText('✨ ¡Código correcto! ✨');
+      lento = Math.min(lento, ...await Promise.all([0, 1, 2].map(async () => { await page.waitForTimeout(150); return page.evaluate(() => window.__juego.competencia.lento()); })));
+    }
     if (i > 5 && !s.jugando) break;
     await page.waitForTimeout(100);
   }
   expect(s.jugando).toBe(false);
+  expect(codigos).toBe(3);
+  expect(lento).toBeLessThan(0.6);                                   // cámara lenta al acertar
   expect([...anims].filter(a => ['griddy', 'floss', 'sigma'].includes(a)).length).toBeGreaterThanOrEqual(2);
-  for (const t of ['general', 'cerca', 'abajo', 'orbita', 'jurado']) expect([...tomas]).toContain(t);
+  for (const t of ['general', 'cerca', 'reto', 'lenta', 'jurado']) expect([...tomas]).toContain(t);
+  await expect(page.locator('#codigoAura')).toBeHidden();
   await expect(page.locator('#toast')).toBeVisible();
   await expect.poll(async () => (await C(page)).modo).toBe('play');
   expect(await page.evaluate(() => window.__juego.player.seat)).toBeNull();

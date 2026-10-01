@@ -151,6 +151,30 @@ button:focus-visible{outline:4px solid var(--sky);outline-offset:3px;}
 #petPanel .opt.on{border-color:var(--mint);background:#EAFBF4;box-shadow:0 3px 0 #9DE8CF;}
 .opt:active{transform:translateY(2px);}
 #wardrobePanel .phead{background:var(--pink);}
+/* el Código Aura (ui/codigoAura.js): ventana sobria y semitransparente arriba, cada palabra sobre su anillo del
+   criptex; debajo, el tiempo (un sector de círculo que se achica, que parpadea los últimos 5 s). Mientras está, el aviso
+   de arriba no se muestra (quedaría encima). */
+#codigoAura{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);
+  background:rgba(28,18,62,.46);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border:2px solid rgba(255,255,255,.28);
+  border-radius:22px;padding:8px 0 12px;color:#fff;text-align:center;box-shadow:0 8px 30px rgba(20,10,50,.25);pointer-events:none;z-index:4;}
+#codigoAura[hidden]{display:none;}
+#codigoAura .titulo{font:800 12px/1 var(--body);letter-spacing:.28em;opacity:.75;margin-bottom:6px;}
+#codigoAura .palabras{display:flex;}
+#codigoAura .palabra{flex:1;font:800 38px/1.05 var(--body);letter-spacing:.02em;padding:0 6px;white-space:nowrap;
+  text-shadow:0 2px 8px rgba(120,80,255,.55);transition:color .2s;}
+#codigoAura .palabra.mal{color:#FF9AA8;}
+#codigoAura .palabra.bien{color:#9BFFC8;}
+#codigoAura .msg{font:800 20px/1.2 var(--display);margin-top:6px;}
+#codigoAura .msg:empty{display:none;}
+#codigoAura .tiempo{position:absolute;left:50%;top:calc(100% + 10px);transform:translateX(-50%);width:86px;height:86px;border-radius:50%;
+  background:rgba(28,18,62,.38);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);border:2px solid rgba(255,255,255,.28);box-sizing:border-box;}
+#codigoAura .sector{position:absolute;inset:5px;border-radius:50%;background:conic-gradient(rgba(255,255,255,.5) calc(var(--p,1) * 360deg),transparent 0);}
+#codigoAura .tiempo b{position:absolute;inset:0;display:grid;place-items:center;font:800 34px/1 var(--body);color:#fff;text-shadow:0 2px 6px rgba(40,20,90,.7);}
+#codigoAura .tiempo.apurado .sector{background:conic-gradient(rgba(255,170,90,.75) calc(var(--p,1) * 360deg),transparent 0);}
+#codigoAura .tiempo.apurado{animation:parpadeo .5s steps(1,end) infinite;}
+@keyframes parpadeo{50%{opacity:.25;}}
+#game.codigo #toast{display:none;}
+@media (max-width:760px){#codigoAura .palabra{font-size:28px;} #codigoAura .tiempo{width:64px;height:64px;} #codigoAura .tiempo b{font-size:26px;}}
 /* la ventana para elegir los 3 movimientos de la competencia de aura: cada elegido muestra su número */
 #auraPanel .phead{background:#9B6BF0;}
 #auraPanel .opt{position:relative;}
