@@ -5,6 +5,17 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Mascotienda como tienda de verdad: cajas con imagen y precio (02-10-2026)
+
+- Los productos de los estantes son cajas de colores (`productos` en `world/places/mascotienda.js`): una por cada
+  artículo del catálogo, del tamaño de su sección (`CAJA`: pociones altas y angostas, transporte y hogar grandes,
+  trucos delgadas como libros), 2 o 3 iguales lado a lado (y una encima si son bajitas), con su ícono, su nombre y una
+  franja arcoíris al frente, y la etiqueta amarilla con el precio en el borde de la repisa.
+- Todas las etiquetas en un atlas (un canvas, 12 por fila) y todas las cajas de un mueble en una sola malla: una
+  llamada de dibujo por mueble.
+- Pasillos: detrás del mueble de Transporte, Trucos (naranjo); detrás del de Ropa, Hogar (verde menta); los
+  compañeros, con los juguetes. Trucos y Hogar con su cartel colgado y su zona ("🎉 Mirar trucos", "🏡 Mirar hogar").
+
 ## Estantes de la Mascotienda con productos a la vista (02-10-2026)
 
 - Los estantes de la sala (`estante` en `world/places/mascotienda.js`) eran un bloque macizo: las cosas de cada repisa
