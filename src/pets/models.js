@@ -11,6 +11,21 @@ const PET_KINDS = [{ id: 'perro', name: 'Perrito', ic: '🐶' }, { id: 'gato', n
 const PET_COLORS = ['#F5E6D3', '#E9B77A', '#C98B4F', '#6B4A35', '#34313F', '#FFFFFF', '#B9B9CC', '#FFB8D6', '#BFD8FF'];
 const PET_NAMES = ['Toby', 'Luna', 'Nube', 'Coco', 'Maní', 'Bombón', 'Estrella', 'Galleta', 'Pelusa', 'Canela', 'Copito', 'Chispa', 'Frutilla', 'Algodón'];
 
+// Mapa de anclajes de cada especie: dónde va cada cosa que se le pone a una mascota (pets/extras.js: alitas, mochilas,
+// capas, monturas, cohetes, collares, sombreros…). Coordenadas en metros, en el espacio del cuerpo (x a la izquierda o
+// derecha, y arriba desde el suelo, z hacia adelante), salvo `cabeza`, que va en el espacio de la cabeza (sigue sus
+// giros). Se hicieron con las medidas de buildPet: si cambia una forma, revisar sus anclajes.
+//   espalda  sobre los hombros (alas, mochila, cohete)      lomo   el centro del lomo (montura, capa)
+//   cuello   collar, bufanda                                cabeza lo alto de la cabeza (sombrero, corona)
+//   cola     el nacimiento de la cola
+//   medidas: ancho y largo del cuerpo, y `alto` (el lomo sobre el suelo) para calzar cosas alrededor
+export const ANCLAJES = {
+  perro: { espalda: [0, 0.65, 0.1], lomo: [0, 0.65, -0.05], cuello: [0, 0.62, 0.24], cabeza: [0, 0.27, 0], cola: [0, 0.58, -0.32], ancho: 0.44, largo: 0.66, alto: 0.65 },
+  gato: { espalda: [0, 0.59, 0.08], lomo: [0, 0.59, -0.04], cuello: [0, 0.6, 0.2], cabeza: [0, 0.25, 0], cola: [0, 0.5, -0.3], ancho: 0.36, largo: 0.6, alto: 0.59 },
+  conejo: { espalda: [0, 0.6, 0.02], lomo: [0, 0.6, -0.06], cuello: [0, 0.56, 0.14], cabeza: [0, 0.22, 0], cola: [0, 0.38, -0.33], ancho: 0.54, largo: 0.66, alto: 0.6 },
+  unicornio: { espalda: [0, 0.89, 0.12], lomo: [0, 0.89, -0.08], cuello: [0, 1.0, 0.32], cabeza: [0, 0.14, 0.04], cola: [0, 0.82, -0.38], ancho: 0.42, largo: 0.74, alto: 0.89 },
+};
+
 function buildPet(kind, color) {
   const P = { kind, color, root: new THREE.Group(), body: new THREE.Group(), legs: [], tail: null, head: null, phase: 0, disposables: [] };
   P.root.add(P.body);
@@ -69,6 +84,13 @@ function buildPet(kind, color) {
   }
   B.add(head);
   [B, head, P.tail, ...P.legs].forEach(g => mergeChildren(g).forEach(m => P.disposables.push(m.geometry)));
+  // los anclajes: objetos vacíos colgados del cuerpo (y de la cabeza): se mueven con él al caminar, saltar y sentarse
+  const A = ANCLAJES[kind] || ANCLAJES.perro;
+  P.anclas = {};
+  for (const id of ['espalda', 'lomo', 'cuello', 'cabeza', 'cola']) {
+    const o = new THREE.Object3D(); o.position.set(...A[id]); (id === 'cabeza' ? head : B).add(o); P.anclas[id] = o;
+  }
+  P.medidas = A;
   P.labelY = kind === 'unicornio' ? 1.75 : 1.2;
   return P;
 }
@@ -79,7 +101,10 @@ function setPetName(P, name) {
 function disposePet(P) { scene.remove(P.root); P.disposables.forEach(g => g.dispose()); }
 // `sentada`: se sienta (quieta, esperando): el cuerpo se inclina con la cola abajo, las patas de adelante quedan
 // derechas y las de atrás se doblan hacia adelante. Pasa de una pose a la otra suavemente (P.sit, 0…1).
+// (`P.siempreSentada`: va sentada aunque se mueva —en la burbuja, en la canasta del globo—: pets/extras.js)
 function animatePet(P, t, speed01, dt, sentada = false) {
+  const vel = speed01;
+  if (P.siempreSentada) { sentada = true; speed01 = 0; }
   const hop = speed01 > 0.05;
   P.phase += dt * (hop ? 9 + Math.min(speed01, 3) * 5 : 0);
   const k = P.kind === 'conejo' ? 1.7 : 1;
@@ -92,9 +117,9 @@ function animatePet(P, t, speed01, dt, sentada = false) {
     l.rotation.x = anda * (1 - s) + (i > 1 ? incl : P.kind === 'conejo' ? 0 : -1.0) * s;   // (0 y 1: las de atrás; el conejo ya va sentado)
   });
   if (P.head) P.head.rotation.x = incl * 0.7 * s;   // la cabeza mira adelante aunque el cuerpo se incline
-  if (P.extrasUpdate) P.extrasUpdate(t, dt, speed01);   // artículos de la Mascotienda (pets/extras.js)
+  if (P.extrasUpdate) P.extrasUpdate(t, dt, vel);   // artículos de la Mascotienda (pets/extras.js)
   if (P.tail) P.tail.rotation.z = Math.sin(t * (hop ? 16 : 7)) * (P.kind === 'conejo' ? 0.2 : 0.45);
   if (P.head) P.head.rotation.y = hop ? 0 : Math.sin(t * 0.9 + P.phase) * 0.28;
 }
 
-export { PET_COLORS, PET_KINDS, PET_NAMES, animatePet, buildPet, disposePet, setPetName };
+export { PET_COLORS, PET_KINDS, PET_NAMES, animatePet, buildPet, disposePet, setPetName };   // (y ANCLAJES, arriba)

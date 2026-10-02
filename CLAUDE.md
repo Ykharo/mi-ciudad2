@@ -175,6 +175,8 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
 - Mascotienda Arcoíris: `world/places/mascotienda.js` (fachada + sala de adentro lejos del mapa, `addInterior`),
   `game/mascotienda.js` (entrar/salir, comprar, ponerse; `player.articulos`, `p.extras`), `ui/panels/mascotienda.js`,
   artículos en `pets/catalog/articulos.js` y sus efectos en `pets/extras.js` (`ponerExtras(P, { transporte, arcoiris })`).
+  Lo que se pone a una mascota se calza con el **mapa de anclajes** (`ANCLAJES` en `pets/models.js`: espalda, lomo,
+  cuello, cabeza, cola + medidas; `P.anclas.*` son Object3D que siguen al cuerpo). Usarlo para capas, monturas, cohetes.
 - Guardado en `localStorage` con clave `ciudadArcoiris.v2`: `{ version: 2, jugador, nina: { look }, personajes, pets (con extras), cars, shop, huesitos, mascotienda: { comprados } }`
   (`game/save.js`). Una partida `ciudadArcoiris.v1` se migra al cargar y la clave v1 no se borra. Envolver en try/catch.
   Todo lo guardado se valida al cargar (`fixLook`, `fixCarSpec`, tipos de mascota).

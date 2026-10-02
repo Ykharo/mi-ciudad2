@@ -5,6 +5,26 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Mascotienda: cámaras, burbuja, globo, alitas y mapa de anclajes de las mascotas (01-10-2026)
+
+- Pedidos: la cámara del probador y la de Robi a veces quedaban tapadas (el biombo, una pared); la burbuja con la
+  mascota sentada y más grande; el globo con la mascota sentada en la canasta, más grande y alto, y una cuerda que lleva
+  Nina; las alas de mariposa bien puestas en la espalda de cualquier mascota caminando, con un mapa de coordenadas
+  (servirá para capas, monturas, alas, cohetes…).
+- **Mapa de anclajes** (`ANCLAJES` en `pets/models.js`): por especie, `espalda`, `lomo`, `cuello`, `cola` (en el espacio
+  del cuerpo) y `cabeza` (en el de la cabeza), más `ancho`, `largo` y `alto`. `buildPet` cuelga un `Object3D` en cada
+  uno (`P.anclas.espalda`…, `P.medidas`): se mueven con el cuerpo al caminar, saltar y sentarse.
+- `pets/extras.js` rehecho sobre los anclajes: **alitas** de hada en `espalda` (dos pares, rosado y celeste; a lo largo
+  del lomo, abiertas en V hacia los lados, del tamaño del largo de la mascota; aletean abriéndose y cerrándose: las
+  primeras, horizontales y en el plano equivocado, no se veían); **burbuja** grande (radio ~ largo/alto + 12 cm) con
+  dos brillos, la mascota **sentada** adentro (`P.siempreSentada`: `animatePet` la sienta aunque se mueva); **globo**:
+  canasta abierta con borde y fondo a 1,6 m, la mascota sentada adentro, globo de 95 cm con 12 gajos ~1,5 m más arriba,
+  4 cuerdas, y **la cuerda hasta la mano izquierda de Nina** (`P.mano`, que pone `game/mascotienda.js`; un tubo curvo que
+  cuelga un poco); patines igual.
+- Cámara de la ventana: mira desde el centro de la sala (la de Robi quedaba detrás de la pared del fondo); el probador
+  tiene su propio ángulo (`vista` en la zona: desde el pasillo de enfrente; con el centro la tapaba un estante).
+- Pruebas: la de la Mascotienda; capturas regeneradas (los anclajes nuevos mueven a dos vecinos).
+
 ## TEMPORAL: 1000 Huesitos de regalo para probar la Mascotienda (01-10-2026)
 
 - Pedido: agregar temporalmente 1000 Huesitos para comprar y ver los artículos ("es sólo algo temporal, en el juego hay

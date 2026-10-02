@@ -80,6 +80,10 @@ onZoneAction('mascotienda_salir', () => llevarA(MASCOTIENDA.afuera, MASCOTIENDA.
 onZoneAction('mascotienda', z => {
   if (state.mode !== 'play') return;
   enterMenu('mascotienda');
+  // la cámara de la ventana mira desde el centro de la sala (así no la tapan la pared del fondo ni el biombo del
+  // probador), y Nina mira hacia ella
+  const S = MASCOTIENDA.sala, yaw = z.vista !== undefined ? z.vista : Math.atan2(S.x - player.pos.x, S.z - player.pos.z);
+  cam.menuYaw = yaw; player.facing = yaw;
   emit('mascotienda', { que: 'abrir', seccion: z.seccion || null });
 });
 function cerrarMascotienda() { dejarDeProbar(); leaveMenu(); }
@@ -106,6 +110,13 @@ const _v = new THREE.Vector3();
 let elegida = 0;
 function updateMascotienda(dt) {
   robiHabla(dt);
+  // la cuerda del globo va a la mano izquierda de Nina (pets/extras.js la dibuja)
+  const mano = player.ch && player.ch.bones && player.ch.bones.HandL;
+  for (const p of player.pets) {
+    if (!p.obj.ext || !p.obj.ext.globo) continue;
+    if (!mano) { p.obj.mano = null; continue; }
+    p.obj.mano = mano.getWorldPosition(p.obj.mano || new THREE.Vector3());
+  }
   if (state.mode !== 'mascotienda') return;
   const p = player.pets[elegida]; if (!p) return;
   const yaw = cam.menuYaw, fx = Math.sin(yaw), fz = Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);

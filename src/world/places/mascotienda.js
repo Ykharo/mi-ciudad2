@@ -173,7 +173,8 @@ function sala({ world, addObs, addZone, onFrame }) {
   const cortina = new THREE.Mesh(new THREE.CylinderGeometry(1.45, 1.45, 3, 24, 1, true, Math.PI * 0.15, Math.PI * 0.7), new THREE.MeshStandardMaterial({ map: stripeTexture('#FF8FC7', '#FFFFFF', 12), side: THREE.DoubleSide }));
   cortina.position.set(PX, 1.7, PZ); g.add(cortina);
   const cartelP = makeSign('🪞 Probador', '#FF6FAE', '#FFFFFF', 2.6); cartelP.position.set(PX, 3.6, PZ - 1.5); g.add(cartelP);
-  addZone({ id: 'mascotienda', x: X + PX - 1.6, z: Z + PZ - 1.2, r: 1.5, label: '🪞 Probador' });
+  // (vista: el giro de la cámara de la ventana; desde el pasillo de enfrente, entre los muebles: si no, los tapan)
+  addZone({ id: 'mascotienda', x: X + PX - 1.6, z: Z + PZ - 1.2, r: 1.5, label: '🪞 Probador', vista: Math.PI });
   // el mostrador y Robi
   g.add(mesh(rlo(6, 1.1, 1.2, 0.12), mat('#FFFFFF'), 0, 0.55, -D / 2 + 2.6));
   g.add(mesh(rlo(6.1, 0.12, 1.3, 0.05), mat('#FF6FAE'), 0, 1.12, -D / 2 + 2.6));
