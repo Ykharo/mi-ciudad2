@@ -38,15 +38,19 @@ function collar(P) {
 }
 // sombreros: sobre el ancla `cabeza`, del tamaño de la cabeza (cabezaR)
 function corona(P) {
-  const R = P.medidas.cabezaR, g = new THREE.Group(), oro = est('#FFD23F', { metalness: 0.6, roughness: 0.3 });
-  g.add(new THREE.Mesh(new THREE.CylinderGeometry(R * 0.62, R * 0.6, R * 0.22, 20, 1, true), oro));
+  // alta y de cono invertido: angosta donde se apoya, ancha arriba, con puntas en el borde de arriba y gemas alrededor
+  const R = P.medidas.cabezaR, g = new THREE.Group(), oro = est('#FFD23F', { metalness: 0.6, roughness: 0.3, side: THREE.DoubleSide });
+  const abajo = R * 0.45, arriba = R * 0.78, alto = R * 0.7;
+  const cuerpo = new THREE.Mesh(new THREE.CylinderGeometry(arriba, abajo, alto, 24, 1, true), oro); cuerpo.position.y = alto / 2; g.add(cuerpo);
+  const borde = new THREE.Mesh(new THREE.TorusGeometry(arriba, R * 0.04, 6, 28), oro); borde.rotation.x = Math.PI / 2; borde.position.y = alto; g.add(borde);
   for (let i = 0; i < 6; i++) {
-    const a = i / 6 * Math.PI * 2, p = new THREE.Mesh(new THREE.ConeGeometry(R * 0.12, R * 0.3, 6), oro);
-    p.position.set(Math.cos(a) * R * 0.6, R * 0.25, Math.sin(a) * R * 0.6); g.add(p);
-    const gema = new THREE.Mesh(new THREE.SphereGeometry(R * 0.06, 8, 6), est(RAINBOW[i], { emissive: RAINBOW[i], emissiveIntensity: 0.4 }));
-    gema.position.set(Math.cos(a) * R * 0.62, 0, Math.sin(a) * R * 0.62); g.add(gema);
+    const a = i / 6 * Math.PI * 2, p = new THREE.Mesh(new THREE.ConeGeometry(R * 0.13, R * 0.42, 6), oro);
+    p.position.set(Math.cos(a) * arriba, alto + R * 0.2, Math.sin(a) * arriba); g.add(p);
+    const bola = new THREE.Mesh(new THREE.SphereGeometry(R * 0.06, 8, 6), oro); bola.position.set(Math.cos(a) * arriba, alto + R * 0.43, Math.sin(a) * arriba); g.add(bola);
+    const rg = (abajo + arriba) / 2 + R * 0.02, gema = new THREE.Mesh(new THREE.SphereGeometry(R * 0.08, 8, 6), est(RAINBOW[i], { emissive: RAINBOW[i], emissiveIntensity: 0.4 }));
+    gema.position.set(Math.cos(a) * rg, alto * 0.5, Math.sin(a) * rg); g.add(gema);
   }
-  g.position.y = R * 0.02; g.rotation.x = -0.12;
+  g.position.y = -R * 0.12; g.rotation.x = -0.12;   // (un poco hundida: la base se calza en la cabeza redonda)
   P.anclas.cabeza.add(g);
   return { g };
 }

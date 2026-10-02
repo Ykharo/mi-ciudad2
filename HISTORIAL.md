@@ -5,6 +5,15 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Corona alta, estelas más largas y la burbuja gigante que parpadeaba (02-10-2026)
+
+- Corona: alta y de cono invertido (base 0,45 R, arriba 0,78 R, alto 0,7 R de la cabeza), borde de arriba con 6
+  puntas con bolitas y gemas de colores alrededor; un poco hundida para calzar en la cabeza redonda.
+- Estelas (`pets/efectos.js`): estrellas viven 2,2–2,8 s y suben 1,1 m/s (se apagan en el último 40 %); burbujas
+  4,5–6 s subiendo 0,75 m/s; hasta 90 partículas.
+- Error: cada burbuja nacía con la esfera de 1 m de radio y recién en el cuadro siguiente se achicaba (`moverEfectos`
+  se salta cuadros muy seguidos): se veía una burbuja gigante que parpadeaba. Ahora nace con su tamaño.
+
 ## Bufanda arcoíris larguísima y botón de prueba de +100 Huesitos (02-10-2026)
 
 - La bufanda era "arcoíris y larguísima que arrastra": aro con rayas de colores en el cuello y una cola de 16 tramos

@@ -6,7 +6,7 @@ import { THREE } from '../engine/three.js';
 import { scene } from '../engine/renderer.js';
 import { RAINBOW } from '../engine/materials.js';
 
-const MAX = 60, vivas = [];
+const MAX = 90, vivas = [];
 let geoEstrella = null, geoBurbuja = null;
 function estrella() {
   if (geoEstrella) return geoEstrella;
@@ -23,8 +23,11 @@ function nueva(tipo, x, y, z) {
     geoBurbuja = geoBurbuja || new THREE.SphereGeometry(1, 14, 10);
     m = new THREE.Mesh(geoBurbuja, new THREE.MeshStandardMaterial({ color: 0xDFF6FF, transparent: true, opacity: 0.55, roughness: 0.05, emissive: 0x9FE3FF, emissiveIntensity: 0.25, metalness: 0.2, depthWrite: false }));
   }
+  // (vida larga y subida rápida: la estela llega alto; con su tamaño desde que nace: la esfera mide 1 m de radio y, si
+  // esperaba al cuadro siguiente para achicarse, se veía un instante una burbuja gigante que parpadeaba)
+  const p = { tipo, m, t: 0, vida: tipo === 'brillo' ? 2.2 + Math.random() * 0.6 : 4.5 + Math.random() * 1.5, r: tipo === 'burbuja' ? 0.09 + Math.random() * 0.08 : 1, fase: Math.random() * 6 };
+  m.scale.setScalar(p.r);
   m.position.set(x, y, z); m.castShadow = false; scene.add(m);
-  const p = { tipo, m, t: 0, vida: tipo === 'brillo' ? 1.1 : 2.6 + Math.random(), r: tipo === 'burbuja' ? 0.09 + Math.random() * 0.08 : 1, fase: Math.random() * 6 };
   vivas.push(p);
   return p;
 }
@@ -52,10 +55,10 @@ export function moverEfectos() {
     const u = p.t / p.vida;
     if (u >= 1) { quitar(p); continue; }
     if (p.tipo === 'brillo') {
-      p.m.position.y += dt * 0.5; p.m.rotation.y += dt * 4; p.m.rotation.z += dt * 2;
-      p.m.material.opacity = 1 - u; p.m.scale.setScalar(1 - u * 0.5);
+      p.m.position.y += dt * 1.1; p.m.position.x += Math.sin(p.t * 2 + p.fase) * dt * 0.12; p.m.rotation.y += dt * 4; p.m.rotation.z += dt * 2;
+      p.m.material.opacity = u < 0.6 ? 1 : 1 - (u - 0.6) / 0.4; p.m.scale.setScalar(1 - u * 0.5);
     } else {
-      p.m.position.y += dt * 0.45; p.m.position.x += Math.sin(p.t * 3 + p.fase) * dt * 0.15;
+      p.m.position.y += dt * 0.75; p.m.position.x += Math.sin(p.t * 2.2 + p.fase) * dt * 0.2;
       const pop = u > 0.92 ? 1 + (u - 0.92) * 6 : 1;   // al final se agranda y revienta
       p.m.scale.setScalar(p.r * pop); p.m.material.opacity = u > 0.92 ? 0.55 * (1 - (u - 0.92) / 0.08) : 0.55;
     }
