@@ -52,6 +52,7 @@ import { updateBurbujero } from './game/burbujero.js';
 import { updateAro } from './game/aro.js';
 import { updateTrucos } from './game/trucos.js';
 import { updateCasas } from './game/casas.js';
+import { cargarCartas, crearPersonas, updateEncargos } from './game/encargos.js';
 import './game/juegos.js';
 import './game/vecinosJuegos.js';
 import { lookVecinos, spawnNPCs, updateNPCs } from './game/npcs.js';
@@ -75,6 +76,7 @@ import './ui/panels/aura.js';
 import './ui/codigoAura.js';
 import './ui/huesitos.js';
 import './ui/panels/mascotienda.js';
+import './ui/panels/encargos.js';
 import './ui/pelota.js';
 import './ui/trucos.js';
 import { mostrarPersonajes } from './ui/personajes.js';
@@ -104,6 +106,7 @@ function frame(now) {
   else followChain(fila, player.pos, dt, state.clock, 1.7, !!player.seat, ocioMascotas());
   updateNPCs(dt, state.clock);
   updateEspectador(dt);
+  updateEncargos(dt);
   updatePublico(dt);
   updatePreview(dt, state.clock);
   updateMascotienda(dt);
@@ -130,12 +133,14 @@ async function boot() {
   const saved = loadSave();
   cargarPersonajes(saved);   // con quién se juega y el look de cada uno
   cargarHuesitos(saved);     // la moneda
+  cargarCartas(saved);       // la carta diaria de Robi (y la racha)
   // la base y las prendas del personaje, de los vecinos y del espectador del cartel (la amiga o el amigo); y la imagen
   // del cartel
   const vecinos = lookVecinos(7), publico = lookPublico();   // (y el jurado y el público del Escenario del Aura)
   await Promise.all([loadCharacters([player.look, PERSONAJES.amiga.look, PERSONAJES.amigo.look, ...vecinos, ...publico]), cartelListo]);
   player.ch = makeAvatar(player.look);
   crearEspectador();
+  crearPersonas();            // los de los encargos de lectura: Tito, Rosa, Beto y Sofía (looks de vecinos, ya cargados)
   crearPublico(publico);
   const pets = saved ? (saved.pets || []) : [{ kind: 'perro', color: '#E9B77A', name: 'Toby' }];
   pets.slice(0, MAX_PETS).forEach(p => { if (PET_KINDS.some(k => k.id === p.kind)) addPet(p.kind, p.color || '#E9B77A', String(p.name || 'Toby').slice(0, 12)); });

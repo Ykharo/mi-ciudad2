@@ -72,8 +72,11 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
    - Trucos ✅ (botón 🎉: patita, saludar, vuelta, dos patas, hacerse la muerta, bailar).
    - Hogar ✅ (Patio de mascotas en Mi Casa: casita de perro, torre de gato, madriguera, iglú, hongo, castillo, nave);
      falta cama-nube / hamaca / flotante, comedero de estrellitas, y estantes de Trucos y Hogar en la sala 3D.
-4. ✅ Poción transformadora (el convertidor sorpresa). 5. Encargos de lectura de los vecinos.
-6. Letreros escondidos, diario de la mascota, racha diaria.
+4. ✅ Poción transformadora (el convertidor sorpresa).
+5. ✅ Encargos de lectura (cartelera de la Plaza: helado para Tito, huesos para el Refugio, invitaciones de Sofía; caja
+   fuerte con criptex; `game/encargos.js`). Siguientes ideas: auto equivocado, mascota extraviada, receta de helado,
+   paquete misterioso, más personas.
+6. ✅ Carta diaria de Robi con racha (buzón de Mi Casa). Faltan letreros escondidos.
 
 **Competencia de aura (plan por etapas)**
 - A. El lugar ✅.

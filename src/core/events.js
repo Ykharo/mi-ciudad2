@@ -14,7 +14,10 @@
 //   'trucos' ({ visible })             mostrar u ocultar el botón 🎉 Trucos (game/trucos.js → ui/trucos.js)
 //   'mascotienda' ({ que, … })       la ventana de la Mascotienda: 'abrir', 'diario'
 //   'huesitos' ({ total, delta, motivo })  cambió la cantidad de Huesitos de Aura (game/huesitos.js)
-//   'aura'   ({ que, … })            competencia de aura: 'elegir' (abrir la ventana de los 3 movimientos, con `bailes`)
+//   'aura'   ({ que, … })            competencia de aura: 'elegir' (abrir la ventana de los 3 movimientos, con `bailes`);
+//                                    también el criptex: 'codigo' (con `origen: 'caja'`, la caja fuerte de un encargo), …
+//   'encargo' ({ que, … })           encargos de lectura y carta de Robi (game/encargos.js → ui/panels/encargos.js):
+//                                    'cartelera', 'nota', 'elegir', 'carta', 'boton' ({ visible }: el botón 📜)
 const listeners = new Map();
 
 export function on(name, fn) {

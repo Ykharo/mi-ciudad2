@@ -98,6 +98,25 @@ function arenero({ world, addObs }, x, z) {
   addObs(x, z, 2.1, 2.1);
 }
 
+// La cartelera de encargos (game/encargos.js): un tablero de corcho con marco de madera, mirando a la avenida, con
+// notitas de colores clavadas con chinches y el letrero "📋 Encargos"
+function cartelera({ world, addObs, addZone }, x, z) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = -Math.PI / 2; world.add(g);
+  const madera = mat('#B9784A');
+  for (const s of [-1, 1]) g.add(mesh(cyl(0.08, 0.09, 2.6, 8), madera, s * 1.25, 1.3, 0));
+  g.add(mesh(rlo(2.6, 1.6, 0.14, 0.05), madera, 0, 1.75, 0));
+  g.add(mesh(box(2.35, 1.38, 0.05), mat('#D8A86A', { roughness: 1 }), 0, 1.75, 0.06, false, true));
+  const notas = [['#FFF6B0', -0.75, 1.95, 0.08], ['#BFE8FF', 0.05, 1.85, -0.06], ['#FFD1E8', 0.8, 1.98, 0.1], ['#C9F2D8', -0.35, 1.38, -0.04], ['#FFE2B8', 0.55, 1.4, 0.07]];
+  notas.forEach(([c, px, py, r]) => {
+    const n = mesh(box(0.55, 0.5, 0.01), mat(c), px, py, 0.09, false, false); n.rotation.z = r; g.add(n);
+    for (let k = 0; k < 3; k++) g.add(mesh(box(0.38, 0.025, 0.005), mat('#8A8FA8'), px - 0.02, py + 0.1 - k * 0.1, 0.1, false, false));
+    g.add(mesh(sph(0.03, 8, 6), mat(RAINBOW[Math.round((px + 1) * 3) % 6]), px, py + 0.21, 0.11, false, false));
+  });
+  const letrero = makeSign('📋 Encargos', '#FF9B4A', '#FFFFFF', 2.2); letrero.position.set(0, 2.85, 0.02); g.add(letrero);
+  addObs(x, z, 0.3, 1.4);
+  addZone({ id: 'cartelera', x: x - 1.6, z, r: 1.7, label: '📋 Mirar los encargos' });
+}
+
 function plaza(ctx) {
   const { world, addObs, addSenderos } = ctx;
   // por dónde andan los vecinos adentro: del arco (vereda de la Avenida Menta) al centro y entre los juegos; también se
@@ -121,6 +140,7 @@ function plaza(ctx) {
   });
   const letrero = makeSign('Plaza de Juegos', '#3DD6A8', '#FFFFFF', 5.0); letrero.position.set(48.1, 3.2, CZ); letrero.rotation.y = -Math.PI / 2;
   world.add(letrero);
+  cartelera(ctx, 50.2, 25.4);
   carrusel(ctx, 64, 13.5);
   camaElastica(ctx, 56, 26.5);
   subeBaja(ctx, 67, 27);

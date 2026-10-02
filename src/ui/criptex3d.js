@@ -13,7 +13,7 @@
 //     anillos: 3 listas de 6 figuras { id, emoji?, img?, simbolo? } (img: la imagen propia, cuando exista; simbolo: una
 //     runa para las caras que sobran)
 //   c.update(dt, t)   cada cuadro        c.elegidos() → [id, id, id]        c.marcar([bien, bien, bien])
-//   c.abrir(fin)      acierto: se abre y desaparece        c.quitar()        c.girar(anillo, pasos)   c.elegir(anillo)
+//   c.abrir(fin, puntos, palabra)   acierto: se abre y desaparece (la palabra mágica: "AURA" o "¡ABIERTA!")        c.quitar()        c.girar(anillo, pasos)   c.elegir(anillo)
 import { THREE } from '../engine/three.js';
 import { tube } from '../engine/geometry.js';
 
@@ -280,7 +280,7 @@ export function crearCriptex({ camera, dom, anillos, alConfirmar, alGirar }) {
     });
   }
   // acierto: `puntos` es el texto de los puntos (ej. '+1000 pts'); `fin` se llama cuando ya desapareció
-  function abrir(fin, puntos = '+1000 pts') {
+  function abrir(fin, puntos = '+1000 pts', palabra = 'AURA') {
     A.forEach(a => { a.arista.color.setHex(COLOR.bien); a.rot = a.obj; });
     // los textos van en la raíz (no en el cuerpo, que se achica al final), arriba del criptex
     const texto = (tex, ancho, alto, aditivo) => {
@@ -288,7 +288,7 @@ export function crearCriptex({ camera, dom, anillos, alConfirmar, alGirar }) {
         blending: aditivo ? THREE.AdditiveBlending : THREE.NormalBlending }));
       m.renderOrder = 10; m.visible = false; raiz.add(m); return m;
     };
-    abriendo = { t: 0, brillo: 0, fin, hechizo: texto(texturaHechizo('AURA'), 0.95, 0.297, false), puntos: texto(texturaPuntos(puntos), 0.62, 0.182, false) };
+    abriendo = { t: 0, brillo: 0, fin, hechizo: texto(texturaHechizo(palabra), 0.95, 0.297, false), puntos: texto(texturaPuntos(puntos), 0.62, 0.182, false) };
   }
   function quitar() {
     if (!vivo) return; vivo = false;

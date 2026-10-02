@@ -564,7 +564,7 @@ function sala({ world, addObs, addZone, onFrame }) {
   const cartelR = makeSign('Robi, el vendedor', '#4FB6F5', '#FFFFFF', 3.2); cartelR.position.set(0, 4.3, -D / 2 + 0.2); g.add(cartelR);
   addObs(X, Z - D / 2 + 2.6, 3.1, 0.7);
   const R = robi(); R.position.set(0, 0.9, -D / 2 + 1.3); R.scale.setScalar(1.4); g.add(R); MASCOTIENDA.robi = R; R.userData.dynamic = true;
-  addZone({ id: 'mascotienda', x: X, z: Z - D / 2 + 4.3, r: 1.8, label: '🤖 Hablar con Robi' });
+  addZone({ id: 'mascotienda', x: X, z: Z - D / 2 + 4.3, r: 1.8, label: '🤖 Hablar con Robi', robi: true });
   onFrame(t => {
     const u = R.userData;
     R.position.y = 0.9 + Math.sin(t * 1.6) * 0.08;   // (la cabeza de Robi, a la altura de la de Nina)

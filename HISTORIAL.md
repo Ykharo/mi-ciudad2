@@ -5,6 +5,26 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Encargos de lectura, caja fuerte con criptex y carta diaria de Robi (02-10-2026)
+
+- `game/encargos.js` (+ `ui/panels/encargos.js`, evento `encargo`): **cartelera de encargos** en la Plaza de Juegos
+  (tablero de corcho junto a la entrada, `cartelera` en `world/places/plaza.js`) con 3 notas para leer y elegir una:
+  "El antojo del mecánico" (Heladería → Tito; elegir los 2 sabores que pide la nota), "Comida para el refugio"
+  (Robi → Rosa; elegir cuántos huesos) e "Invitaciones de cumpleaños" (repartir a 3 de la lista, en cualquier orden,
+  y volver donde Sofía). Sin flechas: la nota dice a quién y a dónde. Botón 📜 Mi encargo para releerla; 🔊 la lee en
+  voz alta. Equivocarse de persona o de respuesta: respuesta con humor y sin bono.
+- Personas (looks de vecinos, paradas con su nombre y zona "💬 Hablar con…"): Tito (Autos Arcoíris), Rosa (Refugio),
+  Beto (Heladería), Sofía (Plaza). Robi atiende en su zona de la Mascotienda (`robi: true`): si no hay encargo para
+  él, abre la tienda como siempre.
+- **Caja fuerte**: al final de cada encargo, el criptex de figuras (ui/codigoAura.js con `origen: 'caja'`: sin reloj,
+  palabras ocultas —"📜 Ver la clave" las muestra 4 s—, botón Salir, palabra mágica "ABIERTA"; `abrir(fin, puntos,
+  palabra)` en ui/criptex3d.js). La clave son las 3 palabras de la P.D. de la nota. Pago: 25 o 40, +5 sin errores,
+  +5 sin 🔊.
+- **Carta de Robi**: una por día en el buzón de Mi Casa (con banderita que se levanta: `BUZON` en
+  world/places/casa.js; textos en `game/cartas.js`), con una pregunta de comprensión. 5–10 Huesitos, +2 por día de
+  racha (hasta +10). Se guarda `carta: { ultima, racha }`.
+- Revisado con fotos y recorriendo los 3 encargos completos (pagos 45, 30 con un error, 45). Sin pruebas (a pedido).
+
 ## Mascotienda: mesa de destacados, escenario de transportes, rincón de juguetes y percheros (02-10-2026)
 
 - Con fotos de tiendas de referencia del usuario. En `world/places/mascotienda.js` (`maniqui(especie, i, alto)` arma

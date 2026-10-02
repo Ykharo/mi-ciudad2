@@ -3,7 +3,7 @@
 // por mascota, donde va su casita de la Mascotienda (game/casas.js las pone según lo que tenga cada una).
 import { THREE } from '../../engine/three.js';
 import { mat } from '../../engine/materials.js';
-import { box, cyl, mesh } from '../../engine/geometry.js';
+import { box, cyl, mesh, rlo } from '../../engine/geometry.js';
 import { makeSign } from '../../engine/textures.js';
 import { definePlace } from '../place.js';
 import { house } from '../houses.js';
@@ -35,11 +35,28 @@ function patio({ world, addObs }) {
   addArea('Patio de mascotas', x0, x1, z0, z1);
 }
 
+// El buzón (junto al camino de Mi Casa, cerca de la vereda): ahí llega cada día la carta de Robi (game/encargos.js).
+// `BUZON.bandera` es la banderita roja: el juego la levanta cuando hay carta nueva.
+export const BUZON = { x: -7.6, z: 23.6, bandera: null };
+function buzon({ world, addObs, addZone }) {
+  const { x, z } = BUZON, g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = Math.PI / 2; g.userData.dynamic = true; world.add(g);
+  g.add(mesh(cyl(0.05, 0.05, 1.1, 8), mat('#8A5A2E'), 0, 0.55, 0));
+  const caja = mesh(rlo(0.36, 0.34, 0.6, 0.14), mat('#4FB6F5'), 0, 1.25, 0); g.add(caja);
+  g.add(mesh(box(0.28, 0.04, 0.02), mat('#2B2A44'), 0, 1.3, 0.305));   // la ranura
+  const pivote = new THREE.Group(); pivote.position.set(0.2, 1.2, -0.12); g.add(pivote);
+  pivote.add(mesh(box(0.02, 0.38, 0.04), mat('#FF4F5E'), 0, 0.19, 0)); pivote.add(mesh(box(0.02, 0.12, 0.16), mat('#FF4F5E'), 0, 0.32, -0.08));
+  BUZON.bandera = pivote;
+  const s = makeSign('📬 Correo', '#4FB6F5', '#FFFFFF', 0.9); s.position.set(0, 1.62, 0.02); g.add(s);
+  addObs(x, z, 0.3, 0.3);
+  addZone({ id: 'buzon', x: x + 1.0, z, r: 1.4, label: '📬 Abrir el buzón' });
+}
+
 function casa(ctx) {
   const mine = house(-13, 26, Math.PI / 2, { w: 9, d: 7.5, h: 6, wall: '#FFD6E2', roof: '#FF6FAE', door: '#9B6BF0', path: 3.3 });
   const s = makeSign('Mi Casa', '#9B6BF0', '#FFFFFF', 3.4); s.position.set(0, 5.1, 7.5 / 2 + 0.07); mine.add(s);
   flowers(-7.5, 20, 2, 4, 14, 41); flowers(-7.5, 32, 2, 4, 14, 42);
   patio(ctx);
+  buzon(ctx);
 }
 
 definePlace({ id: 'casa', nombre: 'Mi Casa', orden: 60, area: [-34.5, -5.5, 21, 34.5], build: casa });

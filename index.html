@@ -23,7 +23,7 @@
     </div>
     <div id="joy" aria-label="Mover"><span id="joyHint">¡Mueve aquí!</span><div id="joySpeed" aria-live="off"><b>0</b><span>km/h</span></div><div id="joyKnob"></div></div>
     <div id="actions">
-      <div id="actionBtns"><button id="btnPelota" class="toy mint" hidden><span class="em">🎾</span>Lanzar pelota</button><button id="btnPelotaOtro" class="toy mint round" aria-label="Cambiar juguete" hidden>🔄</button><button id="btnBurbujas" class="toy sky" hidden><span class="em">🫧</span>Hacer burbujas</button><button id="btnAro" class="toy pink" hidden><span class="em">🎪</span>Saltar el aro</button><div id="trucosWrap" hidden><button id="btnTrucos" class="toy sun" aria-haspopup="true" aria-expanded="false" aria-controls="trucosMenu"><span class="em">🎉</span>Trucos</button><div id="trucosMenu" role="menu" hidden></div></div><button id="btnAction2" class="toy sky" hidden></button><button id="btnAction" class="toy sun" hidden></button></div>
+      <div id="actionBtns"><button id="btnPelota" class="toy mint" hidden><span class="em">🎾</span>Lanzar pelota</button><button id="btnPelotaOtro" class="toy mint round" aria-label="Cambiar juguete" hidden>🔄</button><button id="btnBurbujas" class="toy sky" hidden><span class="em">🫧</span>Hacer burbujas</button><button id="btnAro" class="toy pink" hidden><span class="em">🎪</span>Saltar el aro</button><button id="btnEncargo" class="toy sun" hidden><span class="em">📜</span>Mi encargo</button><div id="trucosWrap" hidden><button id="btnTrucos" class="toy sun" aria-haspopup="true" aria-expanded="false" aria-controls="trucosMenu"><span class="em">🎉</span>Trucos</button><div id="trucosMenu" role="menu" hidden></div></div><button id="btnAction2" class="toy sky" hidden></button><button id="btnAction" class="toy sun" hidden></button></div>
       <div id="actionRow">
         <div id="menuBtns">
           <button id="btnAct" class="toy pink" aria-haspopup="true" aria-expanded="false" aria-controls="actMenu"><span class="em">🎬</span>Acción</button>
@@ -48,6 +48,7 @@
       <div class="palabras"><span class="palabra"></span><span class="palabra"></span><span class="palabra"></span></div>
       <div class="msg"></div>
       <div class="tiempo"><div class="sector"></div><b></b></div>
+      <div class="botonesCaja"><button class="toy sun verClave" hidden>📜 Ver la clave</button><button class="toy salir" hidden>Salir</button></div>
     </div>
   </div>
 
@@ -86,6 +87,11 @@
       <div id="archSecs"></div>
       <div id="archBody" class="pbody"></div>
     </div>
+  </aside>
+
+  <aside id="encargoPanel" class="panel" hidden>
+    <div class="phead"><h2 id="encargoTitulo">Encargos</h2><button id="encargoDone" class="toy">Cerrar</button></div>
+    <div id="encargoBody" class="pbody"></div>
   </aside>
 
   <aside id="tiendaPanel" class="panel" hidden>

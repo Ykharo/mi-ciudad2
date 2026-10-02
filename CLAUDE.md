@@ -178,6 +178,10 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
   los `baseColorFactor` de lineal a sRGB.
 - Huesitos de Aura 🦴 (la moneda): `game/huesitos.js` (`ganarHuesitos`, `gastarHuesitos`), `player.huesitos`,
   contador `ui/huesitos.js`. Se ganan leyendo (Código Aura) y compitiendo.
+- Encargos de lectura (`game/encargos.js`, `ui/panels/encargos.js`, evento `encargo`): cartelera en la Plaza, personas
+  (Tito, Rosa, Beto, Sofía; Robi en la Mascotienda), pasos `elegir` / `entregar` / `invitaciones` / `caja` (el criptex
+  como caja fuerte: evento `aura` con `origen: 'caja'`). Carta diaria de Robi en el buzón de Mi Casa (`game/cartas.js`,
+  `player.carta`).
 - "Mis mascotas" (botón 🐾 Mascotas): el archivador personal, `ui/panels/archivador.js` + `game/fichas.js` (adopción,
   estado energía/diversión que cambia solo, controles médicos, fotos; se guardan con cada mascota). Adoptar: en el Refugio.
 - Mascotienda Arcoíris: `world/places/mascotienda.js` (fachada + sala de adentro lejos del mapa, `addInterior`),

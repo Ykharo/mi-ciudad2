@@ -17,6 +17,7 @@ import { cam, player } from './actors.js';
 import { gastarHuesitos, ganarHuesitos } from './huesitos.js';
 import { enterMenu, leaveMenu } from './modes.js';
 import { save } from './save.js';
+import { hablar } from './encargos.js';
 
 const articulo = id => ARTICULOS.find(a => a.id === id);
 const tiene = (p, id) => !!(p && p.cosas && p.cosas.includes(id));
@@ -119,6 +120,7 @@ onZoneAction('mascotienda_salir', () => llevarA(MASCOTIENDA.afuera, MASCOTIENDA.
 // en un pasillo se abre en su sección; en el mostrador y el probador, en la primera
 onZoneAction('mascotienda', z => {
   if (state.mode !== 'play') return;
+  if (z.robi && hablar('robi')) return;   // (con un encargo para Robi —los huesos del Refugio, una invitación—: game/encargos.js)
   enterMenu('mascotienda');
   // la cámara de la ventana mira desde el centro de la sala (así no la tapan la pared del fondo ni el biombo del
   // probador), y Nina mira hacia ella

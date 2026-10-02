@@ -7,27 +7,39 @@ import { camera, canvas, scene } from '../engine/renderer.js';
 import { animated } from '../engine/loop.js';
 import { sfx } from '../audio/audio.js';
 import { responderCodigo } from '../game/aura.js';
+import { cerrarCaja, responderCaja } from '../game/encargos.js';
 import { crearCriptex } from './criptex3d.js';
 import { $, gameEl } from './dom.js';
 
+// También es la caja fuerte de los encargos (game/encargos.js: `origen: 'caja'`): sin reloj, con las palabras ocultas
+// (la clave está en la P.D. de la nota: "📜 Ver la clave" la muestra unos segundos) y con un botón para salir.
 const ventana = $('#codigoAura'), spans = [...ventana.querySelectorAll('.palabra')], msg = ventana.querySelector('.msg');
-const reloj = ventana.querySelector('.tiempo'), cifra = reloj.querySelector('b');
-let criptex = null, palabras = [], anillos = null, ocupado = false;
+const reloj = ventana.querySelector('.tiempo'), cifra = reloj.querySelector('b'), titulo = ventana.querySelector('.titulo');
+const btnClave = ventana.querySelector('.verClave'), btnSalir = ventana.querySelector('.salir');
+let criptex = null, palabras = [], anillos = null, ocupado = false, origen = null, ocultas = null;
 
 function cerrar() {
   if (criptex && criptex.vivo()) criptex.quitar();
-  criptex = null; ventana.hidden = true; gameEl.classList.remove('codigo');
+  criptex = null; ventana.hidden = true; gameEl.classList.remove('codigo'); clearTimeout(ocultas);
 }
+const tapar = () => spans.forEach(s => { if (!s.classList.contains('bien')) s.textContent = '❓'; });
+btnClave.addEventListener('click', () => {
+  sfx('pop'); spans.forEach((s, i) => { s.textContent = palabras[i].palabra; });
+  clearTimeout(ocultas); ocultas = setTimeout(tapar, 4000);
+});
+btnSalir.addEventListener('click', () => { sfx('pop'); cerrarCaja(); });
 on('aura', ev => {
   if (ev.que === 'codigo') {
     cerrar();
     if (!camera.parent) scene.add(camera);   // (el criptex va colgado de la cámara)
-    palabras = ev.palabras; anillos = ev.anillos; ocupado = false;
-    spans.forEach((s, i) => { s.className = 'palabra'; s.textContent = palabras[i].palabra; });
-    msg.textContent = ''; reloj.classList.remove('apurado');
+    palabras = ev.palabras; anillos = ev.anillos; ocupado = false; origen = ev.origen || null;
+    spans.forEach((s, i) => { s.className = 'palabra'; s.textContent = ev.oculto ? '❓' : palabras[i].palabra; });
+    titulo.textContent = origen === 'caja' ? '🔐 CAJA FUERTE' : 'CÓDIGO AURA';
+    reloj.hidden = origen === 'caja'; btnClave.hidden = btnSalir.hidden = origen !== 'caja';
+    msg.textContent = origen === 'caja' ? 'Gira las figuras de la clave de la nota' : ''; reloj.classList.remove('apurado');
     criptex = crearCriptex({
       camera, dom: canvas, anillos: ev.anillos,
-      alConfirmar: () => { if (!ocupado) responderCodigo(criptex.elegidos()); },
+      alConfirmar: () => { if (!ocupado) (origen === 'caja' ? responderCaja : responderCodigo)(criptex.elegidos()); },
       alGirar: () => sfx('pop'),
     });
     ventana.hidden = false; gameEl.classList.add('codigo');
@@ -38,13 +50,14 @@ on('aura', ev => {
   } else if (ev.que === 'error' && criptex) {
     criptex.marcar(ev.res);
     spans.forEach((s, i) => { s.classList.toggle('bien', ev.res[i]); s.classList.toggle('mal', !ev.res[i]); });
-    msg.textContent = ev.res.some(Boolean) ? '¡Casi! Revisa la palabra en rojo' : 'Mira bien cada palabra';
+    msg.textContent = origen === 'caja' ? (ev.res.some(Boolean) ? '¡Casi! Una figura está mal: mira la clave' : 'Esa no es la clave: mira la nota')
+      : ev.res.some(Boolean) ? '¡Casi! Revisa la palabra en rojo' : 'Mira bien cada palabra';
     setTimeout(() => spans.forEach(s => s.classList.remove('mal')), 1200);
   } else if (ev.que === 'acierto' && criptex) {
-    ocupado = true; reloj.classList.remove('apurado');
-    spans.forEach(s => { s.classList.remove('mal'); s.classList.add('bien'); });
-    msg.textContent = '✨ ¡Código correcto! ✨';
-    criptex.abrir(null, ev.puntos);
+    ocupado = true; reloj.classList.remove('apurado'); clearTimeout(ocultas); btnClave.hidden = btnSalir.hidden = true;
+    spans.forEach((s, i) => { s.classList.remove('mal'); s.classList.add('bien'); s.textContent = palabras[i].palabra; });
+    msg.textContent = origen === 'caja' ? '🔓 ¡La caja se abrió!' : '✨ ¡Código correcto! ✨';
+    criptex.abrir(null, ev.puntos, origen === 'caja' ? 'ABIERTA' : 'AURA');
   } else if (ev.que === 'tiempo' && criptex) {
     ocupado = true; reloj.classList.remove('apurado');
     msg.textContent = 'Era: ' + palabras.map(p => p.palabra).join(' · ');
