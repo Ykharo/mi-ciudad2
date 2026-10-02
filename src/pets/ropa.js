@@ -13,12 +13,14 @@ import { stripeTexture } from '../engine/textures.js';
 import { scene } from '../engine/renderer.js';
 import { emit } from '../core/events.js';
 import { soltarHumo } from './efectos.js';
+import { HACER_CUERPO, LUGAR_CUERPO, ponerEnCuerpo } from './ropaCuerpo.js';
 
 const _humo = new THREE.Vector3();
 
 export const LUGAR_ROPA = { collar: 'cuello', bufanda: 'cuello', corona: 'cabeza', gorro_cumple: 'cabeza', sombrero_mago: 'cabeza', capa: 'lomo', lentes: 'cara', mono: 'cola',
-  aureola: 'cabeza', cuerno: 'cabeza', antenas: 'cabeza', cohete: 'espalda', collar_musical: 'cuello', paraguas: 'arriba' };
-const LUGARES = ['cuello', 'cabeza', 'lomo', 'cara', 'cola', 'espalda', 'arriba'];
+  aureola: 'cabeza', cuerno: 'cabeza', antenas: 'cabeza', cohete: 'espalda', collar_musical: 'cuello', paraguas: 'arriba', ...LUGAR_CUERPO };
+// (cuerpo, piernas y pies: chalecos, pantalones, botas y disfraces, en pets/ropaCuerpo.js)
+const LUGARES = ['cuello', 'cabeza', 'lomo', 'cara', 'cola', 'espalda', 'arriba', 'cuerpo', 'piernas', 'pies'];
 const est = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.5, ...o });
 // cuánto se inclina lo que va alrededor del cuello (el aro mira hacia donde va el cuello; el pingüino va parado)
 const inclCuello = P => P.medidas.cuelloInc ?? (P.kind === 'unicornio' ? -1.15 : -0.65);
@@ -378,14 +380,15 @@ export function saltoMascota(P) {
   const C = P.ropa && P.ropa.cuello;
   if (C && C.musical) { emit('sonido', 'nota'); C.baila = 1; }
 }
-const HACER = { paraguas, cohete, collar_musical: collarMusical, collar, bufanda, corona, gorro_cumple: gorroCumple, sombrero_mago: sombreroMago, capa, lentes, mono, aureola, cuerno, antenas };
+const HACER = { paraguas, cohete, collar_musical: collarMusical, collar, bufanda, corona, gorro_cumple: gorroCumple, sombrero_mago: sombreroMago, capa, lentes, mono, aureola, cuerno, antenas,
+  ...Object.fromEntries(Object.entries(HACER_CUERPO).map(([id, f]) => [id, P => ponerEnCuerpo(P, f(P))])) };
 
 function tirar(o) {
   if (o.quitar) o.quitar();
   o.g.parent && o.g.parent.remove(o.g);
   o.g.traverse(m => {
     if (m.geometry) m.geometry.dispose();
-    [].concat(m.material || []).forEach(x => { if (x.map) x.map.dispose(); x.dispose(); });
+    [].concat(m.material || []).forEach(x => { if (x.map && !x.userData.tex) x.map.dispose(); x.dispose(); });   // (tex: textura compartida)
   });
 }
 export function ponerRopa(P, ropa = {}) {

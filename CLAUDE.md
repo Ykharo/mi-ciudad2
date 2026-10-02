@@ -189,7 +189,9 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
   `escala` de la especie (perro 0,8, gato 0,6, conejo 0,4) se aplica a `P.root`: el mapa está en el espacio propio,
   antes de escalar.
   El libro de Nina también tiene su mapa (`agarre` en `characters/libro.js`: el centro del borde de cada tapa).
-  Ropa de mascotas (`pets/ropa.js`: `extras.ropa = { cuello, cabeza, lomo, cara, cola }`; el set superhéroe es `capa`),
+  Ropa de mascotas (`pets/ropa.js`: `extras.ropa = { cuello, cabeza, lomo, cara, cola, espalda, arriba, cuerpo, piernas,
+  pies }`; el set superhéroe es `capa`; chalecos, pantalones, botas y disfraces en `pets/ropaCuerpo.js`, calzados con
+  `TORSO` de `pets/models.js`),
   pelaje (`pets/pelaje.js`: arcoíris, pastillas de diseño, invisible), partículas (`pets/efectos.js`), compañeros
   (`pets/companeros.js`: la mariposa), voces (`vozDe` en `pets/follow.js`) y juguetes (pelota, frisbee y palito:
   `game/pelota.js` + `#btnPelota`/`#btnPelotaOtro`; burbujero: `game/burbujero.js` + `#btnBurbujas`; hueso:

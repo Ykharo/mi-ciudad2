@@ -154,10 +154,22 @@ function productos(e, largo, D, secciones, repisas) {
   const m = new THREE.Mesh(geo, material); m.receiveShadow = true; e.add(m);
 }
 
-// La vitrina de la ropa: un mueble con puertas de vidrio y dos pisos; adentro, maniquíes de mascotas (blancos, como de
-// tienda) sobre un pedestal que gira despacio, cada uno con una prenda o accesorio puesto (pets/ropa.js, calzado con
-// los anclajes de su especie), y adelante una tarjetita con la imagen y el nombre, y la etiqueta con el precio.
-const MANIQUI = '#F4F0E8', ALTO_MANIQUI = 0.72, ESPECIES_MANIQUI = ['perro', 'gato', 'conejo', 'unicornio'];
+// La vitrina de la ropa: un mueble con puertas de vidrio y dos pisos; adentro, maniquíes con forma de mascota, de un
+// solo metal mate (gris, rojo, grafito, bronce, azul acero, lila), sobre un pedestal con un palo, que giran despacio,
+// cada uno con un conjunto de ropa y accesorios (pets/ropa.js, calzado con los anclajes de su especie); adelante, una
+// tarjetita por prenda con la imagen y el nombre, y las etiquetas con los precios.
+const ALTO_MANIQUI = 0.72;
+// (metal mate: poco metálico y algo de brillo propio; sin un entorno que reflejar, el metal de verdad se ve negro)
+const METALES = ['#A3A8B0', '#A35A5A', '#7C8594', '#9C8670', '#6F8C9A', '#8D86A0'].map(c => new THREE.MeshStandardMaterial({ color: c, metalness: 0.3, roughness: 0.42, emissive: c, emissiveIntensity: 0.18 }));
+const CONJUNTOS = [
+  ['perro', ['chaleco_mezclilla', 'pantalon_mezclilla', 'lentes']], ['gato', ['disfraz_dino']],
+  ['perro', ['chaleco_acolchado', 'bufanda', 'botas_lluvia']], ['conejo', ['disfraz_abeja']],
+  ['gato', ['sueter', 'pantalon_pijama', 'gorro_cumple']], ['perro', ['disfraz_tiburon']],
+  ['unicornio', ['chaleco_reflectante', 'botas_lluvia', 'paraguas']],
+  ['perro', ['disfraz_astronauta']], ['gato', ['chaleco_salvavidas', 'lentes']], ['unicornio', ['capa', 'corona']],
+  ['conejo', ['pantalon_pijama', 'sombrero_mago', 'collar_musical']], ['perro', ['sueter', 'aureola']],
+  ['gato', ['chaleco_mezclilla', 'cohete']], ['gato', ['collar', 'mono', 'antenas']],
+];
 function vitrina(g, x, z, largo, ry, color, onFrame) {
   const e = new THREE.Group(); e.position.set(x, 0, z); e.rotation.y = ry; g.add(e);
   const H = 2.7, D = 0.9, pisos = [0.14, 1.36];
@@ -189,23 +201,31 @@ function vitrina(g, x, z, largo, ry, color, onFrame) {
     e.add(mesh(rlo(0.05, h, 0.05, 0.02), marco, largo / 2, ym, D / 2 - 0.01));
   });
   const letrero = makeSign('✨ Moda para mascotas', color, '#FFFFFF', 2.8); letrero.position.set(0, H + 0.35, D / 2 - 0.1); e.add(letrero);
-  // los maniquíes: uno por prenda, la mitad en cada piso
-  const ropa = ARTICULOS.filter(a => a.tipo === 'ropa'), porPiso = Math.ceil(ropa.length / 2), ancho = largo / porPiso;
+  // los maniquíes: cada uno con un conjunto (la mitad en cada piso), sobre su pedestal con un palo de metal
+  const porPiso = Math.ceil(CONJUNTOS.length / 2), ancho = largo / porPiso;
   const { celdas, material } = atlas(), T = { pos: [], nor: [], uv: [] }, girar = [];
-  const pedestal = mat('#FFFFFF', { emissive: '#FFFFFF', emissiveIntensity: 0.15 }), anillo = mat(color);
-  ropa.forEach((a, i) => {
+  const pedestal = mat('#FFFFFF', { emissive: '#FFFFFF', emissiveIntensity: 0.15 }), anillo = mat(color), palo = mat('#B8BCC6', { metalness: 0.7, roughness: 0.3 });
+  CONJUNTOS.forEach(([especie, ids], i) => {
     const piso = Math.floor(i / porPiso), y = pisos[piso], px = -largo / 2 + ancho * (i % porPiso + 0.5);
     e.add(mesh(cyl(0.26, 0.28, 0.06, 24), pedestal, px, y + 0.03, -0.05)); e.add(mesh(cyl(0.285, 0.285, 0.02, 24), anillo, px, y + 0.05, -0.05));
-    const P = buildPet(ESPECIES_MANIQUI[i % ESPECIES_MANIQUI.length], MANIQUI); P.nombre = 'Arcoíris';
-    P.root.scale.setScalar(ALTO_MANIQUI / (P.head.position.y + P.medidas.cabezaR));
+    const P = buildPet(especie, '#FFFFFF'); P.nombre = 'Arcoíris';
+    // todo de un solo metal mate (también los ojos y la crin): un maniquí, no una mascota
+    const metal = METALES[i % METALES.length];
+    P.root.traverse(o => { if (o.isMesh) o.material = metal; });
+    const k = ALTO_MANIQUI / (P.head.position.y + P.medidas.cabezaR);
+    P.root.scale.setScalar(k);
     P.root.position.set(px, y + 0.06, -0.05); P.root.userData.dynamic = true; e.add(P.root);
-    ponerRopa(P, { [a.lugar]: a.id });
+    const alto = (P.torso[0] - P.torso[2] / 2) * k;
+    e.add(mesh(cyl(0.012, 0.012, alto, 8), palo, px, y + 0.06 + alto / 2, -0.05));
+    ponerRopa(P, Object.fromEntries(ids.map(id => { const a = ARTICULOS.find(x => x.id === id); return [a.lugar, id]; })));
     P.root.traverse(o => { o.castShadow = false; });
     girar.push({ P, fase: i * 0.9 });
-    // la tarjeta (imagen y nombre) parada delante del pedestal, y el precio en el borde del piso
-    const c = celdas[a.id], f = c.frente, pr = c.precio;
-    cuadro(T, [px + 0.24, y + 0.1, 0.3], [0, 0, 1], [1, 0, 0], [0, 1, 0], 0.1, 0.075, [[f[0], f[1]], [f[2], f[1]], [f[2], f[3]], [f[0], f[3]]]);
-    cuadro(T, [px, y - 0.04, D / 2 - 0.016], [0, 0, 1], [1, 0, 0], [0, 1, 0], 0.08, 0.035, [[pr[0], pr[1]], [pr[2], pr[1]], [pr[2], pr[3]], [pr[0], pr[3]]]);
+    // delante del pedestal, una tarjetita por prenda (imagen y nombre) y su precio en el borde del piso
+    ids.forEach((id, j) => {
+      const c = celdas[id], f = c.frente, pr = c.precio, tx = px + (j - (ids.length - 1) / 2) * 0.17;
+      cuadro(T, [tx, y + 0.1, 0.3], [0, 0, 1], [1, 0, 0], [0, 1, 0], 0.075, 0.056, [[f[0], f[1]], [f[2], f[1]], [f[2], f[3]], [f[0], f[3]]]);
+      cuadro(T, [tx, y - 0.04, D / 2 - 0.016], [0, 0, 1], [1, 0, 0], [0, 1, 0], 0.07, 0.032, [[pr[0], pr[1]], [pr[2], pr[1]], [pr[2], pr[3]], [pr[0], pr[3]]]);
+    });
   });
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(T.pos, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(T.nor, 3));

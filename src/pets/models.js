@@ -40,6 +40,14 @@ export const ANCLAJES = {
   leon: { espalda: [0, 0.7, 0.1], lomo: [0, 0.7, -0.05], cuello: [0, 0.68, 0.27], cabeza: [0, 0.31, 0], cola: [0, 0.62, -0.36], ancho: 0.46, largo: 0.72, alto: 0.7, cabezaR: 0.28, cuelloR: 0.2, ojos: [0.09, 0.05, 0.19], colaLargo: 0.5, escala: 0.85 },
   chanchito: { espalda: [0, 0.69, 0.08], lomo: [0, 0.69, -0.06], cuello: [0, 0.6, 0.27], cabeza: [0, 0.22, 0], cola: [0, 0.44, -0.42], ancho: 0.68, largo: 0.84, alto: 0.69, cabezaR: 0.24, cuelloR: 0.2, ojos: [0.1, 0.07, 0.19], colaLargo: 0.1, escala: 0.6 },
 };
+// El tronco de cada especie (para la ropa que lo envuelve: chalecos, suéter, pantalones, disfraces; pets/ropaCuerpo.js):
+// [y del centro, ancho, alto, largo, redondo]. Redondo = una bola estirada (conejo, pingüino, chanchito); si no, una
+// caja redondeada. En el espacio de la mascota, como los anclajes; se sacaron de las medidas de buildPet.
+export const TORSO = {
+  perro: [0.46, 0.44, 0.38, 0.66], gato: [0.42, 0.36, 0.34, 0.6], conejo: [0.34, 0.6, 0.54, 0.66, true], unicornio: [0.68, 0.42, 0.42, 0.74],
+  dinosaurio: [0.52, 0.5, 0.42, 0.8], vaca: [0.56, 0.48, 0.42, 0.78], pinguino: [0.4, 0.54, 0.7, 0.49, true], leon: [0.5, 0.46, 0.4, 0.72],
+  chanchito: [0.4, 0.68, 0.58, 0.83, true],
+};
 // el Convertidor sorpresa: cada forma con sus colores de siempre (las especies que se adoptan conservan el color de la
 // mascota) y su voz (audio/audio.js)
 export const FORMAS = [
@@ -194,7 +202,7 @@ function buildPet(kind, color) {
   for (const id of ['espalda', 'lomo', 'cuello', 'cabeza', 'cola']) {
     const o = new THREE.Object3D(); o.position.set(...A[id]); (id === 'cabeza' ? head : B).add(o); P.anclas[id] = o;
   }
-  P.medidas = A;
+  P.medidas = A; P.torso = TORSO[kind] || TORSO.perro;
   P.labelY = kind === 'unicornio' ? 1.75 : 1.2;
   // el tamaño de la especie: se achica todo junto (cuerpo, anclajes y lo que tenga puesto), salvo las etiquetas
   P.root.scale.setScalar(A.escala || 1);

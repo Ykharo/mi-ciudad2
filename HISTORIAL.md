@@ -5,6 +5,21 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Ropa nueva para mascotas y maniquíes de metal con conjuntos (02-10-2026)
+
+- `pets/ropaCuerpo.js` (lo usa `pets/ropa.js`; lugares nuevos `cuerpo`, `piernas`, `pies`): chalecos de mezclilla
+  (botones dorados, bolsillos), acolchado (rayas infladas, cierre), reflectante (franjas plateadas), salvavidas;
+  suéter de rayas (con cuello de lana); pantalón de mezclilla (bolsillos atrás) y pijama de estrellas (trozo en las
+  caderas + un tubo en cada pata); botas de lluvia; disfraces de dinosaurio (placas y capucha), abeja (rayas, alitas,
+  antenas), tiburón (aleta, capucha con dientes) y astronauta (casco de vidrio, cinturón, bandera, mochila).
+- Se calzan con el tronco de cada especie (`TORSO` en `pets/models.js`: caja redondeada o bola estirada, también en
+  las formas del convertidor; `P.torso`) y con la caja de cada pata. La caja de la ropa usa `rbox` (la misma del
+  cuerpo, con radio + lo que se agranda): con menos segmentos la curva del cuerpo se asomaba por las esquinas. Las
+  rayas son una textura a lo largo del cuerpo (uv de atrás hacia adelante), no trozos separados.
+- Vitrina: los maniquíes son de un solo metal mate (gris, rojo, grafito, bronce, azul acero, lila; metalness 0,3 y
+  algo de brillo propio: con más metal se veían negros), también ojos y crin, sobre un palo; cada uno con un conjunto
+  (`CONJUNTOS`: p. ej. chaleco + pantalón de mezclilla + lentes) y una tarjeta y un precio por prenda.
+
 ## Vitrina de ropa con maniquíes (02-10-2026)
 
 - El mueble de Ropa (`vitrina` en `world/places/mascotienda.js`) es una vitrina de dos pisos con 4 puertas de vidrio

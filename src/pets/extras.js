@@ -210,7 +210,7 @@ function cambiarCuerpo(P, forma, magia) {
   if (P.hueso) { P.hueso.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); P.hueso = null; }
   P.root.remove(P.body); P.disposables.forEach(g => g.dispose());
   P.root.add(N.body);
-  for (const k of ['body', 'legs', 'tail', 'head', 'mats', 'anclas', 'medidas', 'mallas', 'disposables', 'labelY']) P[k] = N[k];
+  for (const k of ['body', 'legs', 'tail', 'head', 'mats', 'anclas', 'medidas', 'torso', 'mallas', 'disposables', 'labelY']) P[k] = N[k];
   P.kind = forma; P.cadera = undefined;
   if (P.label) P.label.position.y = P.labelY;
   if (magia && P.root.parent === scene) {

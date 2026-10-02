@@ -4,7 +4,8 @@
 //     'transporte'  uno a la vez por mascota (patines, burbuja, globo, alitas)
 //     'pocion'      se pone y se quita; `efecto`: arcoiris, brillo, burbujas, invisible (se pueden juntar), mini / gigante
 //                   (una) o diseno (una pastilla a la vez: `diseno` es el dibujo, ver pets/pelaje.js)
-//     'ropa'        una prenda por lugar del cuerpo (`lugar`: cuello, cabeza, lomo, cara, cola): se pone y se quita
+//     'ropa'        una prenda por lugar del cuerpo (`lugar`: cuello, cabeza, lomo, cara, cola, espalda, arriba, cuerpo,
+//                   piernas, pies): se pone y se quita
 //     'juguete'     no se pone: se usa (pelota, frisbee, palito y burbujero con su botón; el hueso, solo, al sentarse)
 //     'companero'   uno a la vez: lo acompaña (mariposa, pajarito, ratoncito: pets/companeros.js)
 //     'truco'       se aprende: lo hace cuando se le pide con el botón 🎉 Trucos (game/trucos.js)
@@ -67,6 +68,18 @@ export const ARTICULOS = [
   { id: 'convertidor', nombre: 'Convertidor sorpresa', ic: '🔮', seccion: 'pociones', tipo: 'pocion', efecto: 'convertidor', precio: 90, desc: 'Cada rato se convierte en otro animal', frase: '¡Puf! ¿En qué animal se convertirá {n}?' },
   { id: 'platillo', nombre: 'Platillo volador', ic: '🛸', seccion: 'transporte', tipo: 'transporte', precio: 110, desc: 'Con rayo abductor de luz verde', frase: '¡{n} llegó del espacio en su platillo!' },
   { id: 'aro', nombre: 'Aro de circo', ic: '🎪', seccion: 'juguetes', tipo: 'juguete', precio: 40, desc: 'Salta a través del aro de luces', frase: '¡{n} salta por el aro como en el circo!' },
+  { id: 'chaleco_mezclilla', nombre: 'Chaleco de mezclilla', ic: '🎽', seccion: 'ropa', tipo: 'ropa', lugar: 'cuerpo', precio: 40, desc: 'Con botones dorados y bolsillos', frase: '¡{n} se ve muy a la moda con su chaleco!' },
+  { id: 'chaleco_acolchado', nombre: 'Chaleco acolchado', ic: '🧥', seccion: 'ropa', tipo: 'ropa', lugar: 'cuerpo', precio: 45, desc: 'Rosado y calentito, con cierre', frase: '¡{n} ya no tiene frío!' },
+  { id: 'chaleco_reflectante', nombre: 'Chaleco reflectante', ic: '🦺', seccion: 'ropa', tipo: 'ropa', lugar: 'cuerpo', precio: 35, desc: 'Amarillo con franjas que brillan', frase: '¡Todos ven a {n} cuando cruza la calle!' },
+  { id: 'chaleco_salvavidas', nombre: 'Chaleco salvavidas', ic: '🛟', seccion: 'ropa', tipo: 'ropa', lugar: 'cuerpo', precio: 40, desc: 'Para nadar seguro', frase: '¡{n} está lista para ir a la playa!' },
+  { id: 'sueter', nombre: 'Suéter de rayas', ic: '🧶', seccion: 'ropa', tipo: 'ropa', lugar: 'cuerpo', precio: 35, desc: 'De lana, rojo, blanco y verde', frase: '¡Qué suave es el suéter de {n}!' },
+  { id: 'pantalon_mezclilla', nombre: 'Pantalón de mezclilla', ic: '👖', seccion: 'ropa', tipo: 'ropa', lugar: 'piernas', precio: 40, desc: 'Con bolsillos atrás', frase: '¡{n} estrena pantalón!' },
+  { id: 'pantalon_pijama', nombre: 'Pijama de estrellas', ic: '🌙', seccion: 'ropa', tipo: 'ropa', lugar: 'piernas', precio: 35, desc: 'Celeste con estrellas y lunas', frase: '¡{n} está lista para dormir!' },
+  { id: 'botas_lluvia', nombre: 'Botas de lluvia', ic: '🥾', seccion: 'ropa', tipo: 'ropa', lugar: 'pies', precio: 30, desc: 'Amarillas, para saltar en los charcos', frase: '¡{n} quiere saltar en todos los charcos!' },
+  { id: 'disfraz_dino', nombre: 'Disfraz de dinosaurio', ic: '🦖', seccion: 'ropa', tipo: 'ropa', lugar: 'cuerpo', precio: 70, desc: 'Traje verde con capucha y placas', frase: '¡Roaaar! {n} es un dinosaurio.' },
+  { id: 'disfraz_abeja', nombre: 'Disfraz de abeja', ic: '🐝', seccion: 'ropa', tipo: 'ropa', lugar: 'cuerpo', precio: 65, desc: 'Con rayas, alitas y antenas', frase: '¡Bzzz! {n} es una abejita.' },
+  { id: 'disfraz_tiburon', nombre: 'Disfraz de tiburón', ic: '🦈', seccion: 'ropa', tipo: 'ropa', lugar: 'cuerpo', precio: 70, desc: 'Con aleta y capucha con dientes', frase: '¡Cuidado! {n} es un tiburón.' },
+  { id: 'disfraz_astronauta', nombre: 'Traje de astronauta', ic: '🧑‍🚀', seccion: 'ropa', tipo: 'ropa', lugar: 'cuerpo', precio: 80, desc: 'Con casco de vidrio y mochila', frase: '¡{n} va a viajar a la luna!' },
   { id: 'patita', nombre: 'Dar la patita', ic: '🐾', seccion: 'trucos', tipo: 'truco', precio: 20, desc: 'Se sienta y te da la patita', frase: '¡{n} aprendió a dar la patita!' },
   { id: 'saludar', nombre: 'Saludar', ic: '👋', seccion: 'trucos', tipo: 'truco', precio: 20, desc: 'Te saluda moviendo la pata', frase: '¡{n} aprendió a saludar!' },
   { id: 'vuelta', nombre: 'Dar una vuelta', ic: '🌀', seccion: 'trucos', tipo: 'truco', precio: 25, desc: 'Da una vuelta con un salto', frase: '¡{n} aprendió a dar una vuelta en el aire!' },
