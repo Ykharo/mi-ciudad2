@@ -14,7 +14,8 @@ import { scene } from '../engine/renderer.js';
 import { RAINBOW } from '../engine/materials.js';
 import { rbox } from '../engine/geometry.js';
 import { animarRopa, ponerRopa, ropaPuesta } from './ropa.js';
-import { estallido, soltarChispas, soltarEfectos } from './efectos.js';
+import { estallido, nubeMagica, soltarChispas, soltarEfectos, soltarEstrellita } from './efectos.js';
+import { FORMAS, buildPet } from './models.js';
 import { DISENOS, animarPelaje, ponerPelaje } from './pelaje.js';
 import { emit } from '../core/events.js';
 import { efectoAura } from '../engine/efectoAura.js';
@@ -163,11 +164,74 @@ function globo(P) {
   P.siempreSentada = true;
   return { g, alto: ALTO, bola, arriba, canastaY: ALTO - 0.06, cuerda, flota: true, globo: true, inercia: { k: 9, c: 3.2, max: 0.7 }, quitar() { scene.remove(cuerda); cuerda.geometry.dispose(); cuerda.material.dispose(); } };
 }
-const TRANSPORTES = { patines, burbuja, alitas, alitas_murcielago: P => alitas(P, 'murcielago'), globo };
+// El platillo volador: un disco plateado con luces de colores que dan vueltas por el borde, una cúpula de vidrio con
+// antena y la mascota sentada adentro, flotando a la altura del hombro de la dueña (como la burbuja). Quieta, prende el
+// rayo abductor: un tubo de luz verde hasta el suelo, con anillos que suben y estrellitas.
+function platillo(P) {
+  const M = P.medidas, R = Math.max(M.largo, M.ancho) * 0.75 + 0.18, g = new THREE.Group();
+  const cupula = (P.head ? P.head.position.y + (M.cabezaR || 0.25) : M.alto + 0.3) * 1.05 + 0.08;   // la mascota sentada cabe
+  const disco = new THREE.Group(); g.add(disco);
+  const perfil = [[0.001, -0.26], [0.3, -0.24], [0.62, -0.17], [0.92, -0.06], [1, 0], [0.95, 0.04], [0.75, 0.05], [0.001, 0.05]].map(([x, y]) => new THREE.Vector2(x * R, y * R));
+  disco.add(new THREE.Mesh(new THREE.LatheGeometry(perfil, 40), new THREE.MeshStandardMaterial({ color: 0xD9DEEA, metalness: 0.6, roughness: 0.25 })));
+  const luces = [];
+  for (let i = 0; i < 12; i++) {
+    const a = i / 12 * TAU, l = new THREE.Mesh(new THREE.SphereGeometry(R * 0.055, 10, 8), new THREE.MeshStandardMaterial({ color: 0xFFFFFF, emissive: RAINBOW[i % 6], emissiveIntensity: 1 }));
+    l.position.set(Math.cos(a) * R * 0.95, -R * 0.02, Math.sin(a) * R * 0.95); disco.add(l); luces.push(l);
+  }
+  const anillo = new THREE.Mesh(new THREE.TorusGeometry(R * 0.32, R * 0.04, 8, 28), new THREE.MeshStandardMaterial({ color: 0x7CF0FF, emissive: 0x3FD8FF, emissiveIntensity: 1 }));
+  anillo.rotation.x = Math.PI / 2; anillo.position.y = -R * 0.23; g.add(anillo);
+  // la cúpula (más alta que ancha si la mascota es alta) y su antena
+  const rc = R * 0.62, vidrio = new THREE.Mesh(new THREE.SphereGeometry(rc, 28, 14, 0, TAU, 0, Math.PI / 2),
+    new THREE.MeshStandardMaterial({ color: 0xBFF4FF, transparent: true, opacity: 0.25, roughness: 0.05, metalness: 0.2, emissive: 0x66CCFF, emissiveIntensity: 0.15, depthWrite: false, side: THREE.DoubleSide }));
+  vidrio.scale.y = Math.max(1, cupula / rc); vidrio.position.y = R * 0.04; g.add(vidrio);
+  const antena = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.16, 5), new THREE.MeshStandardMaterial({ color: 0x8C8FA8 }));
+  const punta = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), new THREE.MeshStandardMaterial({ color: 0xFF6FAE, emissive: 0xFF3FA4, emissiveIntensity: 1 }));
+  antena.position.y = R * 0.04 + rc * vidrio.scale.y + 0.07; punta.position.y = antena.position.y + 0.09; g.add(antena, punta);
+  // el rayo: un tubo abierto que se angosta hacia arriba (mide 1 y se estira hasta el suelo), anillos y la mancha de luz
+  const verde = (op) => new THREE.MeshBasicMaterial({ color: 0x7CFF9A, transparent: true, opacity: op, depthWrite: false, side: THREE.DoubleSide });
+  const rayo = new THREE.Group(); rayo.position.y = -R * 0.24; g.add(rayo);
+  const tubo = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.3, R * 0.85, 1, 28, 1, true), verde(0.22)); tubo.geometry.translate(0, -0.5, 0); rayo.add(tubo);
+  const aros = [0, 1, 2].map(() => { const a = new THREE.Mesh(new THREE.TorusGeometry(1, 0.06, 6, 28), verde(0.5)); a.rotation.x = Math.PI / 2; rayo.add(a); return a; });
+  const mancha = new THREE.Mesh(new THREE.CircleGeometry(R * 0.9, 28), verde(0.35)); mancha.rotation.x = -Math.PI / 2; rayo.add(mancha);
+  P.root.add(g);
+  P.siempreSentada = true;
+  return { g, alto: 1.2, R, cupula, disco, luces, punta, rayo, tubo, aros, mancha, platillo: true, flota: true, encendido: 0, inercia: { k: 7, c: 2.8, max: 0.5 } };
+}
+const TRANSPORTES = { patines, burbuja, alitas, alitas_murcielago: P => alitas(P, 'murcielago'), globo, platillo };
 export const ES_TRANSPORTE = id => !!TRANSPORTES[id];
+
+// El Convertidor sorpresa: al tomarlo, y después cada 20 a 30 segundos, la mascota se convierte en otro animal (FORMAS
+// en pets/models.js) con una nube mágica de colores. Sigue siendo ella (su nombre, su especie en la ficha y lo que
+// tiene puesto, que se le vuelve a calzar con los anclajes de la nueva forma). Al quitárselo vuelve a su especie.
+// No cambia mientras está ocupada (`P.ocupada`: buscando la pelota, haciendo un truco…; game/mascotienda.js).
+const CAMBIO = () => 20 + Math.random() * 10;
+function cambiarCuerpo(P, forma, magia) {
+  const F = FORMAS.find(f => f.id === forma), N = buildPet(forma, (forma !== P.especie && F && F.color) || P.color);
+  if (P.hueso) { P.hueso.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); P.hueso = null; }
+  P.root.remove(P.body); P.disposables.forEach(g => g.dispose());
+  P.root.add(N.body);
+  for (const k of ['body', 'legs', 'tail', 'head', 'mats', 'anclas', 'medidas', 'mallas', 'disposables', 'labelY']) P[k] = N[k];
+  P.kind = forma; P.cadera = undefined;
+  if (P.label) P.label.position.y = P.labelY;
+  if (magia && P.root.parent === scene) {
+    P.root.updateMatrixWorld(true); P.body.getWorldPosition(_a); _a.y += P.medidas.alto * 0.5 * P.root.scale.x;
+    nubeMagica(_a, Math.max(0.4, P.medidas.largo * P.root.scale.x)); emit('sonido', 'magia');
+    if (forma !== P.especie) emit('aviso', `✨ ¡${P.nombre} se convirtió en ${F.nombre}!`);
+  }
+}
+function otraForma(P) { const l = FORMAS.filter(f => f.id !== P.kind); return l[Math.floor(Math.random() * l.length)].id; }
 
 const TAMANOS = { mini: 0.6, gigante: 1.6 };
 export function ponerExtras(P, extras = {}) {
+  P.pedidos = extras;
+  // el convertidor: se quita todo, se cambia el cuerpo y se vuelve a poner
+  let forma = P.kind;
+  if (extras.convertidor && !P.convActivo) { P.convActivo = true; P.convT = CAMBIO(); forma = otraForma(P); }
+  else if (!extras.convertidor && P.convActivo) { P.convActivo = false; forma = P.especie; }
+  if (forma !== P.kind) { aplicar(P, {}); cambiarCuerpo(P, forma, true); }
+  aplicar(P, extras);
+}
+function aplicar(P, extras) {
   if (P.ext && P.ext.id !== extras.transporte) {
     if (P.ext.g.parent) P.ext.g.parent.remove(P.ext.g);
     P.ext.g.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
@@ -197,6 +261,7 @@ export function ponerExtras(P, extras = {}) {
   P.extras = { transporte: P.ext ? P.ext.id : null, arcoiris: !!extras.arcoiris, ropa: ropaPuesta(P), brillo: !!extras.brillo, burbujas: !!extras.burbujas, tamano,
     diseno: DISENOS.includes(extras.diseno) ? extras.diseno : null, invisible: !!extras.invisible, aura: !!P.auraFx,
     voz: VOCES_POCION.includes(extras.voz) ? extras.voz : null, companero: P.companero ? P.companero.id : null,
+    pixeles: !!extras.pixeles, convertidor: !!P.convActivo,
     // (con pociones de voz: pets/follow.js y la pelota usan su voz en vez de la de la especie)
   };
   // (con la mascota se anima siempre: el sombrero de mago, la corona, los lentes y el hueso también se mueven)
@@ -227,8 +292,9 @@ function plop(P, E, dt) {
 // se sienta, bajan). El unicornio y lo demás, a su altura de siempre.
 const HOMBRO = 1.75;
 function alturaVuelo(P, E, dt) {
-  if (P.kind === 'unicornio' || !(E.alas || (E.bola && E.r)) || P.root.parent !== scene) return E.alto;   // (en el auto, no)
-  const h = (P.hombro || HOMBRO) / P.root.scale.x, meta = E.alas ? h - P.medidas.alto * 0.7 : h - E.r * 0.62;
+  if (P.kind === 'unicornio' || !(E.alas || (E.bola && E.r) || E.platillo) || P.root.parent !== scene) return E.alto;   // (en el auto, no)
+  // (el platillo: la cabeza de la mascota sentada, más o menos a la altura del hombro)
+  const h = (P.hombro || HOMBRO) / P.root.scale.x, meta = E.alas ? h - P.medidas.alto * 0.7 : E.platillo ? h - E.cupula * 0.6 : h - E.r * 0.62;
   E.altoS = E.altoS === undefined ? meta : E.altoS + (meta - E.altoS) * Math.min(1, dt * 2.5);
   return E.altoS;
 }
@@ -270,8 +336,41 @@ function patinar(P, E, dt, speed, anda) {
     l.rotation.z = lado * 0.22 * emp * m;
   });
 }
+// el platillo: se mece, se inclina con la inercia, las luces dan vueltas cambiando de color y, quieta, baja el rayo
+function moverPlatillo(P, E, t, dt, anda, alto, lx, lz) {
+  E.g.position.set(lx, alto, lz);
+  E.g.rotation.z = -lx * 0.5 + Math.sin(t * 1.3) * 0.04; E.g.rotation.x = lz * 0.5 + Math.sin(t * 1.7) * 0.03;
+  P.body.position.x = lx; P.body.position.z = lz; P.body.rotation.z += E.g.rotation.z; P.body.rotation.x += E.g.rotation.x;
+  E.disco.rotation.y += dt * (anda ? 4 : 1.5);
+  E.luces.forEach((l, i) => l.material.emissive.setHSL((i / E.luces.length + t * 0.4) % 1, 1, 0.55));
+  E.punta.material.emissiveIntensity = Math.sin(t * 6) > 0 ? 1.2 : 0.2;
+  const antes = E.encendido;
+  E.encendido += ((anda ? 0 : 1) - E.encendido) * Math.min(1, dt * (anda ? 6 : 2));
+  if (antes < 0.3 && E.encendido >= 0.3) emit('sonido', 'ovni');
+  const k = E.encendido, largo = Math.max(0.01, alto - E.R * 0.24);
+  E.rayo.visible = k > 0.02;
+  if (!E.rayo.visible) return;
+  E.tubo.scale.set(1, largo * k, 1); E.tubo.material.opacity = (0.16 + Math.sin(t * 9) * 0.04) * k;
+  E.mancha.position.y = -largo * k; E.mancha.material.opacity = 0.35 * k;
+  E.aros.forEach((a, i) => {   // suben del suelo al platillo, achicándose
+    const u = (t * 0.45 + i / 3) % 1, r = E.R * (0.85 - 0.55 * u);
+    a.position.y = -largo * k * (1 - u); a.scale.set(r, r, r); a.material.opacity = 0.5 * k * Math.sin(Math.PI * u);
+  });
+  E.chispa = (E.chispa || 0) - dt;
+  if (k > 0.6 && E.chispa <= 0 && P.root.parent === scene) {
+    E.chispa = 0.18; P.root.updateMatrixWorld(true);
+    _a.set((Math.random() - 0.5) * E.R, -largo * Math.random(), (Math.random() - 0.5) * E.R).add(E.rayo.position).applyMatrix4(E.g.matrixWorld);
+    soltarEstrellita(_a);
+  }
+}
 function animarExtras(P, t, dt, speed) {
   const E = P.ext, anda = speed > 0.05;
+  // el convertidor: cada tanto, otra forma (y se vuelve a poner lo que tenía)
+  if (P.convActivo && !P.ocupada && P.root.parent === scene && (P.convT -= dt) <= 0) {
+    P.convT = CAMBIO();
+    const pedidos = P.pedidos; aplicar(P, {}); cambiarCuerpo(P, otraForma(P), true); aplicar(P, pedidos);
+    return;
+  }
   animarPelaje(P, t);
   if (P.auraFx) P.auraFx.update(dt);
   moverCompanero(P, t, dt);
@@ -322,6 +421,7 @@ function animarExtras(P, t, dt, speed) {
       E.fAla = (E.fAla || 0) + dt * (anda ? 6 : 4) * (1 + E.saltito * 2.5);   // (al saltar, aletea más rápido)
       E.alas.forEach(({ pivote, s }) => { pivote.rotation.z = -s * (0.3 + (Math.sin(E.fAla) * 0.5 + 0.5) * (0.55 + E.saltito * 0.25)); });
     }
+    if (E.platillo) { moverPlatillo(P, E, t, dt, anda, alto, lx, lz); etiqueta = Math.max(0, E.cupula + 0.35 - P.labelY); }
     if (E.globo) {
       // el globo se mece y se queda atrás con la inercia (se inclina como un péndulo); la mascota va sentada en la
       // canasta; la cuerda baja hasta la mano de Nina

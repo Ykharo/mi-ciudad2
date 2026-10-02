@@ -43,9 +43,12 @@ function fixExtras(e, p) {
   // las que van de a una con un valor: el diseño de pelaje y la voz (vale si tiene el artículo de ese valor)
   const uno = campo => { const a = e && ARTICULOS.find(x => x.efecto === campo && x[campo] === e[campo]); return a && tiene(p, a.id) ? a[campo] : null; };
   const comp = e && typeof e.companero === 'string' && tiene(p, e.companero) && articulo(e.companero).tipo === 'companero' ? e.companero : null;
+  const casa = e && typeof e.casa === 'string' && tiene(p, e.casa) && articulo(e.casa).tipo === 'casa' ? e.casa : null;
   return { transporte: t, arcoiris: pocion('arcoiris'), brillo: pocion('brillo'), burbujas: pocion('burbujas'), invisible: pocion('invisible'), aura: pocion('aura'),
-    tamano, diseno: uno('diseno'), voz: uno('voz'), companero: comp, ropa };
+    pixeles: pocion('pixeles'), convertidor: pocion('convertidor'), tamano, diseno: uno('diseno'), voz: uno('voz'), companero: comp, casa, ropa };
 }
+// los que no se ponen: los juguetes y los trucos se usan; la casa se elige (va en el patio de Mi Casa, no en la mascota)
+const SE_USA = new Set(['juguete', 'truco']);
 // las pociones que van de a una: un tamaño (mini o gigante), un diseño de pelaje y una voz; las demás se juntan
 const TAMANO = new Set(['mini', 'gigante']), CON_VALOR = new Set(['diseno', 'voz']);
 // ¿lo tiene puesto? (los juguetes no se ponen)
@@ -53,6 +56,7 @@ function puesto(p, id) {
   const a = articulo(id), e = p && p.extras; if (!a || !e) return false;
   if (a.tipo === 'pocion') return TAMANO.has(a.efecto) ? e.tamano === a.efecto : CON_VALOR.has(a.efecto) ? e[a.efecto] === a[a.efecto] : !!e[a.efecto];
   if (a.tipo === 'companero') return e.companero === id;
+  if (a.tipo === 'casa') return e.casa === id;
   return a.tipo === 'transporte' ? e.transporte === id : a.tipo === 'ropa' ? !!(e.ropa && e.ropa[a.lugar] === id) : false;
 }
 // cómo quedan los extras al ponerse (on) o quitarse un artículo: un transporte reemplaza al que tenía; una prenda, a la
@@ -63,6 +67,7 @@ function conArticulo(e0, a, on) {
   const cambia = (campo, v) => { e[campo] = on ? v : (e[campo] === v ? null : e[campo]); };
   if (a.tipo === 'transporte') cambia('transporte', a.id);
   else if (a.tipo === 'companero') cambia('companero', a.id);
+  else if (a.tipo === 'casa') cambia('casa', a.id);
   else if (a.tipo === 'pocion' && TAMANO.has(a.efecto)) cambia('tamano', a.efecto);
   else if (a.tipo === 'pocion' && CON_VALOR.has(a.efecto)) cambia(a.efecto, a[a.efecto]);
   else if (a.tipo === 'pocion') e[a.efecto] = !!on;
@@ -86,14 +91,14 @@ function comprar(id, mascota) {
   return { r: 'ok' };
 }
 function leerDiario() { ganarHuesitos(3, '¡Leíste el diario!'); }
-// ponérselo o quitárselo a una mascota (los juguetes no se ponen: se usan)
+// ponérselo o quitárselo a una mascota (los juguetes y los trucos no se ponen: se usan; la casa se pone en el patio)
 function equipar(p, id, on) {
-  const a = articulo(id); if (!p || !a || !tiene(p, id) || a.tipo === 'juguete') return;
+  const a = articulo(id); if (!p || !a || !tiene(p, id) || SE_USA.has(a.tipo)) return;
   ponerA(p, conArticulo(p.extras, a, on)); save();
 }
 // probar (sin comprar): se ve puesto hasta que se pruebe otra cosa o se cierre la tienda
 function probar(p, id) {
-  const a = articulo(id); if (!p || !a || a.tipo === 'juguete') return;
+  const a = articulo(id); if (!p || !a || SE_USA.has(a.tipo) || a.tipo === 'casa') return;
   ponerExtras(p.obj, conArticulo(p.extras, a, true));
 }
 function dejarDeProbar() { for (const p of player.pets) ponerExtras(p.obj, p.extras || {}); }
@@ -152,6 +157,7 @@ function updateMascotienda(dt) {
   const hy = hombro && !player.seat ? Math.min(2.2, Math.max(0.8, hombro.getWorldPosition(_v).y - player.ch.root.position.y)) : null;
   for (const p of player.pets) {
     p.obj.hombro = hy; p.obj.salta = player.air;   // (con alitas, aletea y sube cuando ella salta)
+    p.obj.ocupada = !!(p.busca || p.enCasa);       // (el convertidor espera: buscando la pelota, haciendo un truco…)
     if (!p.obj.ext || !p.obj.ext.globo) continue;
     if (!mano) { p.obj.mano = null; continue; }
     p.obj.mano = mano.getWorldPosition(p.obj.mano || new THREE.Vector3());

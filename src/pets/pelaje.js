@@ -69,17 +69,66 @@ function conUV(geo) {
   geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
 }
 
-// poner el pelaje que corresponde (`cfg`: { arcoiris, diseno, invisible })
+// Píxeles: el cuerpo se arma con cubitos, como en un videojuego antiguo. Cada malla del cuerpo (P.mallas) se esconde y
+// en su lugar va una de cubitos con el mismo material: se marcan las celdas de una grilla que tocan su superficie (una
+// cáscara: por fuera se ve igual que maciza) y se dibujan sólo las caras que no tocan otro cubito. Los ojos y lo que
+// no es pelaje, con cubitos más finos. (Los puntos de cada triángulo salen de una secuencia fija: siempre igual.)
+const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _c = new THREE.Vector3(), _ab = new THREE.Vector3(), _ac = new THREE.Vector3();
+const CARAS = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
+function cubitos(geo, lado) {
+  const p = geo.attributes.position, celdas = new Map(), marcar = (x, y, z) => { const k = [Math.floor(x / lado), Math.floor(y / lado), Math.floor(z / lado)]; celdas.set(k.join(','), k); };
+  for (let i = 0; i + 2 < p.count; i += 3) {
+    _a.fromBufferAttribute(p, i); _b.fromBufferAttribute(p, i + 1); _c.fromBufferAttribute(p, i + 2);
+    _ab.subVectors(_b, _a); _ac.subVectors(_c, _a);
+    const area = _ab.clone().cross(_ac).length() / 2, n = Math.min(80, Math.ceil(area / (lado * lado) * 8));
+    [_a, _b, _c].forEach(v => marcar(v.x, v.y, v.z));
+    for (let k = 1; k <= n; k++) {
+      let u = (k * 0.618034) % 1, v = (k * 0.754878) % 1;
+      if (u + v > 1) { u = 1 - u; v = 1 - v; }
+      marcar(_a.x + _ab.x * u + _ac.x * v, _a.y + _ab.y * u + _ac.y * v, _a.z + _ab.z * u + _ac.z * v);
+    }
+  }
+  const pos = [], nor = [];
+  for (const [x, y, z] of celdas.values()) for (const [nx, ny, nz] of CARAS) {
+    if (celdas.has(`${x + nx},${y + ny},${z + nz}`)) continue;   // (tapada por el vecino)
+    // las 4 esquinas de la cara, en el sentido que mira hacia afuera
+    const c = [(x + 0.5 + nx * 0.5) * lado, (y + 0.5 + ny * 0.5) * lado, (z + 0.5 + nz * 0.5) * lado];
+    const t1 = nx ? [0, 1, 0] : [1, 0, 0], t2 = [ny * t1[2] - nz * t1[1], nz * t1[0] - nx * t1[2], nx * t1[1] - ny * t1[0]];
+    const q = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([s, r]) => [0, 1, 2].map(j => c[j] + (t1[j] * s + t2[j] * r) * lado / 2));
+    for (const i of [0, 1, 2, 0, 2, 3]) { pos.push(...q[i]); nor.push(nx, ny, nz); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  g.computeBoundingSphere();
+  return g;
+}
+function ponerPixeles(P) {
+  const pelo = new Set(Object.values(P.mats)), lado = P.medidas.largo * 0.07;
+  P.pixeles = P.mallas.map(m => {
+    const v = new THREE.Mesh(cubitos(m.geometry, pelo.has(m.material) ? lado : lado / 2), m.material);
+    v.position.copy(m.position); v.quaternion.copy(m.quaternion); v.scale.copy(m.scale);
+    v.castShadow = m.castShadow; v.receiveShadow = true; m.parent.add(v); m.visible = false;
+    return { m, v };
+  });
+}
+function quitarPixeles(P) {
+  (P.pixeles || []).forEach(({ m, v }) => { v.parent.remove(v); v.geometry.dispose(); m.visible = true; });
+  P.pixeles = null;
+}
+
+// poner el pelaje que corresponde (`cfg`: { arcoiris, diseno, invisible, pixeles })
 export function ponerPelaje(P, cfg = {}) {
-  const diseno = DISENOS.includes(cfg.diseno) ? cfg.diseno : null, clave = `${!!cfg.arcoiris}|${diseno}|${!!cfg.invisible}`;
+  const diseno = DISENOS.includes(cfg.diseno) ? cfg.diseno : null, clave = `${!!cfg.arcoiris}|${diseno}|${!!cfg.invisible}|${!!cfg.pixeles}`;
   if (P.pelaje && P.pelaje.clave === clave) return;
   if (P.pelaje) {   // volver a los originales
     const vuelta = new Map([...P.pelaje.swap].map(([a, b]) => [b, a]));
     P.root.traverse(o => { if (o.isMesh && vuelta.has(o.material)) { o.material = vuelta.get(o.material); if (o.userData.sombra !== undefined) { o.castShadow = o.userData.sombra; delete o.userData.sombra; } } });
     Object.values(P.pelaje.nuevo).forEach(m => m.dispose());
+    quitarPixeles(P);
     P.pelaje = null;
   }
-  if (clave === 'false|null|false') return;
+  if (clave === 'false|null|false|false') return;
+  if (cfg.pixeles) ponerPixeles(P);
   const nuevo = {}, swap = new Map();
   for (const [k, m] of Object.entries(P.mats)) {
     const c = nuevo[k] = m.clone(); swap.set(m, c);

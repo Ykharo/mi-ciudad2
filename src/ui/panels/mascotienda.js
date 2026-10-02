@@ -37,13 +37,15 @@ function render() {
   if (S.pronto || !lista.length) h += '<p class="empty" style="margin-top:14px">¡Muy pronto llegan cosas nuevas a este pasillo!</p>';
   const tengo = M.comprados(p);
   for (const a of lista) {
-    const mio = tengo.includes(a.id), puesto = M.puesto(p, a.id), juguete = a.tipo === 'juguete';
+    // (los juguetes y los trucos se usan; la casa no se prueba: va en el patio de Mi Casa)
+    const mio = tengo.includes(a.id), puesto = M.puesto(p, a.id), usa = a.tipo === 'juguete' || a.tipo === 'truco', casa = a.tipo === 'casa';
+    const poner = casa ? (puesto ? 'Sacarla del patio' : 'Ponerla en el patio') : puesto ? 'Quitárselo' : 'Ponérselo';
     h += `<div class="art${probando === a.id ? ' probando' : ''}"><span class="ic">${a.ic}</span>
       <div class="nombre">${esc(a.nombre)}<button data-voz="${a.id}" aria-label="Escuchar">🔊</button></div>
       <div class="desc">${esc(a.desc)}</div><div class="botones">` +
-      (mio ? `<span class="tengo">✔ ¡Es de ${esc(p.name)}!</span>` + (juguete ? `<span class="tengo">${a.id === 'hueso' ? 'Lo saca cuando se sienta' : `Úsalo con ${a.ic}`}</span>`
-        : `<button class="toy ${puesto ? '' : 'mint'}" data-poner="${a.id}">${puesto ? 'Quitárselo' : 'Ponérselo'}</button>`)
-        : `<span class="precio">🦴 ${a.precio}</span>` + (p ? (juguete ? '' : `<button class="toy" data-probar="${a.id}">${probando === a.id ? 'Probando…' : 'Probar'}</button>`) +
+      (mio ? `<span class="tengo">✔ ¡Es de ${esc(p.name)}!</span>` + (usa ? `<span class="tengo">${a.id === 'hueso' ? 'Lo saca cuando se sienta' : a.tipo === 'truco' ? 'Pídeselo con 🎉 Trucos' : `Úsalo con ${a.ic}`}</span>`
+        : `<button class="toy ${puesto ? '' : 'mint'}" data-poner="${a.id}" data-on="${puesto ? '' : '1'}">${poner}</button>`)
+        : `<span class="precio">🦴 ${a.precio}</span>` + (p ? (usa || casa ? '' : `<button class="toy" data-probar="${a.id}">${probando === a.id ? 'Probando…' : 'Probar'}</button>`) +
           `<button class="toy pink" data-comprar="${a.id}">Comprar</button>` : '')) + '</div></div>';
   }
   body.innerHTML = h;
@@ -58,7 +60,7 @@ body.addEventListener('click', e => {
   else if (b.dataset.pet) { M.elegir(+b.dataset.pet); probando = null; }
   else if (b.dataset.voz) decir(ARTICULOS.find(a => a.id === b.dataset.voz).nombre);
   else if (b.dataset.probar) { probando = b.dataset.probar; M.dejarDeProbar(); M.probar(p, probando); }
-  else if (b.dataset.poner) { const on = b.textContent === 'Ponérselo'; M.equipar(p, b.dataset.poner, on); probando = null; }
+  else if (b.dataset.poner) { M.equipar(p, b.dataset.poner, !!b.dataset.on); probando = null; }
   else if (b.dataset.comprar) {
     const id = b.dataset.comprar, r = M.comprar(id, p);
     if (r.r === 'faltan') { toast(`Te faltan 🦴 ${r.faltan}. ¡Gánalos leyendo en la competencia de aura!`); sfx('bonk'); return; }

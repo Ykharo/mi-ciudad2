@@ -70,6 +70,12 @@ function sfx(kind) {
   else if (kind === 'leon') { toneF(180, t, 0.75, 'sawtooth', 0.6, 'lowpass', 700, 90, 0.06); toneF(240, t, 0.6, 'square', 0.25, 'lowpass', 500, 110, 0.08); }
   else if (kind === 'vaca') { toneF(170, t, 0.9, 'sawtooth', 0.45, 'lowpass', 600, 130, 0.12); tone(170, t, 0.9, 'triangle', 0.3, sfxGain, 0.12, 140); }
   else if (kind === 'nota') { const m = [72, 74, 76, 79, 81, 84][Math.floor(Math.random() * 6)]; tone(mtof(m), t, 0.45, 'triangle', 0.45, sfxGain, 0.005); tone(mtof(m + 12), t, 0.25, 'sine', 0.12, sfxGain, 0.005); }
+  // las formas del Convertidor sorpresa, su nube mágica y el platillo volador
+  else if (kind === 'dino') { toneF(120, t, 0.9, 'sawtooth', 0.6, 'lowpass', 500, 60, 0.08); toneF(190, t + 0.05, 0.7, 'square', 0.22, 'lowpass', 420, 80, 0.1); }
+  else if (kind === 'pinguino') [0, 0.16].forEach(d => toneF(900, t + d, 0.14, 'sawtooth', 0.35, 'bandpass', 1500, 650, 0.005));
+  else if (kind === 'oink') [0, 0.2].forEach(d => { toneF(260, t + d, 0.16, 'sawtooth', 0.5, 'bandpass', 700, 200, 0.01); tone(180, t + d, 0.12, 'square', 0.12, sfxGain, 0.01, 150); });
+  else if (kind === 'magia') [79, 83, 86, 91, 95, 98].forEach((m, i) => tone(mtof(m), t + i * 0.05, 0.25, 'sine', 0.3, sfxGain, 0.005));
+  else if (kind === 'ovni') { tone(400, t, 0.9, 'sine', 0.25, sfxGain, 0.05, 1200); tone(1200, t + 0.45, 0.6, 'sine', 0.15, sfxGain, 0.05, 500); }
   else if (kind === 'horn')[0, 0.24].forEach(d => { tone(466, t + d, 0.2, 'square', 0.12, sfxGain, 0.01); tone(587, t + d, 0.2, 'square', 0.1, sfxGain, 0.01); });
 }
 

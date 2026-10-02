@@ -20,6 +20,8 @@ export const LUGAR_ROPA = { collar: 'cuello', bufanda: 'cuello', corona: 'cabeza
   aureola: 'cabeza', cuerno: 'cabeza', antenas: 'cabeza', cohete: 'espalda', collar_musical: 'cuello', paraguas: 'arriba' };
 const LUGARES = ['cuello', 'cabeza', 'lomo', 'cara', 'cola', 'espalda', 'arriba'];
 const est = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.5, ...o });
+// cuánto se inclina lo que va alrededor del cuello (el aro mira hacia donde va el cuello; el pingüino va parado)
+const inclCuello = P => P.medidas.cuelloInc ?? (P.kind === 'unicornio' ? -1.15 : -0.65);
 function estrella(r1, r2, n = 5) {
   const s = new THREE.Shape();
   for (let i = 0; i < n * 2; i++) { const a = Math.PI / 2 + i * Math.PI / n, r = i % 2 ? r2 : r1; i ? s.lineTo(Math.cos(a) * r, Math.sin(a) * r) : s.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
@@ -36,7 +38,7 @@ function collar(P) {
   x.fillText((P.nombre || '?').slice(0, 1).toUpperCase(), 32, 35);
   const placa = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.012, 20), [est('#E8B400', { metalness: 0.5 }), est('#FFFFFF', { map: new THREE.CanvasTexture(c), metalness: 0.3 }), est('#E8B400')]);
   placa.rotation.x = Math.PI / 2; placa.position.set(0, -r - 0.05, 0.02); g.add(placa);
-  g.rotation.x = P.kind === 'unicornio' ? -1.15 : -0.65;   // (el aro mira hacia donde va el cuello)
+  g.rotation.x = inclCuello(P);   // (el aro mira hacia donde va el cuello)
   P.anclas.cuello.add(g);
   return { g };
 }
@@ -202,7 +204,7 @@ function capa(P) {
   const r = (M.cuelloR || M.ancho * 0.4) + 0.005, collarG = new THREE.Group();
   collarG.add(new THREE.Mesh(new THREE.TorusGeometry(r, 0.025, 8, 28), rojo));
   const medalla = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.015, 18), oro); medalla.rotation.x = Math.PI / 2; medalla.position.set(0, -r - 0.025, 0.015); collarG.add(medalla);
-  collarG.rotation.x = P.kind === 'unicornio' ? -1.15 : -0.65; P.anclas.cuello.add(collarG);
+  collarG.rotation.x = inclCuello(P); P.anclas.cuello.add(collarG);
   // el emblema en el pecho: un escudo dorado con un rayo rojo
   const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
   x.fillStyle = '#FFC93C'; x.fillRect(0, 0, 64, 64); x.fillStyle = ROJO; x.beginPath();
@@ -237,7 +239,7 @@ function bufanda(P) {
   const M = P.medidas, r = (M.cuelloR || M.ancho * 0.4) + 0.02, g = new THREE.Group();
   const colores = ['#FF5E5E', '#FFB547', '#FFE45C', '#3DD6A8', '#4FB6F5', '#A77BF3'];
   g.add(new THREE.Mesh(new THREE.TorusGeometry(r, 0.05, 10, 28), est('#FFFFFF', { map: stripeTexture(colores[0], colores[3], 12), roughness: 0.9 })));
-  g.rotation.x = P.kind === 'unicornio' ? -1.15 : -0.65;
+  g.rotation.x = inclCuello(P);
   P.anclas.cuello.add(g);
   // la cola, en la escena: cada tramo es una tira de lana de un color
   const nudo = new THREE.Object3D(); nudo.position.set(r * 0.5, -r * 0.7, 0); g.add(nudo);   // de donde sale (al costado)
@@ -347,7 +349,7 @@ function collarMusical(P) {
   const cabeza = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 10), oro); cabeza.scale.set(1.3, 1, 0.7); nota.add(cabeza);
   const palo = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.09, 6), oro); palo.position.set(0.033, 0.045, 0); nota.add(palo);
   const bandera = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.012, 0.01), oro); bandera.position.set(0.05, 0.085, 0); bandera.rotation.z = -0.5; nota.add(bandera);
-  g.rotation.x = P.kind === 'unicornio' ? -1.15 : -0.65;
+  g.rotation.x = inclCuello(P);
   P.anclas.cuello.add(g);
   return { g, nota, musical: true };
 }

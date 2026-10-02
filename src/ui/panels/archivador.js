@@ -13,6 +13,8 @@ import { FOTOS, abrirArchivador, ahora, animo, borrarFoto, cerrarArchivador, ele
 import { mascotienda as M } from '../../game/mascotienda.js';
 import { lanzarPelota } from '../../game/pelota.js';
 import { hacerBurbujas } from '../../game/burbujero.js';
+import { saltarAro } from '../../game/aro.js';
+import { hacerTruco } from '../../game/trucos.js';
 import { PET_KINDS } from '../../pets/models.js';
 import { ARTICULOS } from '../../pets/catalog/articulos.js';
 import { $, esc, toast } from '../dom.js';
@@ -26,6 +28,8 @@ const CATEGORIAS = [
   { id: 'pociones', nombre: 'Pociones', ic: '🧪', secciones: ['pociones'] },
   { id: 'juguetes', nombre: 'Juguetes', ic: '🧸', secciones: ['juguetes'] },
   { id: 'companeros', nombre: 'Compañeros', ic: '🦋', secciones: ['companeros'] },
+  { id: 'trucos', nombre: 'Trucos', ic: '🎉', secciones: ['trucos'] },
+  { id: 'hogar', nombre: 'Hogar', ic: '🏡', secciones: ['hogar'] },
 ];
 let seccion = 'ficha', seguro = false;
 const fechaCL = iso => new Date(iso).toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -82,10 +86,13 @@ function render() {
       if (!lista.length) { h += `<p class="note">${esc(p.name)} todavía no tiene.</p>`; continue; }
       for (const a of lista) {
         const puesto = M.puesto(p, a.id);
-        h += a.tipo === 'juguete'
-          ? `<div class="cosa"><span class="ic">${a.ic}</span><b>${esc(a.nombre)}</b>` + (a.id === 'hueso' ? '<small>Lo saca cuando se sienta</small></div>'
-            : `<button class="toy sun" data-jugar="${a.id}">${a.ic} ¡A jugar!</button></div>`)
-          : `<div class="cosa${puesto ? ' puesto' : ''}"><span class="ic">${a.ic}</span><b>${esc(a.nombre)}</b><button class="toy ${puesto ? '' : 'mint'}" data-poner="${a.id}" data-on="${puesto ? '' : '1'}">${puesto ? 'Quitárselo' : 'Ponérselo'}</button></div>`;
+        const poner = a.tipo === 'casa' ? (puesto ? 'Sacarla del patio' : 'Ponerla en el patio') : puesto ? 'Quitárselo' : 'Ponérselo';
+        h += a.tipo === 'truco'
+          ? `<div class="cosa"><span class="ic">${a.ic}</span><b>${esc(a.nombre)}</b><button class="toy sun" data-truco="${a.id}">🎉 ¡Hazlo!</button></div>`
+          : a.tipo === 'juguete'
+            ? `<div class="cosa"><span class="ic">${a.ic}</span><b>${esc(a.nombre)}</b>` + (a.id === 'hueso' ? '<small>Lo saca cuando se sienta</small></div>'
+              : `<button class="toy sun" data-jugar="${a.id}">${a.ic} ¡A jugar!</button></div>`)
+            : `<div class="cosa${puesto ? ' puesto' : ''}"><span class="ic">${a.ic}</span><b>${esc(a.nombre)}</b><button class="toy ${puesto ? '' : 'mint'}" data-poner="${a.id}" data-on="${puesto ? '' : '1'}">${poner}</button></div>`;
       }
     }
   }
@@ -111,8 +118,11 @@ body.addEventListener('click', e => {
   else if (b.dataset.borrar) borrarFoto(p, +b.dataset.borrar);
   else if (b.dataset.poner) M.equipar(p, b.dataset.poner, !!b.dataset.on);
   else if (b.dataset.jugar) {   // a jugar: se cierra el archivador y Nina lanza la pelota
-    panel.hidden = true; seguro = false; cerrarArchivador(); if (b.dataset.jugar === 'burbujero') hacerBurbujas(p); else lanzarPelota(p, b.dataset.jugar); return;
+    panel.hidden = true; seguro = false; cerrarArchivador();
+    if (b.dataset.jugar === 'burbujero') hacerBurbujas(p); else if (b.dataset.jugar === 'aro') saltarAro(p); else lanzarPelota(p, b.dataset.jugar);
+    return;
   }
+  else if (b.dataset.truco) { panel.hidden = true; seguro = false; cerrarArchivador(); hacerTruco(i, b.dataset.truco); return; }
   else if (b.dataset.casa) {
     if (!seguro) { seguro = true; render(); return; }
     const q = llevarACasa(i); seguro = false; elegirFicha(0);

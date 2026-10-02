@@ -49,6 +49,9 @@ import { updatePlayer } from './game/player.js';
 import { ANIMS_REPOSO, updateReposo } from './game/reposo.js';
 import { updatePelota } from './game/pelota.js';
 import { updateBurbujero } from './game/burbujero.js';
+import { updateAro } from './game/aro.js';
+import { updateTrucos } from './game/trucos.js';
+import { updateCasas } from './game/casas.js';
 import './game/juegos.js';
 import './game/vecinosJuegos.js';
 import { lookVecinos, spawnNPCs, updateNPCs } from './game/npcs.js';
@@ -73,6 +76,7 @@ import './ui/codigoAura.js';
 import './ui/huesitos.js';
 import './ui/panels/mascotienda.js';
 import './ui/pelota.js';
+import './ui/trucos.js';
 import { mostrarPersonajes } from './ui/personajes.js';
 import { installTestHooks } from './debug/hooks.js';
 
@@ -91,8 +95,9 @@ function frame(now) {
   if (state.mode === 'drive') updateCar(dt); else updatePlayer(dt);
   updateReposo(dt);
   const piso = state.mode === 'drive' ? null : pisoEn(player.pos.x, player.pos.z);
-  updatePelota(dt); updateBurbujero(dt);   // (la que va a buscar la pelota o persigue burbujas no sigue la fila)
-  const fila = player.pets.filter(p => !p.busca);
+  // (la que va a buscar la pelota, persigue burbujas, salta el aro, hace un truco o está en su casita no sigue la fila)
+  updatePelota(dt); updateBurbujero(dt); updateAro(dt); updateTrucos(dt); updateCasas(dt);
+  const fila = player.pets.filter(p => !p.busca && !p.enCasa);
   if (state.mode === 'drive') followChain(fila.filter(p => !p.riding), player.pos, dt, state.clock, driving.hl + 1.3);
   else if (piso && piso.espera) waitAt(fila, piso.espera, dt, state.clock);   // en la tarima: esperan abajo
   else if (player.seat && player.seat.mascotas) waitAt(fila, player.seat.mascotas, dt, state.clock, true);   // a su lado

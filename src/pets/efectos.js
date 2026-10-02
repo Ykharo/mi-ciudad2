@@ -72,6 +72,18 @@ export function estallido(c, r) {
     p.v = { x: Math.cos(a) * 1.2, y: 0.6 + Math.random(), z: Math.sin(a) * 1.2 };
   }
 }
+// la nube mágica del Convertidor: bolitas de colores que salen para todos lados, crecen y se desvanecen, con estrellitas
+export function nubeMagica(c, r) {
+  for (let i = 0; i < 18; i++) {
+    const a = i / 18 * Math.PI * 2, b = (Math.random() - 0.3) * 1.4;
+    const p = nueva('humo', c.x + Math.cos(a) * r * 0.3, c.y + b * r * 0.3, c.z + Math.sin(a) * r * 0.3);
+    p.r = r * (0.18 + Math.random() * 0.1); p.m.scale.setScalar(p.r);
+    p.v = { x: Math.cos(a) * 1.4, y: -0.6 + b, z: Math.sin(a) * 1.4 }; p.sube = true;
+  }
+  for (let i = 0; i < 8; i++) nueva('brillo', c.x + (Math.random() - 0.5) * r * 1.5, c.y + (Math.random() - 0.3) * r, c.z + (Math.random() - 0.5) * r * 1.5);
+}
+// una estrellita que sube (el rayo del platillo, el aro)
+export function soltarEstrellita(c) { nueva('brillo', c.x, c.y, c.z); }
 // mover todas las partículas, una vez por cuadro aunque se llame por cada mascota (lo llama animatePet: así las que ya
 // salieron terminan aunque se quite la poción)
 let ultimo = 0;

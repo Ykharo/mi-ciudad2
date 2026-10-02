@@ -57,19 +57,22 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
    un ciclo de la mascota: busca pasto, se sienta, bosteza y lee un libro acostada / sentada; `game/reposo.js`).
 3. Más artículos. La lista del usuario (✅ hecho):
    - Transporte: ✅ patines (chispitas, curvas), ✅ globo (5 colores), ✅ alitas de hada (aletean al saltar), ✅ burbuja
-     ("plop"), ✅ alitas de murciélago; patineta con propulsores, mini auto a control remoto, nube personal (llueve
-     confeti), alfombra mágica, resorte en las patas (saltos de canguro).
+     ("plop"), ✅ alitas de murciélago, ✅ platillo volador con rayo abductor; patineta con propulsores, mini auto a
+     control remoto, nube con rayos (y paraguas) que la lleva, alfombra mágica, zapatos con resortes.
    - Pociones: ✅ jarabe arcoíris, ✅ gigante / mini, ✅ pastillas de diseño (vaca, cebra, estrellas, corazones,
-     lunares, galaxia), ✅ invisible; transformadora (perro → dinosaurio, gato → dragón, conejo → pingüino), brillo
-     fosforescente (cuando haya noche), poción de voz (pato, león, "muuu"), caramelo de aura.
-     (Extra: ✅ polvo de estrellas, ✅ jarabe de burbujas.)
+     lunares, galaxia), ✅ invisible, ✅ convertidor sorpresa (dinosaurio, vaca, pingüino, león, chanchito y las 4
+     especies, al azar), ✅ píxeles, ✅ voz (pato, león, "muuu"), ✅ caramelo de aura; brillo fosforescente (cuando
+     haya noche). (Extra: ✅ polvo de estrellas, ✅ jarabe de burbujas.)
    - Accesorios: ✅ set superhéroe (capa, antifaz, emblema, cinturón, muñequeras), ✅ lentes que cambian de forma,
      ✅ bufanda arcoíris larguísima, ✅ sombrero de mago con conejito, ✅ corona que gira, ✅ aureola, ✅ cuernito,
      ✅ antenas de abeja, ✅ mochila cohete con humito, ✅ collar musical, ✅ paraguas.
      (Extra: ✅ collar con placa, ✅ gorro de cumpleaños, ✅ moño en la cola.)
    - Compañeros: ✅ mariposa, ✅ pajarito, ✅ ratoncito encima; pez en pecera flotante.
-   - Juguetes: ✅ pelota, ✅ hueso eterno, ✅ burbujero, ✅ frisbee, ✅ palito mágico que crece.
-   - Hogar (Mi Casa): casitas (castillo, nave, iglú, hongo), cama-nube / hamaca / flotante, comedero de estrellitas. 4. Poción transformadora. 5. Encargos de lectura de los vecinos.
+   - Juguetes: ✅ pelota, ✅ hueso eterno, ✅ burbujero, ✅ frisbee, ✅ palito mágico que crece, ✅ aro de circo.
+   - Trucos ✅ (botón 🎉: patita, saludar, vuelta, dos patas, hacerse la muerta, bailar).
+   - Hogar ✅ (Patio de mascotas en Mi Casa: casita de perro, torre de gato, madriguera, iglú, hongo, castillo, nave);
+     falta cama-nube / hamaca / flotante, comedero de estrellitas, y estantes de Trucos y Hogar en la sala 3D.
+4. ✅ Poción transformadora (el convertidor sorpresa). 5. Encargos de lectura de los vecinos.
 6. Letreros escondidos, diario de la mascota, racha diaria.
 
 **Competencia de aura (plan por etapas)**

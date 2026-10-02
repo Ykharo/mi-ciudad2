@@ -10,6 +10,8 @@
 //   'archivador' ({ que: 'abrir' })    abrir "Mis mascotas" (game/fichas.js → ui/panels/archivador.js)
 //   'pelota' ({ visible })             mostrar u ocultar el botón 🎾 Lanzar pelota (game/pelota.js → ui/pelota.js)
 //   'burbujero' ({ visible })          lo mismo con 🫧 Hacer burbujas (game/burbujero.js → ui/pelota.js)
+//   'aro' ({ visible })                lo mismo con 🎪 Saltar el aro (game/aro.js → ui/pelota.js)
+//   'trucos' ({ visible })             mostrar u ocultar el botón 🎉 Trucos (game/trucos.js → ui/trucos.js)
 //   'mascotienda' ({ que, … })       la ventana de la Mascotienda: 'abrir', 'diario'
 //   'huesitos' ({ total, delta, motivo })  cambió la cantidad de Huesitos de Aura (game/huesitos.js)
 //   'aura'   ({ que, … })            competencia de aura: 'elegir' (abrir la ventana de los 3 movimientos, con `bailes`)

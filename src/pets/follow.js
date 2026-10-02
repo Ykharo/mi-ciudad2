@@ -3,7 +3,7 @@ import { clamp, lerpAngle } from '../core/math.js';
 import { emit } from '../core/events.js';
 import { labelSprite } from '../engine/textures.js';
 import { collide, sueloSuave } from '../world/physics.js';
-import { animatePet, letreroMascota } from './models.js';
+import { FORMAS, animatePet, letreroMascota } from './models.js';
 import { roerHueso } from './hueso.js';
 import { saltoMascota } from './ropa.js';
 
@@ -26,9 +26,11 @@ const CICLOS = {
 const ORDEN = ['espera', 'sentada', 'acostada', 'juega'];
 // la voz de la mascota: la de su especie, o la de la poción de voz que tenga (pato, león, vaca)
 const VOCES = { pato: { voz: 'pato', texto: '¡Cuac cuac!' }, leon: { voz: 'leon', texto: '¡Grrroar!' }, vaca: { voz: 'vaca', texto: '¡Muuu!' } };
+// (convertida en otro animal con el Convertidor sorpresa: la voz de esa forma)
 export function vozDe(p) {
   const v = p.obj && p.obj.extras && VOCES[p.obj.extras.voz], C = CICLOS[p.kind] || CICLOS.perro;
-  return v || { voz: C.voz, texto: C.texto };
+  const F = p.obj && p.obj.kind !== p.kind && FORMAS.find(f => f.id === p.obj.kind);
+  return v || (F ? { voz: F.voz, texto: F.texto } : { voz: C.voz, texto: C.texto });
 }
 function avanzarOcio(p, dt, ocio) {
   const C = CICLOS[p.kind] || CICLOS.perro, O = p.ocio || (p.ocio = { fase: 'espera', t: 0 });

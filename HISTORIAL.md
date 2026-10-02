@@ -5,6 +5,39 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Tanda: convertidor, píxeles, platillo, aro, trucos y casitas (02-10-2026)
+
+- **Convertidor sorpresa** (poción `convertidor`): al ponérselo y después cada 20–30 s la mascota se convierte en otro
+  animal al azar, con una nube mágica (`nubeMagica` en `pets/efectos.js`, sonido `magia`) y un aviso. Formas nuevas en
+  `buildPet` (`pets/models.js`): dinosaurio (placas de colores), vaca (manchas, cuernitos), pingüino (parado; se
+  bambolea al andar; `cuelloInc` en sus anclajes para que el collar vaya derecho), león (melena) y chanchito (cola en
+  rulo), cada una con su mapa de anclajes y su voz (`FORMAS`: dino, vaca, pinguino, leon, oink). Las especies que se
+  adoptan siguen siendo sólo 4 (`PET_KINDS`). `cambiarCuerpo` (`pets/extras.js`) cambia el cuerpo en el mismo
+  `P.root` (se quita todo, se cambia, se vuelve a poner con los anclajes nuevos); `P.especie` = la de verdad (vuelve
+  al quitárselo). No cambia mientras está ocupada (`P.ocupada`: buscando la pelota, haciendo un truco, en su casa).
+  `vozDe` usa la voz de la forma.
+- **Poción de píxeles** (`pixeles`, en `pets/pelaje.js`): cada malla del cuerpo (`P.mallas`) se esconde y la
+  reemplaza una de cubitos (celdas de una grilla que tocan su superficie, sólo las caras de afuera; ojos con cubitos
+  más finos). Se junta con arcoíris, diseños e invisible (va en la clave del pelaje).
+- **Platillo volador** (transporte `platillo`): disco con luces que giran cambiando de color, cúpula de vidrio con
+  antena; flota a la altura del hombro (como la burbuja); quieta baja el rayo abductor verde con anillos que suben y
+  estrellitas (sonido `ovni`).
+- **Aro de circo** (juguete `aro`, `game/aro.js`, botón 🎪 Saltar el aro): un aro de colores con ampolletas, del tamaño
+  de la mascota, 2,6 m delante de Nina; la mascota lo salta 3 veces de ida y vuelta y desaparece en una nube mágica.
+- **Trucos** (sección nueva, tipo `truco`): dar la patita, saludar, dar una vuelta, pararse en dos patas, hacerse la
+  muerta, bailar. Botón 🎉 Trucos con menú (`ui/trucos.js`, evento `trucos`); `game/trucos.js` la trae delante de
+  Nina y `pets/trucos.js` hace la pose (después de animatePet; `P.body.position.x/z` se vuelven a 0 cada cuadro porque
+  animatePet no los toca). Con "Bailar", Nina baila. También desde "Mis mascotas" → Cosas.
+- **Casitas** (sección Hogar, tipo `casa`, una por mascota: `extras.casa`): casita de perro (con su nombre), torre de
+  gato, madriguera, iglú, casa hongo, castillo, nave espacial (`pets/casas.js`). Van en el **Patio de mascotas** de Mi
+  Casa (`world/places/casa.js`, `PATIO`: reja, 4 terrenos de pasto con caminito, letrero), un terreno por mascota en
+  el orden de la fila, del tamaño de su especie. Con Nina en el patio, cada una va a su casa, entra y se acuesta
+  asomada a la puerta; le salen 💤 (`game/casas.js`, `p.enCasa` la saca de la fila).
+- Tienda: los trucos y las casas no se prueban; las casas dicen "Ponerla en el patio" / "Sacarla del patio". Los
+  pasillos 3D de la sala siguen siendo 4 (Trucos y Hogar se ven en las pestañas).
+- Revisado con fotos (las formas con ropa, píxeles, platillo, convertidor, aro, cada truco, el patio con 4 casas) y
+  `npm run lint`. Sin correr las pruebas (a pedido). Las capturas de referencia van a cambiar: el patio es nuevo.
+
 ## Tanda: paraguas, pajarito, ratoncito y alitas de murciélago (02-10-2026)
 
 - Paraguas flotante (`pets/ropa.js`, lugar nuevo `arriba`: no choca con los sombreros): 8 gajos de colores, mango

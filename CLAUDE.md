@@ -193,7 +193,11 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
   pelaje (`pets/pelaje.js`: arcoíris, pastillas de diseño, invisible), partículas (`pets/efectos.js`), compañeros
   (`pets/companeros.js`: la mariposa), voces (`vozDe` en `pets/follow.js`) y juguetes (pelota, frisbee y palito:
   `game/pelota.js` + `#btnPelota`/`#btnPelotaOtro`; burbujero: `game/burbujero.js` + `#btnBurbujas`; hueso:
-  `pets/hueso.js`). El collar musical suena con `saltoMascota(P)` (pets/ropa.js) cuando la mascota salta. Un artículo nuevo: datos en `pets/catalog/articulos.js` (tipo
+  `pets/hueso.js`; aro: `game/aro.js` + `#btnAro`). Convertidor sorpresa: formas extra en `buildPet` (`FORMAS` y
+  `ANCLAJES` en `pets/models.js`), `cambiarCuerpo` en `pets/extras.js` (`P.especie` = la de verdad). Píxeles: en
+  `pets/pelaje.js` (`P.mallas`). Trucos (tipo `truco`): `game/trucos.js` + poses `pets/trucos.js` + `ui/trucos.js`
+  (botón 🎉). Casitas (tipo `casa`, `extras.casa`): modelos `pets/casas.js`, Patio de mascotas en
+  `world/places/casa.js` (`PATIO`), `game/casas.js` (`p.enCasa`). El collar musical suena con `saltoMascota(P)` (pets/ropa.js) cuando la mascota salta. Un artículo nuevo: datos en `pets/catalog/articulos.js` (tipo
   `transporte` / `pocion` / `ropa` con `lugar` / `juguete`) y su modelo en `extras.js` o `ropa.js`.
 - Guardado en `localStorage` con clave `ciudadArcoiris.v2`: `{ version: 2, jugador, nina: { look }, personajes, pets (con ficha, cosas y extras), cars, shop, huesitos }`
   (`game/save.js`). Una partida `ciudadArcoiris.v1` se migra al cargar y la clave v1 no se borra. Envolver en try/catch.
