@@ -5,6 +5,16 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Vitrina de ropa con maniquíes (02-10-2026)
+
+- El mueble de Ropa (`vitrina` en `world/places/mascotienda.js`) es una vitrina de dos pisos con 4 puertas de vidrio
+  por piso (vidrio transparente con reflejos en diagonal, marcos del color del pasillo, manillas doradas), tubos de luz
+  adentro y el letrero "✨ Moda para mascotas" arriba.
+- Adentro, un maniquí por prenda (`buildPet` de color marfil, alternando perro, gato, conejo y unicornio, achicados a
+  0,72 m), sobre un pedestal blanco con anillo de color, con su prenda puesta (`ponerRopa`, calzada con los anclajes).
+  Giran despacio de lado a lado y lo que se mueve de la ropa se mueve (`animarRopa` en `onFrame`). Delante de cada uno,
+  una tarjetita con la imagen y el nombre, y la etiqueta del precio en el borde del piso (del atlas de las cajas).
+
 ## Mascotienda como tienda de verdad: cajas con imagen y precio (02-10-2026)
 
 - Los productos de los estantes son cajas de colores (`productos` en `world/places/mascotienda.js`): una por cada

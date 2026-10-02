@@ -13,6 +13,8 @@ import { addInterior } from '../physics.js';
 import { addArea } from '../zones.js';
 import { definePlace } from '../place.js';
 import { ARTICULOS } from '../../pets/catalog/articulos.js';
+import { buildPet } from '../../pets/models.js';
+import { animarRopa, ponerRopa } from '../../pets/ropa.js';
 
 // afuera: el centro del edificio (mira hacia la Calle Mora, −z); adentro: el centro de la sala, lejos del mapa
 const AFUERA = { x: 20, z: 56, w: 18, d: 12, h: 6.5 };
@@ -152,6 +154,71 @@ function productos(e, largo, D, secciones, repisas) {
   const m = new THREE.Mesh(geo, material); m.receiveShadow = true; e.add(m);
 }
 
+// La vitrina de la ropa: un mueble con puertas de vidrio y dos pisos; adentro, maniquíes de mascotas (blancos, como de
+// tienda) sobre un pedestal que gira despacio, cada uno con una prenda o accesorio puesto (pets/ropa.js, calzado con
+// los anclajes de su especie), y adelante una tarjetita con la imagen y el nombre, y la etiqueta con el precio.
+const MANIQUI = '#F4F0E8', ALTO_MANIQUI = 0.72, ESPECIES_MANIQUI = ['perro', 'gato', 'conejo', 'unicornio'];
+function vitrina(g, x, z, largo, ry, color, onFrame) {
+  const e = new THREE.Group(); e.position.set(x, 0, z); e.rotation.y = ry; g.add(e);
+  const H = 2.7, D = 0.9, pisos = [0.14, 1.36];
+  const marco = mat(color, { emissive: color, emissiveIntensity: 0.15 }), oro = mat('#FFC93C', { metalness: 0.5, roughness: 0.3 });
+  const fondo = mat(tint(color, 0.55), { emissive: tint(color, 0.55), emissiveIntensity: 0.3 });
+  e.add(mesh(rlo(largo, H, 0.08, 0.03), fondo, 0, H / 2, -D / 2 + 0.04));
+  for (const s of [-1, 1]) e.add(mesh(rlo(0.12, H, D, 0.04), marco, s * (largo / 2 + 0.06), H / 2, 0));
+  e.add(mesh(rlo(largo + 0.24, 0.12, D, 0.04), marco, 0, H, 0));
+  const luz = mat('#FFF6D6', { emissive: '#FFF0B8', emissiveIntensity: 1 });
+  for (const y of pisos) {
+    e.add(mesh(rlo(largo, 0.08, D, 0.03), mat('#FFFFFF', { emissive: '#FFFFFF', emissiveIntensity: 0.2 }), 0, y - 0.04, 0));
+    e.add(mesh(rlo(largo + 0.02, 0.1, 0.06, 0.03), marco, 0, y - 0.04, D / 2 - 0.05));
+  }
+  for (const y of [pisos[1] - 0.1, H - 0.1]) e.add(mesh(box(largo - 0.1, 0.03, 0.08), luz, 0, y, 0.25, false, false));   // tubos de luz
+  // las puertas de vidrio: 4 por piso, con marco, manillas doradas y un reflejo en diagonal
+  const vidrio = new THREE.MeshStandardMaterial({ color: 0xDFF6FF, transparent: true, opacity: 0.16, roughness: 0.05, metalness: 0.3, depthWrite: false, side: THREE.DoubleSide });
+  const brillo = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide });
+  const pw = largo / 4;
+  pisos.forEach((y0, p) => {
+    const y1 = p ? H - 0.06 : pisos[1] - 0.08, h = y1 - y0, ym = (y0 + y1) / 2;
+    for (let k = 0; k < 4; k++) {
+      const cx = -largo / 2 + pw * (k + 0.5);
+      e.add(mesh(new THREE.PlaneGeometry(pw - 0.04, h), vidrio, cx, ym, D / 2 - 0.01, false, false));
+      for (const d of [-0.25, 0.1]) { const r = mesh(new THREE.PlaneGeometry(0.07, h * 0.8), brillo, cx + d * pw, ym, D / 2 - 0.005, false, false); r.rotation.z = 0.5; e.add(r); }
+      e.add(mesh(rlo(0.05, h, 0.05, 0.02), marco, cx - pw / 2, ym, D / 2 - 0.01));
+      const lado = k % 2 ? -1 : 1;   // las manillas, en el borde donde se juntan dos puertas
+      e.add(mesh(cyl(0.015, 0.015, 0.22, 8), oro, cx + lado * (pw / 2 - 0.08), ym, D / 2 + 0.03));
+    }
+    e.add(mesh(rlo(0.05, h, 0.05, 0.02), marco, largo / 2, ym, D / 2 - 0.01));
+  });
+  const letrero = makeSign('✨ Moda para mascotas', color, '#FFFFFF', 2.8); letrero.position.set(0, H + 0.35, D / 2 - 0.1); e.add(letrero);
+  // los maniquíes: uno por prenda, la mitad en cada piso
+  const ropa = ARTICULOS.filter(a => a.tipo === 'ropa'), porPiso = Math.ceil(ropa.length / 2), ancho = largo / porPiso;
+  const { celdas, material } = atlas(), T = { pos: [], nor: [], uv: [] }, girar = [];
+  const pedestal = mat('#FFFFFF', { emissive: '#FFFFFF', emissiveIntensity: 0.15 }), anillo = mat(color);
+  ropa.forEach((a, i) => {
+    const piso = Math.floor(i / porPiso), y = pisos[piso], px = -largo / 2 + ancho * (i % porPiso + 0.5);
+    e.add(mesh(cyl(0.26, 0.28, 0.06, 24), pedestal, px, y + 0.03, -0.05)); e.add(mesh(cyl(0.285, 0.285, 0.02, 24), anillo, px, y + 0.05, -0.05));
+    const P = buildPet(ESPECIES_MANIQUI[i % ESPECIES_MANIQUI.length], MANIQUI); P.nombre = 'Arcoíris';
+    P.root.scale.setScalar(ALTO_MANIQUI / (P.head.position.y + P.medidas.cabezaR));
+    P.root.position.set(px, y + 0.06, -0.05); P.root.userData.dynamic = true; e.add(P.root);
+    ponerRopa(P, { [a.lugar]: a.id });
+    P.root.traverse(o => { o.castShadow = false; });
+    girar.push({ P, fase: i * 0.9 });
+    // la tarjeta (imagen y nombre) parada delante del pedestal, y el precio en el borde del piso
+    const c = celdas[a.id], f = c.frente, pr = c.precio;
+    cuadro(T, [px + 0.24, y + 0.1, 0.3], [0, 0, 1], [1, 0, 0], [0, 1, 0], 0.1, 0.075, [[f[0], f[1]], [f[2], f[1]], [f[2], f[3]], [f[0], f[3]]]);
+    cuadro(T, [px, y - 0.04, D / 2 - 0.016], [0, 0, 1], [1, 0, 0], [0, 1, 0], 0.08, 0.035, [[pr[0], pr[1]], [pr[2], pr[1]], [pr[2], pr[3]], [pr[0], pr[3]]]);
+  });
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(T.pos, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(T.nor, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(T.uv, 2)); geo.computeBoundingSphere();
+  e.add(new THREE.Mesh(geo, material));
+  // giran despacio en su pedestal (y lo que se mueve de la ropa se mueve: la corona, los lentes, la capa…)
+  let antes = 0;
+  onFrame(t => {
+    const dt = Math.min(0.05, Math.max(0, t - antes)); antes = t;
+    for (const { P, fase } of girar) { P.root.rotation.y = Math.sin(t * 0.35 + fase) * 1.1; animarRopa(P, t + fase, dt, 0); }
+  });
+}
+
 function estante(g, x, z, largo, ry, colores, secciones) {
   // un mueble abierto hacia adelante (+z): fondo de color, costados y techo del color del pasillo, y 3 repisas blancas
   // con el borde de color; encima, las cajas de los productos de sus secciones
@@ -254,7 +321,7 @@ function sala({ world, addObs, addZone, onFrame }) {
   const P = [
     { sec: 'pociones', x: -W / 2 + 0.7, ry: Math.PI / 2, color: '#B98BFF', zx: -W / 2 + 2.6, cartel: '🧪 Pociones' },
     { sec: 'transporte', x: -4.5, ry: Math.PI / 2, color: '#4FB6F5', zx: -2.4, cartel: '🛼 Transporte', atras: { sec: 'trucos', color: '#FFB547', cartel: '🎉 Trucos' } },
-    { sec: 'ropa', x: 4.5, ry: -Math.PI / 2, color: '#FF8FC7', zx: 2.4, cartel: '👕 Ropa', atras: { sec: 'hogar', color: '#3DD6A8', cartel: '🏡 Hogar' } },
+    { sec: 'ropa', x: 4.5, ry: -Math.PI / 2, color: '#FF8FC7', zx: 2.4, cartel: '👕 Ropa', vitrina: true, atras: { sec: 'hogar', color: '#3DD6A8', cartel: '🏡 Hogar' } },
     { sec: 'juguetes', x: W / 2 - 0.7, ry: -Math.PI / 2, color: '#FFD23F', zx: W / 2 - 2.6, cartel: '🧸 Juguetes', mas: ['companeros'] },
   ];
   const cartelYZona = (texto, color, cx, cz, zx, zz, sec) => {
@@ -265,7 +332,8 @@ function sala({ world, addObs, addZone, onFrame }) {
   for (const a of P) {
     const f = Math.sin(a.ry) * 0.45;
     if (a.atras) {   // dos muebles espalda con espalda, cada uno mirando a su pasillo
-      estante(g, a.x + f, 0, 7, a.ry, a.color, [a.sec]);
+      if (a.vitrina) vitrina(g, a.x + f, 0, 7, a.ry, a.color, onFrame);
+      else estante(g, a.x + f, 0, 7, a.ry, a.color, [a.sec]);
       estante(g, a.x - f, 0, 7, a.ry + Math.PI, a.atras.color, [a.atras.sec]);
       cartelYZona(a.atras.cartel, a.atras.color, a.x - Math.sign(f) * 1.6, -1.5, a.x - Math.sign(f) * 2.2, -2.5, a.atras.sec);
     } else estante(g, a.x, 0, 7, a.ry, a.color, [a.sec, ...(a.mas || [])]);
