@@ -9,7 +9,6 @@
 // `ponerRopa(P, { cuello, cabeza, lomo })` arma o quita lo que corresponde; `animarRopa(P, t, dt, speed)` mueve la capa.
 // Los materiales son propios de cada prenda (se tiran al quitarla); nada de esto proyecta sombra.
 import { THREE } from '../engine/three.js';
-import { RAINBOW } from '../engine/materials.js';
 import { stripeTexture } from '../engine/textures.js';
 import { scene } from '../engine/renderer.js';
 
@@ -37,20 +36,45 @@ function collar(P) {
   return { g };
 }
 // sombreros: sobre el ancla `cabeza`, del tamaño de la cabeza (cabezaR)
-function corona(P) {
-  // alta y de cono invertido: angosta donde se apoya, ancha arriba, con puntas en el borde de arriba y gemas alrededor
-  const R = P.medidas.cabezaR, g = new THREE.Group(), oro = est('#FFD23F', { metalness: 0.6, roughness: 0.3, side: THREE.DoubleSide });
-  const abajo = R * 0.45, arriba = R * 0.78, alto = R * 0.7;
-  const cuerpo = new THREE.Mesh(new THREE.CylinderGeometry(arriba, abajo, alto, 24, 1, true), oro); cuerpo.position.y = alto / 2; g.add(cuerpo);
-  const borde = new THREE.Mesh(new THREE.TorusGeometry(arriba, R * 0.04, 6, 28), oro); borde.rotation.x = Math.PI / 2; borde.position.y = alto; g.add(borde);
-  for (let i = 0; i < 6; i++) {
-    const a = i / 6 * Math.PI * 2, p = new THREE.Mesh(new THREE.ConeGeometry(R * 0.13, R * 0.42, 6), oro);
-    p.position.set(Math.cos(a) * arriba, alto + R * 0.2, Math.sin(a) * arriba); g.add(p);
-    const bola = new THREE.Mesh(new THREE.SphereGeometry(R * 0.06, 8, 6), oro); bola.position.set(Math.cos(a) * arriba, alto + R * 0.43, Math.sin(a) * arriba); g.add(bola);
-    const rg = (abajo + arriba) / 2 + R * 0.02, gema = new THREE.Mesh(new THREE.SphereGeometry(R * 0.08, 8, 6), est(RAINBOW[i], { emissive: RAINBOW[i], emissiveIntensity: 0.4 }));
-    gema.position.set(Math.cos(a) * rg, alto * 0.5, Math.sin(a) * rg); g.add(gema);
+// Una banda alrededor del eje y que se abre hacia arriba (radio r0 abajo, r1 arriba), con el borde de arriba en puntas:
+// su alto en el ángulo a es alto(a). Con `desde(a)` la banda empieza más arriba (un ribete que sigue el borde).
+function banda(r0, r1, H, alto, desde = () => 0, N = 120) {
+  const pos = [], idx = [];
+  for (let i = 0; i <= N; i++) {
+    const a = i / N * Math.PI * 2, y0 = desde(a), y1 = alto(a), c = Math.cos(a), s = Math.sin(a);
+    for (const y of [y0, y1]) { const r = r0 + (r1 - r0) * (y / H); pos.push(c * r, y, s * r); }
+    if (i < N) { const k = i * 2; idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
   }
-  g.position.y = -R * 0.12; g.rotation.x = -0.12;   // (un poco hundida: la base se calza en la cabeza redonda)
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+  return geo;
+}
+// la corona (como la referencia): cuerpo azul-violeta que se abre hacia arriba con el borde en 5 puntas, dorada por
+// dentro; un ribete dorado que sigue las puntas (más alto que el azul), bolitas doradas en cada punta y gemas rosadas
+// en los valles; abajo, un aro azul redondeado
+function corona(P) {
+  const R = P.medidas.cabezaR, g = new THREE.Group(), n = 5;
+  const r0 = R * 0.5, r1 = R * 0.72, H = R * 0.95, base = R * 0.38, pico = R * 0.5;
+  const punta = a => Math.pow(0.5 + 0.5 * Math.cos(n * a), 2.2);                 // 1 en cada punta, 0 en los valles
+  const oroArriba = a => base + pico * punta(a) + R * 0.06;                       // el borde dorado (sobresale)
+  const azulArriba = a => base + pico * punta(a) * 0.82 - R * 0.06;              // el azul, un poco más abajo
+  const azul = est('#5266E8', { roughness: 0.35, side: THREE.FrontSide }), oro = est('#FFC93C', { roughness: 0.35, emissive: '#FFB000', emissiveIntensity: 0.18 });
+  const adentro = est('#FFB02E', { roughness: 0.4, side: THREE.BackSide });
+  // cuerpo: azul por fuera y dorado por dentro (la misma banda, cada material de un lado)
+  const cuerpo = banda(r0, r1, H, azulArriba);
+  g.add(new THREE.Mesh(cuerpo, azul), new THREE.Mesh(cuerpo, adentro));
+  // el ribete dorado: una banda un poquito más afuera, desde un poco bajo el borde azul hasta el borde dorado
+  const ribete = banda(r0 + R * 0.015, r1 + R * 0.015, H, oroArriba, a => azulArriba(a) - R * 0.04);
+  g.add(new THREE.Mesh(ribete, est('#FFC93C', { roughness: 0.35, emissive: '#FFB000', emissiveIntensity: 0.18, side: THREE.DoubleSide })));
+  const radio = y => r0 + (r1 - r0) * (y / H);
+  for (let i = 0; i < n; i++) {
+    const a = i / n * Math.PI * 2, y = oroArriba(a) + R * 0.06;                  // la bolita sobre cada punta
+    const bola = new THREE.Mesh(new THREE.SphereGeometry(R * 0.085, 12, 10), oro); bola.position.set(Math.cos(a) * radio(y), y, Math.sin(a) * radio(y)); g.add(bola);
+    const av = a + Math.PI / n, yv = base * 0.75, rv = radio(yv) + R * 0.03;      // la gema en el valle
+    const gema = new THREE.Mesh(new THREE.SphereGeometry(R * 0.07, 10, 8), est('#FF8FB8', { roughness: 0.3, emissive: '#FF8FB8', emissiveIntensity: 0.15 }));
+    gema.scale.set(1, 1, 0.6); gema.position.set(Math.cos(av) * rv, yv, Math.sin(av) * rv); gema.lookAt(0, yv, 0); g.add(gema);
+  }
+  const aro = new THREE.Mesh(new THREE.TorusGeometry(r0 + R * 0.02, R * 0.07, 10, 36), est('#4357D6', { roughness: 0.35 })); aro.rotation.x = Math.PI / 2; aro.position.y = R * 0.03; g.add(aro);
+  g.position.y = -R * 0.1; g.rotation.x = -0.12;   // (un poco hundida: la base se calza en la cabeza redonda)
   P.anclas.cabeza.add(g);
   return { g };
 }

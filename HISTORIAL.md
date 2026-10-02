@@ -5,6 +5,14 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## La corona según la imagen de referencia (02-10-2026)
+
+- El usuario mandó una imagen de referencia (corona azul con borde dorado). `corona()` en `pets/ropa.js`: cuerpo
+  azul-violeta que se abre hacia arriba con el borde en 5 puntas (`banda()`: una banda alrededor del eje y con el
+  borde de arriba a la altura que se quiera por ángulo), dorado por dentro (la misma banda con un material del lado
+  de atrás), un ribete dorado que sigue las puntas y sobresale, bolitas doradas en las puntas, gemas rosadas en los
+  valles y un aro azul redondeado abajo. El dorado sin brillo metálico (se veía oscuro: no hay nada que reflejar).
+
 ## Corona alta, estelas más largas y la burbuja gigante que parpadeaba (02-10-2026)
 
 - Corona: alta y de cono invertido (base 0,45 R, arriba 0,78 R, alto 0,7 R de la cabeza), borde de arriba con 6
