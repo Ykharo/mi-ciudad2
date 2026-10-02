@@ -5,6 +5,15 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Salida de la Mascotienda señalizada; burbuja y alitas a la altura del hombro (02-10-2026)
+
+- La puerta de adentro de la Mascotienda: letrero verde grande "🚪 SALIDA" sobre la puerta, marco verde que brilla
+  (late), felpudo verde y tres flechas en el piso que apuntan a la puerta y se encienden una tras otra hacia ella.
+- Con burbuja o alitas, el perro, el gato y el conejo flotan a la altura del hombro de Nina: `game/mascotienda.js`
+  pone `P.hombro` (altura de UpperArmL sobre su suelo, 0,8–2,2 m; ~1,5 m de pie) y `alturaVuelo` en `pets/extras.js`
+  pone ahí el centro de la burbuja o el medio del cuerpo (en el espacio de la mascota: dividido por su escala), con
+  un cambio suave (si se sienta, bajan). El unicornio y las mascotas en el auto quedan como antes.
+
 ## Gato y conejo más chicos, cosas de cada mascota y carpetas del archivador (02-10-2026)
 
 - `escala` en el mapa de anclajes: gato 0,6 y conejo 0,4 (el perro 0,8); se achica todo junto con lo que tengan puesto.

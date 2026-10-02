@@ -172,6 +172,17 @@ export function ponerExtras(P, extras = {}) {
 }
 
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _m = new THREE.Vector3();
+// A qué altura va: con burbuja o alitas, el perro, el gato y el conejo flotan a la altura del hombro de la dueña
+// (`P.hombro`, en metros sobre su suelo: lo pone game/mascotienda.js; 1,75 si no se sabe): el centro de la burbuja, o
+// el medio del cuerpo con alitas. Está en el espacio de la mascota (se divide por su escala) y cambia suave (si ella
+// se sienta, bajan). El unicornio y lo demás, a su altura de siempre.
+const HOMBRO = 1.75;
+function alturaVuelo(P, E, dt) {
+  if (P.kind === 'unicornio' || !(E.alas || (E.bola && E.r)) || P.root.parent !== scene) return E.alto;   // (en el auto, no)
+  const h = (P.hombro || HOMBRO) / P.root.scale.x, meta = E.alas ? h - P.medidas.alto * 0.7 : h - E.r * 0.62;
+  E.altoS = E.altoS === undefined ? meta : E.altoS + (meta - E.altoS) * Math.min(1, dt * 2.5);
+  return E.altoS;
+}
 // Inercia: un resorte poco amortiguado entre la mascota y lo que flota con ella. Cuando la mascota acelera, lo que
 // flota se queda atrás; cuando frena, se adelanta un poco y vuelve suave. `E.inercia`: { k: rigidez, c: freno, max }.
 // Devuelve el desplazamiento en el espacio de la mascota (x: costado, z: adelante).
@@ -218,7 +229,7 @@ function animarExtras(P, t, dt, speed) {
   }
   let alto = 0, etiqueta = 0;
   if (E) {
-    alto = E.alto + (E.vuela ? Math.sin(t * 1.3) * 0.09 : E.flota ? Math.sin(t * 2.2) * 0.06 : 0);
+    alto = alturaVuelo(P, E, dt) + (E.vuela ? Math.sin(t * 1.3) * 0.09 : E.flota ? Math.sin(t * 2.2) * 0.06 : 0);
     const [lx, lz] = E.inercia ? inercia(P, E, dt) : [0, 0];
     if (E.patina) patinar(P, E, dt, speed, anda);
     if (E.bola && E.r) {   // burbuja: rodea a la mascota sentada, flota y tiembla un poco; se adelanta y vuelve

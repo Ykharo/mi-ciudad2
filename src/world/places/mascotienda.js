@@ -147,8 +147,24 @@ function sala({ world, addObs, addZone, onFrame }) {
   addObs(X, Z - D / 2, W / 2, 0.3, 8); addObs(X, Z + D / 2, W / 2, 0.3, 8); addObs(X - W / 2, Z, 0.3, D / 2, 8); addObs(X + W / 2, Z, 0.3, D / 2, 8);
   addInterior({ area: [X - W / 2, X + W / 2, Z - D / 2, Z + D / 2], techo: H });
   addArea('Mascotienda Arcoíris', X - W / 2, X + W / 2, Z - D / 2, Z + D / 2);
-  // la puerta de adentro: vuelve a la calle
+  // la puerta de adentro: vuelve a la calle. Bien señalizada: letrero verde grande de SALIDA, un marco que brilla y
+  // flechas en el piso que llevan hacia ella (laten, una tras otra)
   addZone({ id: 'mascotienda_salir', x: X, z: Z + D / 2 - 1.2, r: 1.5, label: '🚪 Salir a la calle' });
+  const salida = makeSign('🚪 SALIDA', '#22B573', '#FFFFFF', 4.6); salida.position.set(0, 4.55, D / 2 - 0.2); salida.rotation.y = Math.PI; g.add(salida);
+  const marcoM = new THREE.MeshBasicMaterial({ color: 0x3DF59B });
+  for (const s of [-1, 1]) g.add(mesh(box(0.18, 3.7, 0.12), marcoM, s * 1.45, 1.85, D / 2 - 0.18, false, false));
+  g.add(mesh(box(3.08, 0.18, 0.12), marcoM, 0, 3.65, D / 2 - 0.18, false, false));
+  const felpudo = mesh(rlo(2.6, 0.03, 1.4, 0.1), mat('#22B573', { emissive: '#22B573', emissiveIntensity: 0.3 }), 0, 0.025, D / 2 - 1, false, true); g.add(felpudo);
+  const flecha = new THREE.Shape(); flecha.moveTo(0, 0.45); flecha.lineTo(0.45, 0); flecha.lineTo(0.2, 0); flecha.lineTo(0.2, -0.4); flecha.lineTo(-0.2, -0.4); flecha.lineTo(-0.2, 0); flecha.lineTo(-0.45, 0); flecha.closePath();
+  const flechas = [0, 1, 2].map(i => {
+    const f = new THREE.Mesh(new THREE.ShapeGeometry(flecha), new THREE.MeshBasicMaterial({ color: 0x3DF59B, transparent: true }));
+    f.rotation.set(-Math.PI / 2, 0, Math.PI); f.position.set(0, 0.03, D / 2 - 2.6 - i * 1.3); g.add(f);   // (la punta hacia la puerta: +z)
+    return f;
+  });
+  onFrame(t => {
+    flechas.forEach((f, i) => { f.material.opacity = 0.35 + 0.65 * Math.max(0, Math.sin(t * 4 + i * 0.9)); });
+    marcoM.color.setHSL(0.42, 0.9, 0.55 + 0.12 * Math.sin(t * 3));
+  });
 
   // los pasillos: un mueble por sección (los de las paredes, de un lado; los del medio, de los dos), con su cartel
   const P = [

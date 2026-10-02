@@ -118,9 +118,12 @@ let elegida = 0;
 const cual = () => Math.min(elegida, Math.max(0, player.pets.length - 1));   // (por si alguna se fue a casa)
 function updateMascotienda(dt) {
   robiHabla(dt);
-  // la cuerda del globo va a la mano izquierda de Nina (pets/extras.js la dibuja)
-  const mano = player.ch && player.ch.bones && player.ch.bones.HandL;
+  // la cuerda del globo va a la mano izquierda de Nina (pets/extras.js la dibuja); con burbuja o alitas flotan a la
+  // altura de su hombro (sobre el suelo donde está ella)
+  const mano = player.ch && player.ch.bones && player.ch.bones.HandL, hombro = player.ch && player.ch.bones && player.ch.bones.UpperArmL;
+  const hy = hombro && !player.seat ? Math.min(2.2, Math.max(0.8, hombro.getWorldPosition(_v).y - player.ch.root.position.y)) : null;
   for (const p of player.pets) {
+    p.obj.hombro = hy;
     if (!p.obj.ext || !p.obj.ext.globo) continue;
     if (!mano) { p.obj.mano = null; continue; }
     p.obj.mano = mano.getWorldPosition(p.obj.mano || new THREE.Vector3());
