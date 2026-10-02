@@ -1,0 +1,119 @@
+// Ropa de las mascotas (la Mascotienda, pasillo de Ropa): una prenda por lugar del cuerpo, calzada con el mapa de
+// anclajes de la especie (ANCLAJES en pets/models.js), así sirve para todas:
+//   cuello  collar con placa (la inicial de su nombre)                 ancla `cuello`
+//   cabeza  corona, gorro de cumpleaños o sombrero de mago             ancla `cabeza` (sigue los giros de la cabeza)
+//   lomo    capa de superhéroe, que flamea al andar                    sobre el lomo, desde el cuello hacia la cola
+// `ponerRopa(P, { cuello, cabeza, lomo })` arma o quita lo que corresponde; `animarRopa(P, t, dt, speed)` mueve la capa.
+// Los materiales son propios de cada prenda (se tiran al quitarla); nada de esto proyecta sombra.
+import { THREE } from '../engine/three.js';
+import { RAINBOW } from '../engine/materials.js';
+import { stripeTexture } from '../engine/textures.js';
+
+export const LUGAR_ROPA = { collar: 'cuello', corona: 'cabeza', gorro_cumple: 'cabeza', sombrero_mago: 'cabeza', capa: 'lomo' };
+const est = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.5, ...o });
+function estrella(r1, r2, n = 5) {
+  const s = new THREE.Shape();
+  for (let i = 0; i < n * 2; i++) { const a = Math.PI / 2 + i * Math.PI / n, r = i % 2 ? r2 : r1; i ? s.lineTo(Math.cos(a) * r, Math.sin(a) * r) : s.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
+  return new THREE.ShapeGeometry(s);
+}
+
+// el collar: un aro alrededor del cuello, inclinado como el cuello, con una placa dorada colgando adelante
+function collar(P) {
+  const M = P.medidas, r = M.cuelloR || M.ancho * 0.4, g = new THREE.Group();
+  const aro = new THREE.Mesh(new THREE.TorusGeometry(r, 0.028, 8, 28), est('#FF4F8B')); g.add(aro);
+  const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
+  x.fillStyle = '#FFD23F'; x.beginPath(); x.arc(32, 32, 30, 0, Math.PI * 2); x.fill();
+  x.fillStyle = '#9A6B00'; x.font = '800 38px "Baloo 2", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText((P.nombre || '?').slice(0, 1).toUpperCase(), 32, 35);
+  const placa = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.012, 20), [est('#E8B400', { metalness: 0.5 }), est('#FFFFFF', { map: new THREE.CanvasTexture(c), metalness: 0.3 }), est('#E8B400')]);
+  placa.rotation.x = Math.PI / 2; placa.position.set(0, -r - 0.05, 0.02); g.add(placa);
+  g.rotation.x = P.kind === 'unicornio' ? -1.15 : -0.65;   // (el aro mira hacia donde va el cuello)
+  P.anclas.cuello.add(g);
+  return { g };
+}
+// sombreros: sobre el ancla `cabeza`, del tamaño de la cabeza (cabezaR)
+function corona(P) {
+  const R = P.medidas.cabezaR, g = new THREE.Group(), oro = est('#FFD23F', { metalness: 0.6, roughness: 0.3 });
+  g.add(new THREE.Mesh(new THREE.CylinderGeometry(R * 0.62, R * 0.6, R * 0.22, 20, 1, true), oro));
+  for (let i = 0; i < 6; i++) {
+    const a = i / 6 * Math.PI * 2, p = new THREE.Mesh(new THREE.ConeGeometry(R * 0.12, R * 0.3, 6), oro);
+    p.position.set(Math.cos(a) * R * 0.6, R * 0.25, Math.sin(a) * R * 0.6); g.add(p);
+    const gema = new THREE.Mesh(new THREE.SphereGeometry(R * 0.06, 8, 6), est(RAINBOW[i], { emissive: RAINBOW[i], emissiveIntensity: 0.4 }));
+    gema.position.set(Math.cos(a) * R * 0.62, 0, Math.sin(a) * R * 0.62); g.add(gema);
+  }
+  g.position.y = R * 0.02; g.rotation.x = -0.12;
+  P.anclas.cabeza.add(g);
+  return { g };
+}
+function gorroCumple(P) {
+  const R = P.medidas.cabezaR, g = new THREE.Group();
+  const cono = new THREE.Mesh(new THREE.ConeGeometry(R * 0.45, R * 1.2, 20, 1, true), est('#FFFFFF', { map: stripeTexture('#FF6FAE', '#FFE45C', 8), side: THREE.DoubleSide }));
+  cono.position.y = R * 0.55; g.add(cono);
+  const pompon = new THREE.Mesh(new THREE.SphereGeometry(R * 0.14, 10, 8), est('#4FB6F5')); pompon.position.y = R * 1.17; g.add(pompon);
+  g.rotation.z = -0.25; g.position.x = R * 0.12;   // (un poco ladeado)
+  P.anclas.cabeza.add(g);
+  return { g };
+}
+function sombreroMago(P) {
+  const R = P.medidas.cabezaR, g = new THREE.Group(), azul = est('#3B3B98', { side: THREE.DoubleSide });
+  g.add(new THREE.Mesh(new THREE.CylinderGeometry(R * 0.85, R * 0.85, 0.02, 28), azul));
+  const cono = new THREE.Mesh(new THREE.ConeGeometry(R * 0.5, R * 1.5, 24), azul); cono.position.y = R * 0.76; cono.rotation.z = 0.12; g.add(cono);
+  const oro = new THREE.MeshBasicMaterial({ color: 0xFFE45C, side: THREE.DoubleSide });
+  [[0.3, 0.38], [-0.25, 0.75], [0.1, 1.05]].forEach(([dx, y], i) => {
+    const s = new THREE.Mesh(estrella(R * (0.12 - i * 0.02), R * (0.05 - i * 0.008)), oro);
+    s.position.set(dx * R, y * R, R * (0.5 - y * 0.3) + 0.004); g.add(s);
+  });
+  g.position.y = R * 0.02; g.rotation.x = -0.1;
+  P.anclas.cabeza.add(g);
+  return { g };
+}
+// la capa: una tela sobre el lomo desde el cuello hacia la cola, que cae por los costados; al andar el final se levanta
+// y ondea (los vértices se mueven en animarRopa). Roja con una estrella dorada.
+function capa(P) {
+  const M = P.medidas, w = M.ancho * 1.15, L = M.largo * 0.85;
+  const geo = new THREE.PlaneGeometry(w, L, 6, 12); geo.rotateX(-Math.PI / 2); geo.translate(0, 0, -L / 2);   // de z = 0 a -L
+  const base = Float32Array.from(geo.attributes.position.array);
+  const tela = new THREE.Mesh(geo, est('#FF3B5C', { side: THREE.DoubleSide, roughness: 0.7 }));
+  const g = new THREE.Group(); g.position.set(0, M.alto + 0.02, M.cuello[2] - 0.04); g.add(tela);
+  const s = new THREE.Mesh(estrella(w * 0.16, w * 0.07), new THREE.MeshBasicMaterial({ color: 0xFFD23F, side: THREE.DoubleSide }));
+  s.rotation.x = -Math.PI / 2; s.position.set(0, 0.008, -L * 0.42); tela.add(s);
+  P.body.add(g);
+  return { g, tela, base, w, L, cuerpo: M.ancho * 0.42, estrella: s, ondea: 0 };
+}
+const HACER = { collar, corona, gorro_cumple: gorroCumple, sombrero_mago: sombreroMago, capa };
+
+function tirar(o) {
+  o.g.parent && o.g.parent.remove(o.g);
+  o.g.traverse(m => {
+    if (m.geometry) m.geometry.dispose();
+    [].concat(m.material || []).forEach(x => { if (x.map) x.map.dispose(); x.dispose(); });
+  });
+}
+export function ponerRopa(P, ropa = {}) {
+  P.ropa = P.ropa || {};
+  for (const lugar of ['cuello', 'cabeza', 'lomo']) {
+    const id = ropa[lugar] && HACER[ropa[lugar]] && LUGAR_ROPA[ropa[lugar]] === lugar ? ropa[lugar] : null, ya = P.ropa[lugar];
+    if (ya && ya.id === id) continue;
+    if (ya) { tirar(ya); P.ropa[lugar] = null; }
+    if (id) { const o = HACER[id](P); o.id = id; o.g.traverse(m => { m.castShadow = false; }); P.ropa[lugar] = o; }
+  }
+}
+export const ropaPuesta = P => Object.fromEntries(Object.entries(P.ropa || {}).filter(([, o]) => o).map(([l, o]) => [l, o.id]));
+export const ropaQueSeMueve = P => !!(P.ropa && P.ropa.lomo);
+
+// la capa: cae por los costados y, al andar, el final se levanta y ondea (más rápido cuanto más rápido va)
+export function animarRopa(P, t, dt, speed) {
+  const C = P.ropa && P.ropa.lomo; if (!C) return;
+  C.ondea += ((Math.min(speed, 2) / 2) - C.ondea) * Math.min(1, dt * 3);
+  const pos = C.tela.geometry.attributes.position, b = C.base, m = C.ondea;
+  for (let i = 0; i < pos.count; i++) {
+    // u: 0 en el cuello, 1 al final; `lado`: cuánto sale del ancho del lomo (0 encima del cuerpo, 1 en el borde)
+    const x = b[i * 3], z = b[i * 3 + 2], u = -z / C.L, lado = Math.max(0, (Math.abs(x) - C.cuerpo) / (C.w / 2 - C.cuerpo));
+    const cae = -lado * lado * 0.12 * (1 - m * 0.6);                                     // cae por los costados
+    const vuela = m * u * u * (0.22 + Math.sin(t * (6 + m * 6) - u * 5 + x * 3) * 0.06); // se levanta y ondea
+    const quieta = Math.sin(t * 1.5 - u * 3) * 0.008 * (1 - m);
+    pos.setY(i, cae + vuela + quieta);
+  }
+  pos.needsUpdate = true; C.tela.geometry.computeVertexNormals();
+  C.estrella.position.y = 0.008 + m * 0.42 * 0.42 * 0.22;   // (sigue a la tela donde está)
+}

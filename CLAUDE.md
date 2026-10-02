@@ -188,6 +188,9 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
   `escala` de la especie (perro 0,8, gato 0,6, conejo 0,4) se aplica a `P.root`: el mapa está en el espacio propio,
   antes de escalar.
   El libro de Nina también tiene su mapa (`agarre` en `characters/libro.js`: el centro del borde de cada tapa).
+  Ropa de mascotas (`pets/ropa.js`: collar, sombreros, capa; `extras.ropa = { cuello, cabeza, lomo }`) y juguetes
+  (la pelota: `game/pelota.js` + botón `#btnPelota`). Un artículo nuevo: datos en `pets/catalog/articulos.js` (tipo
+  `transporte` / `pocion` / `ropa` con `lugar` / `juguete`) y su modelo en `extras.js` o `ropa.js`.
 - Guardado en `localStorage` con clave `ciudadArcoiris.v2`: `{ version: 2, jugador, nina: { look }, personajes, pets (con ficha, cosas y extras), cars, shop, huesitos }`
   (`game/save.js`). Una partida `ciudadArcoiris.v1` se migra al cargar y la clave v1 no se borra. Envolver en try/catch.
   Todo lo guardado se valida al cargar (`fixLook`, `fixCarSpec`, tipos de mascota).

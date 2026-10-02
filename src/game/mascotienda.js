@@ -1,7 +1,7 @@
 // La Mascotienda Arcoíris: entrar y salir (la tienda por dentro es una sala aparte: world/places/mascotienda.js),
 // comprar artículos con Huesitos de Aura, ponérselos a las mascotas y guardarlos.
 //   p.cosas: lo comprado PARA cada mascota (cada una tiene las suyas: se compra para la mascota elegida)
-//   p.extras: lo que tiene puesto cada mascota ({ transporte, arcoiris })
+//   p.extras: lo que tiene puesto cada mascota ({ transporte, arcoiris, ropa: { cuello, cabeza, lomo } })
 // Las dos se guardan con la mascota. Una partida de antes (lo comprado era de todas: `mascotienda.comprados`) le da
 // esa lista a cada mascota que no tenga la suya.
 // La ventana (ui/panels/mascotienda.js) se abre con el evento 'mascotienda' y llama a estas funciones.
@@ -34,7 +34,25 @@ function cargarMascotienda(saved) {
 }
 function fixExtras(e, p) {
   const t = e && typeof e.transporte === 'string' && tiene(p, e.transporte) && articulo(e.transporte).tipo === 'transporte' ? e.transporte : null;
-  return { transporte: t, arcoiris: !!(e && e.arcoiris && tiene(p, 'arcoiris')) };
+  const ropa = {};
+  for (const [lugar, id] of Object.entries((e && typeof e.ropa === 'object' && e.ropa) || {})) {
+    const a = articulo(id); if (a && a.tipo === 'ropa' && a.lugar === lugar && tiene(p, id)) ropa[lugar] = id;
+  }
+  return { transporte: t, arcoiris: !!(e && e.arcoiris && tiene(p, 'arcoiris')), ropa };
+}
+// ¿lo tiene puesto? (los juguetes no se ponen)
+function puesto(p, id) {
+  const a = articulo(id), e = p && p.extras; if (!a || !e) return false;
+  return a.tipo === 'transporte' ? e.transporte === id : a.tipo === 'pocion' ? !!e.arcoiris : a.tipo === 'ropa' ? !!(e.ropa && e.ropa[a.lugar] === id) : false;
+}
+// cómo quedan los extras al ponerse (on) o quitarse un artículo: un transporte reemplaza al que tenía; una prenda, a la
+// del mismo lugar del cuerpo
+function conArticulo(e0, a, on) {
+  const e = { ...(e0 || {}), ropa: { ...((e0 && e0.ropa) || {}) } };
+  if (a.tipo === 'transporte') e.transporte = on ? a.id : (e.transporte === a.id ? null : e.transporte);
+  else if (a.tipo === 'pocion') e.arcoiris = !!on;
+  else if (a.tipo === 'ropa') { if (on) e.ropa[a.lugar] = a.id; else if (e.ropa[a.lugar] === a.id) delete e.ropa[a.lugar]; }
+  return e;
 }
 function ponerA(p, extras) { p.extras = { ...extras }; ponerExtras(p.obj, p.extras); }
 
@@ -53,20 +71,15 @@ function comprar(id, mascota) {
   return { r: 'ok' };
 }
 function leerDiario() { ganarHuesitos(3, '¡Leíste el diario!'); }
-// ponérselo o quitárselo a una mascota (si es un transporte, reemplaza al que tenía)
+// ponérselo o quitárselo a una mascota (los juguetes no se ponen: se usan)
 function equipar(p, id, on) {
-  const a = articulo(id); if (!p || !a || !tiene(p, id)) return;
-  const e = { ...(p.extras || {}) };
-  if (a.tipo === 'transporte') e.transporte = on ? id : (e.transporte === id ? null : e.transporte);
-  else e.arcoiris = !!on;
-  ponerA(p, e); save();
+  const a = articulo(id); if (!p || !a || !tiene(p, id) || a.tipo === 'juguete') return;
+  ponerA(p, conArticulo(p.extras, a, on)); save();
 }
 // probar (sin comprar): se ve puesto hasta que se pruebe otra cosa o se cierre la tienda
 function probar(p, id) {
-  const a = articulo(id); if (!p || !a) return;
-  const e = { ...(p.extras || {}) };
-  if (a.tipo === 'transporte') e.transporte = id; else e.arcoiris = true;
-  ponerExtras(p.obj, e);
+  const a = articulo(id); if (!p || !a || a.tipo === 'juguete') return;
+  ponerExtras(p.obj, conArticulo(p.extras, a, true));
 }
 function dejarDeProbar() { for (const p of player.pets) ponerExtras(p.obj, p.extras || {}); }
 
@@ -137,7 +150,7 @@ function updateMascotienda(dt) {
 
 const mascotienda = {
   comprados: p => [...((p && p.cosas) || [])],   // (lo de esa mascota)
-  comprar, equipar, probar, dejarDeProbar, cerrar: cerrarMascotienda, leerDiario,
+  comprar, equipar, probar, dejarDeProbar, cerrar: cerrarMascotienda, leerDiario, puesto,
   elegir(i) { elegida = i; dejarDeProbar(); }, elegida: () => cual(),
 };
 

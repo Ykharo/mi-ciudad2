@@ -34,12 +34,13 @@ function render() {
   if (S.pronto || !lista.length) h += '<p class="empty" style="margin-top:14px">¡Muy pronto llegan cosas nuevas a este pasillo!</p>';
   const tengo = M.comprados(p);
   for (const a of lista) {
-    const mio = tengo.includes(a.id), puesto = p && p.extras && (a.tipo === 'transporte' ? p.extras.transporte === a.id : p.extras.arcoiris);
+    const mio = tengo.includes(a.id), puesto = M.puesto(p, a.id), juguete = a.tipo === 'juguete';
     h += `<div class="art${probando === a.id ? ' probando' : ''}"><span class="ic">${a.ic}</span>
       <div class="nombre">${esc(a.nombre)}<button data-voz="${a.id}" aria-label="Escuchar">🔊</button></div>
       <div class="desc">${esc(a.desc)}</div><div class="botones">` +
-      (mio ? `<span class="tengo">✔ ¡Es de ${esc(p.name)}!</span><button class="toy ${puesto ? '' : 'mint'}" data-poner="${a.id}">${puesto ? 'Quitárselo' : 'Ponérselo'}</button>`
-        : `<span class="precio">🦴 ${a.precio}</span>` + (p ? `<button class="toy" data-probar="${a.id}">${probando === a.id ? 'Probando…' : 'Probar'}</button>` +
+      (mio ? `<span class="tengo">✔ ¡Es de ${esc(p.name)}!</span>` + (juguete ? '<span class="tengo">Lánzala con 🎾</span>'
+        : `<button class="toy ${puesto ? '' : 'mint'}" data-poner="${a.id}">${puesto ? 'Quitárselo' : 'Ponérselo'}</button>`)
+        : `<span class="precio">🦴 ${a.precio}</span>` + (p ? (juguete ? '' : `<button class="toy" data-probar="${a.id}">${probando === a.id ? 'Probando…' : 'Probar'}</button>`) +
           `<button class="toy pink" data-comprar="${a.id}">Comprar</button>` : '')) + '</div></div>';
   }
   body.innerHTML = h;

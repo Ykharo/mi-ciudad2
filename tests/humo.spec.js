@@ -88,6 +88,29 @@ test('adoptar una mascota y que siga ahí al recargar', async ({ page, jugar }) 
   await expect(page.locator('#archTabs .carpeta b')).toHaveText(['Toby', 'Luna']);
 });
 
+test('ropa de la mascota (collar, sombrero, capa) y la pelota que va a buscar', async ({ page, jugar }) => {
+  await page.addInitScript(() => { if (!localStorage.getItem('ciudadArcoiris.v2')) localStorage.setItem('ciudadArcoiris.v2', JSON.stringify({ version: 2, cars: [],
+    pets: [{ kind: 'perro', color: '#E9B77A', name: 'Toby', cosas: ['collar', 'corona', 'sombrero_mago', 'capa', 'pelota'],
+      extras: { ropa: { cuello: 'collar', cabeza: 'corona', lomo: 'collar' } } }] })); });   // (un collar en el lomo no vale)
+  await jugar();
+  expect(await page.evaluate(() => window.__juego.player.pets[0].extras.ropa)).toEqual({ cuello: 'collar', cabeza: 'corona' });
+  // en el archivador: Ropa con Ponérselo/Quitárselo; el sombrero de mago reemplaza a la corona; la capa va en el lomo
+  await page.locator('#btnPets').click();
+  await page.locator('#archSecs [data-sec="cosas"]').click();
+  await expect(page.locator('#archBody [data-poner="corona"]')).toHaveText('Quitárselo');
+  await page.locator('#archBody [data-poner="sombrero_mago"]').click();
+  await page.locator('#archBody [data-poner="capa"]').click();
+  expect(await page.evaluate(() => window.__juego.player.pets[0].obj.extras.ropa)).toEqual({ cuello: 'collar', cabeza: 'sombrero_mago', lomo: 'capa' });
+  // la pelota: "¡A jugar!" cierra el archivador y la lanza; Toby la va a buscar y la trae
+  await page.locator('#archBody [data-jugar="pelota"]').click();
+  await expect(page.locator('#archPanel')).toBeHidden();
+  expect(await page.evaluate(() => window.__juego.player.pets[0].busca)).toBe(true);
+  await expect(page.locator('#toast')).toHaveText('🎾 ¡Toby te trajo la pelota!', { timeout: 20_000 });
+  await expect(page.locator('#btnPelota')).toBeVisible({ timeout: 10_000 });
+  const g = await page.evaluate(() => JSON.parse(localStorage.getItem('ciudadArcoiris.v2')).pets[0].extras.ropa);
+  expect(g).toEqual({ cuello: 'collar', cabeza: 'sombrero_mago', lomo: 'capa' });
+});
+
 test('Mis mascotas: el archivador con ficha, estado, salud y cosas', async ({ page, jugar }) => {
   await page.addInitScript(() => { if (!localStorage.getItem('ciudadArcoiris.v2')) localStorage.setItem('ciudadArcoiris.v2', JSON.stringify({ version: 2, cars: [],
     mascotienda: { comprados: ['patines'] }, pets: [{ kind: 'perro', color: '#E9B77A', name: 'Toby', adopcion: '2026-09-01T12:00:00Z', estado: { energia: 20, diversion: 90 } }] })); });

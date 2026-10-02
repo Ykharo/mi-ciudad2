@@ -5,6 +5,23 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Ropa de mascotas (collar, sombreros, capa) y la pelota saltarina (02-10-2026)
+
+- Pasillo nuevo "👕 Ropa" en la Mascotienda (el que era de Accesorios; las alitas pasaron a Transporte) y Juguetes
+  abierto. Artículos nuevos (`pets/catalog/articulos.js`): tipo `'ropa'` con `lugar` (cuello: collar con placa 25;
+  cabeza: corona 40, gorro de cumpleaños 30, sombrero de mago 45; lomo: capa de superhéroe 60) y tipo `'juguete'`
+  (pelota saltarina 30).
+- `pets/ropa.js`: cada prenda se calza con el mapa de anclajes (nuevo: `cabezaR` y `cuelloR` por especie). Collar
+  inclinado como el cuello con una placa dorada con la inicial (`P.nombre`, lo pone `setPetName`); sombreros sobre el
+  ancla `cabeza`; la capa es una tela sobre el lomo (desde el cuello) que cae por los costados pasado el ancho del
+  cuerpo y, al andar, se levanta y ondea (vértices movidos en `animarRopa`). `p.extras.ropa = { cuello, cabeza, lomo }`;
+  `ponerExtras` la arma; la tienda la valida (`fixExtras`), la prueba y la pone (`conArticulo`, `puesto`).
+- La pelota (`game/pelota.js`, botón `#btnPelota` "🎾 Lanzar pelota" en `ui/pelota.js`, evento `'pelota'`): aparece si
+  alguna mascota la tiene. Nina la lanza (animación "wave"), vuela, rebota y rueda sin atravesar obstáculos; la mascota
+  corre (`p.busca`: sale de la fila), la toma con la boca (en la cabeza), vuelve, se la deja a los pies (+12 de
+  diversión) y avisa "🎾 ¡Toby te trajo la pelota!". Desde el archivador, "🎾 ¡A jugar!" la lanza para esa mascota.
+- Prueba nueva en `humo.spec.js` (ropa válida, reemplazos por lugar, la pelota de ida y vuelta, guardado).
+
 ## Salida de la Mascotienda señalizada; burbuja y alitas a la altura del hombro (02-10-2026)
 
 - La puerta de adentro de la Mascotienda: letrero verde grande "🚪 SALIDA" sobre la puerta, marco verde que brilla

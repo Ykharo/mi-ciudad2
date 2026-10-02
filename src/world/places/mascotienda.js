@@ -1,7 +1,7 @@
 // Mascotienda Arcoíris: la tienda de artículos para mascotas (se compra con Huesitos de Aura: game/mascotienda.js).
 // Afuera, en la manzana frente al Refugio (cruzando la Calle Mora): la fachada con un hueso gigante en el techo y la
 // puerta ("🛍️ Entrar a la Mascotienda"). Adentro es una sala aparte, lejos del mapa (MASCOTIENDA.interior): pasillos
-// con estantes por sección (pociones, transporte, accesorios, juguetes) y un cartel colgado sobre cada uno, el
+// con estantes por sección (pociones, transporte, ropa, juguetes) y un cartel colgado sobre cada uno, el
 // probador, y al fondo el mostrador con Robi, el vendedor: un perro robot sobre un disco volador (a la altura de Nina).
 // Cada pasillo, el probador y el mostrador abren la ventana de la tienda; la puerta de adentro vuelve a la calle.
 import { THREE } from '../../engine/three.js';
@@ -170,8 +170,8 @@ function sala({ world, addObs, addZone, onFrame }) {
   const P = [
     { sec: 'pociones', x: -W / 2 + 0.7, ry: Math.PI / 2, cosas: botella, color: '#B98BFF', zx: -W / 2 + 2.6, cartel: '🧪 Pociones' },
     { sec: 'transporte', x: -4.5, ry: Math.PI / 2, cosas: (e, a, b, c2, n) => (n % 3 === 0 ? burbujita : n % 3 === 1 ? patin : globito)(e, a, b, c2, n), color: '#4FB6F5', zx: -2.4, cartel: '🛼 Transporte', doble: true },
-    { sec: 'accesorios', x: 4.5, ry: -Math.PI / 2, cosas: ala, color: '#FF8FC7', zx: 2.4, cartel: '🎀 Accesorios', doble: true },
-    { sec: 'juguetes', x: W / 2 - 0.7, ry: -Math.PI / 2, cosas: pelota, color: '#FFD23F', zx: W / 2 - 2.6, cartel: '🧸 Juguetes (¡pronto!)' },
+    { sec: 'ropa', x: 4.5, ry: -Math.PI / 2, cosas: ala, color: '#FF8FC7', zx: 2.4, cartel: '👕 Ropa', doble: true },
+    { sec: 'juguetes', x: W / 2 - 0.7, ry: -Math.PI / 2, cosas: pelota, color: '#FFD23F', zx: W / 2 - 2.6, cartel: '🧸 Juguetes' },
   ];
   for (const a of P) {
     estante(g, a.x, 0, 7, a.ry, a.color, a.cosas);

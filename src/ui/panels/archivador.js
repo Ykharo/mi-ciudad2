@@ -11,6 +11,7 @@ import { sfx } from '../../audio/audio.js';
 import { player } from '../../game/actors.js';
 import { FOTOS, abrirArchivador, ahora, animo, borrarFoto, cerrarArchivador, elegirFicha, felicidad, fichaElegida, guardarFoto, llevarACasa, renombrar } from '../../game/fichas.js';
 import { mascotienda as M } from '../../game/mascotienda.js';
+import { lanzarPelota } from '../../game/pelota.js';
 import { PET_KINDS } from '../../pets/models.js';
 import { ARTICULOS } from '../../pets/catalog/articulos.js';
 import { $, esc, toast } from '../dom.js';
@@ -19,8 +20,8 @@ const panel = $('#archPanel'), tabs = $('#archTabs'), hoja = $('#archHoja'), sec
 const SECCIONES = [['ficha', '📋', 'Ficha'], ['estado', '😊', 'Estado'], ['salud', '🩺', 'Salud'], ['cosas', '🎒', 'Cosas']];
 const COLORES = ['#FFE7A8', '#C9F2E2', '#FFD6E8', '#D8E6FF'];   // las carpetas
 const CATEGORIAS = [
-  { id: 'ropa', nombre: 'Ropa', ic: '👕', secciones: [] },
-  { id: 'articulos', nombre: 'Artículos', ic: '🛼', secciones: ['transporte', 'accesorios'] },
+  { id: 'ropa', nombre: 'Ropa', ic: '👕', secciones: ['ropa'] },
+  { id: 'articulos', nombre: 'Artículos', ic: '🛼', secciones: ['transporte'] },
   { id: 'pociones', nombre: 'Pociones', ic: '🧪', secciones: ['pociones'] },
   { id: 'juguetes', nombre: 'Juguetes', ic: '🧸', secciones: ['juguetes'] },
 ];
@@ -78,8 +79,10 @@ function render() {
       h += `<h3>${C.ic} ${C.nombre}</h3>`;
       if (!lista.length) { h += `<p class="note">${esc(p.name)} todavía no tiene.</p>`; continue; }
       for (const a of lista) {
-        const puesto = p.extras && (a.tipo === 'transporte' ? p.extras.transporte === a.id : p.extras.arcoiris);
-        h += `<div class="cosa${puesto ? ' puesto' : ''}"><span class="ic">${a.ic}</span><b>${esc(a.nombre)}</b><button class="toy ${puesto ? '' : 'mint'}" data-poner="${a.id}" data-on="${puesto ? '' : '1'}">${puesto ? 'Quitárselo' : 'Ponérselo'}</button></div>`;
+        const puesto = M.puesto(p, a.id);
+        h += a.tipo === 'juguete'
+          ? `<div class="cosa"><span class="ic">${a.ic}</span><b>${esc(a.nombre)}</b><button class="toy sun" data-jugar="${a.id}">🎾 ¡A jugar!</button></div>`
+          : `<div class="cosa${puesto ? ' puesto' : ''}"><span class="ic">${a.ic}</span><b>${esc(a.nombre)}</b><button class="toy ${puesto ? '' : 'mint'}" data-poner="${a.id}" data-on="${puesto ? '' : '1'}">${puesto ? 'Quitárselo' : 'Ponérselo'}</button></div>`;
       }
     }
   }
@@ -104,6 +107,9 @@ body.addEventListener('click', e => {
   else if (b.dataset.foto) { sacarFoto(p); toast('📸 ¡Foto guardada!'); }
   else if (b.dataset.borrar) borrarFoto(p, +b.dataset.borrar);
   else if (b.dataset.poner) M.equipar(p, b.dataset.poner, !!b.dataset.on);
+  else if (b.dataset.jugar) {   // a jugar: se cierra el archivador y Nina lanza la pelota
+    panel.hidden = true; seguro = false; cerrarArchivador(); lanzarPelota(p); return;
+  }
   else if (b.dataset.casa) {
     if (!seguro) { seguro = true; render(); return; }
     const q = llevarACasa(i); seguro = false; elegirFicha(0);

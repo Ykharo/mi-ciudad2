@@ -55,7 +55,8 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
    Artículos con movimiento ✅ (inercia de burbuja, globo y alitas; un patín en cada pata). Ciclo de espera de las
    mascotas ✅ (espera, se sienta, se acuesta, salta con su voz; en la ficha "Ahora: …") y **reposo de Nina** ✅ (tras
    un ciclo de la mascota: busca pasto, se sienta, bosteza y lee un libro acostada / sentada; `game/reposo.js`).
-3. Más artículos (pastillas de diseño, ropa, juguetes del pasillo "¡pronto!"). 4. Poción transformadora. 5. Encargos de lectura de los vecinos.
+3. Más artículos: ✅ ropa (collar, corona, gorro, sombrero de mago, capa) y la pelota saltarina. Faltan: pastillas
+   de diseño, más juguetes (hueso, varita con plumas, frisbee), cohete, monopatín. 4. Poción transformadora. 5. Encargos de lectura de los vecinos.
 6. Letreros escondidos, diario de la mascota, racha diaria.
 
 **Competencia de aura (plan por etapas)**

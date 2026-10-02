@@ -13,6 +13,7 @@ import { THREE } from '../engine/three.js';
 import { scene } from '../engine/renderer.js';
 import { RAINBOW } from '../engine/materials.js';
 import { rbox } from '../engine/geometry.js';
+import { animarRopa, ponerRopa, ropaPuesta, ropaQueSeMueve } from './ropa.js';
 
 const TAU = Math.PI * 2;
 const sinSombra = g => { g.traverse(o => { o.castShadow = false; o.receiveShadow = false; }); return g; };
@@ -166,8 +167,9 @@ export function ponerExtras(P, extras = {}) {
     sinSombra(P.ext.g);
   }
   arcoiris(P, !!extras.arcoiris);
-  P.extras = { transporte: P.ext ? P.ext.id : null, arcoiris: !!P.arco };
-  P.extrasUpdate = P.ext || P.arco ? (t, dt, speed) => animarExtras(P, t, dt, speed) : null;
+  ponerRopa(P, extras.ropa || {});   // collar, sombrero, capa (pets/ropa.js)
+  P.extras = { transporte: P.ext ? P.ext.id : null, arcoiris: !!P.arco, ropa: ropaPuesta(P) };
+  P.extrasUpdate = P.ext || P.arco || ropaQueSeMueve(P) ? (t, dt, speed) => animarExtras(P, t, dt, speed) : null;
   if (!P.extrasUpdate) { P.body.position.y = Math.max(0, P.body.position.y); if (P.label) P.label.position.y = P.labelY; }
 }
 
@@ -286,4 +288,5 @@ function animarExtras(P, t, dt, speed) {
   }
   P.body.position.y += alto;
   if (P.label) P.label.position.y = P.labelY + alto + etiqueta;
+  animarRopa(P, t, dt, speed);
 }
