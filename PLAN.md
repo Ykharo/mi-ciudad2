@@ -48,10 +48,9 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
 
 **Tienda de mascotas "con Huesitos que se ganan leyendo" (plan por etapas)**
 1. Huesitos de Aura ✅ (`game/huesitos.js`, contador en el HUD; se ganan en la competencia).
-2. La tienda: un edificio 3D por dentro, con pasillos/estantes por sección (pociones, transporte, ropa…), probadores,
-   carteles; el vendedor, un perro robot sobre un disco volador (a la altura de Nina). Primeros artículos: jarabe
-   arcoíris, pastillas de diseño, patines (por definir con el usuario).
-3. Efectos voladores (globo, alitas, burbuja). 4. Poción transformadora. 5. Encargos de lectura de los vecinos.
+2. La Mascotienda Arcoíris ✅ (frente al Refugio; adentro, sala 3D con pasillos, carteles, probador y Robi, el perro
+   robot; jarabe arcoíris, patines, burbuja, mini globo, alitas; diario de la mascota).
+3. Más artículos (pastillas de diseño, juguetes del pasillo "¡pronto!"). 4. Poción transformadora. 5. Encargos de lectura de los vecinos.
 6. Letreros escondidos, diario de la mascota, racha diaria.
 
 **Competencia de aura (plan por etapas)**

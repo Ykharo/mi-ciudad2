@@ -415,6 +415,40 @@ test('un vecino cruza el parque por los senderos (pasa junto a la pileta) y sale
   expect(salio).toBe(true);
 });
 
+test('la Mascotienda: entrar, probar, comprar con Huesitos, el diario, y lo puesto queda guardado', async ({ page, jugar }) => {
+  await page.addInitScript(() => { if (!localStorage.getItem('ciudadArcoiris.v2')) localStorage.setItem('ciudadArcoiris.v2', JSON.stringify({ version: 2, cars: [], huesitos: 90, pets: [{ kind: 'perro', color: '#E9B77A', name: 'Toby' }] })); });
+  await jugar();
+  await ir(page, 20, 47.6);   // frente a la puerta, cruzando la Calle Mora desde el Refugio
+  await accion(page, '🛍️ Entrar a la Mascotienda');
+  await expect(page.locator('#placeName')).toHaveText('Mascotienda Arcoíris');
+  expect(await page.evaluate(() => window.__juego.player.pos.z)).toBeGreaterThan(200);   // la sala de adentro
+  await ir(page, -2.4, 260.5);   // el pasillo de transporte
+  await accion(page, '🛼 Mirar transporte');
+  await expect(page.locator('#tiendaPanel')).toBeVisible();
+  await expect(page.locator('#tiendaBody .art .nombre').first()).toContainText('Patines con luces');
+  // probar el globo (se ve puesto, sin comprarlo) y comprarlo: no alcanza
+  await page.locator('#tiendaBody [data-probar="globo"]').click();
+  expect(await page.evaluate(() => window.__juego.player.pets[0].obj.extras.transporte)).toBe('globo');
+  await page.locator('#tiendaBody [data-comprar="globo"]').click();
+  await expect(page.locator('#toast')).toContainText('Te faltan');
+  // comprar los patines: alcanza, quedan puestos, y el diario da 3 Huesitos al leerlo
+  await page.locator('#tiendaBody [data-comprar="patines"]').click();
+  await expect(page.locator('#tiendaBody .diario')).toContainText('¡Toby patina rapidísimo!');
+  await page.locator('#tiendaBody [data-leido]').click();
+  await expect.poll(() => page.evaluate(() => window.__juego.player.huesitos)).toBe(90 - 50 + 3);
+  await page.locator('#tiendaDone').click();
+  await expect.poll(() => modo(page)).toBe('play');
+  expect(await page.evaluate(() => window.__juego.player.pets[0].extras.transporte)).toBe('patines');
+  // salir a la calle
+  await ir(page, 0, 267.8);
+  await accion(page, '🚪 Salir a la calle');
+  await expect.poll(() => page.evaluate(() => window.__juego.player.pos.z)).toBeLessThan(60);
+  // al volver a jugar, Toby sigue con sus patines
+  await page.reload();
+  await expect(page.locator('#btnPlay')).toHaveText('¡A jugar!', { timeout: 60_000 });
+  expect(await page.evaluate(() => [window.__juego.player.huesitos, window.__juego.player.pets[0].obj.extras.transporte])).toEqual([43, 'patines']);
+});
+
 test('competir: el selector trae todos los movimientos del menú Acción', async ({ page, jugar }) => {
   await jugar();
   await ir(page, ...COMPETIR);

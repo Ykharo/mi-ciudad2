@@ -5,6 +5,33 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Mascotienda Arcoíris (tienda de mascotas, etapa 2) (01-10-2026)
+
+- Pedido: la tienda 3D por dentro, con pasillos/estantes por sección, probadores, carteles y el vendedor (un perro
+  robot sobre un disco volador, a la altura de Nina); los primeros artículos, los de fácil construcción.
+- `world/places/mascotienda.js`: **afuera**, en la manzana frente al Refugio (cruzando la Calle Mora): fachada menta con
+  techo rosado, hueso gigante en el techo, huellitas, vitrinas con globos, toldo y letrero; "🛍️ Entrar a la
+  Mascotienda". **Adentro**, una sala aparte lejos del mapa (24 × 18 m en (0; 260), techo a 5,5 m): piso de cuadros
+  rosado y lila, paredes menta con zócalo rosado y franjas arcoíris, techo lila con lámparas planas; 4 pasillos con
+  muebles de 3 repisas del color de su sección y cosas encima (botellitas, patines, globos, burbujas, alitas, pelotas),
+  con su cartel colgado ("🧪 Pociones", "🛼 Transporte", "🎀 Accesorios", "🧸 Juguetes (¡pronto!)"); el probador (tarima,
+  espejo, cortina a rayas); el mostrador con la caja y **Robi**, el perro robot (cara de pantalla ^‿^, orejas rosadas,
+  antena que titila, cola que se mueve) sobre un disco volador que gira y flota; saluda al acercarse. "🚪 Salir a la
+  calle". La sala no recibe bien la luz del sol: paredes y muebles con algo de brillo propio y techo sin sombreado.
+  - `world/physics.js`: interiores (`addInterior`): adentro no rige el límite de la ciudad (`player.js`) y la cámara
+    no sube más que el techo menos 0,8 m (`camera.js`).
+- `pets/catalog/articulos.js` (datos) y `pets/extras.js` (efectos): jarabe arcoíris 20 (el pelaje cambia de color:
+  copias propias de sus materiales), patines con luces 50 (patas quietas al patinar, ruedas que brillan), burbuja
+  flotante 60, mini globo aerostático 100 (con franjas, se mece) y alitas de hada 80 (aletean); los que vuelan, flotan.
+  Uno de "transporte" a la vez por mascota, más el jarabe.
+- `game/mascotienda.js`: entrar/salir (con las mascotas), comprar (gasta Huesitos; si faltan, avisa cuántos),
+  ponerse/quitarse, probar sin comprar (se ve hasta cerrar), el diario de la mascota (+3 Huesitos al leerlo), Robi
+  saluda. Guardado: `mascotienda.comprados` y `extras` en cada mascota (validado contra lo comprado).
+- `ui/panels/mascotienda.js`: pestañas por sección, la mascota a la que se le prueba, cada artículo con su nombre
+  grande y 🔊 (lo dice en voz alta, es-CL), precio, Probar/Comprar o Ponérselo/Quitárselo; el saldo abajo. Mientras está
+  abierta, la mascota elegida se pone delante de Nina.
+- Prueba nueva (entrar, probar, no alcanza, comprar, diario, salir, y lo puesto sigue al recargar). Capturas regeneradas.
+
 ## Huesitos de Aura (tienda de mascotas, etapa 1) (01-10-2026)
 
 - Plan de la tienda de mascotas "con créditos que se ganan leyendo" (ver `PLAN.md`). Etapa 1: la moneda.

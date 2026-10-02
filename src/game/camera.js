@@ -47,7 +47,7 @@ function updateCamera(dt) {
     let dist = cameraBlock(_look, cam.yaw, cam.pitch, cam.dist);
     // en un interior (la Mascotienda por dentro), la cámara no sube más que el techo
     const I = interiorEn(p.x, p.z);
-    if (I) dist = Math.max(2.5, Math.min(dist, (I.techo - 0.5 - _look.y) / Math.max(0.05, Math.sin(cam.pitch))));
+    if (I) dist = Math.max(2.5, Math.min(dist, (I.techo - 0.8 - _look.y) / Math.max(0.05, Math.sin(cam.pitch))));
     const cp = Math.cos(cam.pitch) * dist;
     _pos.set(_look.x + Math.sin(cam.yaw) * cp, _look.y + Math.sin(cam.pitch) * dist, _look.z + Math.cos(cam.yaw) * cp);
     k = 1 - Math.exp(-dt * 9);
