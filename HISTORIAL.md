@@ -7,6 +7,10 @@ el resumen.
 
 ## Ropa nueva para mascotas y maniquíes de metal con conjuntos (02-10-2026)
 
+- (Publicación: la del commit "armaarios" falló en GitHub Pages en el último paso, `deploy-pages`: "No artifacts named
+  github-pages were found", un problema pasajero de GitHub; el lint y el armado pasaron. Se vuelve a publicar con un
+  commit nuevo.)
+
 - `pets/ropaCuerpo.js` (lo usa `pets/ropa.js`; lugares nuevos `cuerpo`, `piernas`, `pies`): chalecos de mezclilla
   (botones dorados, bolsillos), acolchado (rayas infladas, cierre), reflectante (franjas plateadas), salvavidas;
   suéter de rayas (con cuello de lana); pantalón de mezclilla (bolsillos atrás) y pijama de estrellas (trozo en las
