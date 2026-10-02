@@ -5,6 +5,21 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Mascotienda: mesa de destacados, escenario de transportes, rincón de juguetes y percheros (02-10-2026)
+
+- Con fotos de tiendas de referencia del usuario. En `world/places/mascotienda.js` (`maniqui(especie, i, alto)` arma
+  los maniquíes de metal para todas las zonas):
+  - Mesa "⭐ Lo más nuevo" al centro (0, −2,4): redonda de dos pisos, crema con borde dorado y vidrio; un maniquí que
+    cambia de animal cada 3 s (las formas del convertidor) sobre un plato que gira; cajas de lo más nuevo arriba y
+    abajo (`cajaSuelta`); lámparas de papel colgando y el cartel arriba (alto, para no tapar a Robi).
+  - Escenario "🛸 Transportes en acción" (esquina de atrás, izquierda): tarima redonda que gira con luces de colores,
+    maniquíes con platillo (rayo), globo, alitas y burbuja de verdad (`ponerExtras` + `animatePet` en `onFrame`).
+  - "🧸 Rincón de juguetes" (esquina de atrás, derecha): cajones de madera "TOYS" con ruedas, pelotas, frisbees y
+    palitos; mesa baja con un maniquí que mira una pelota que rebota.
+  - Percheros (adelante, izquierda): dos percheros con chalequitos de colores en perchas y cartel con precio, y el
+    tablero perforado "🐾 Accesorios" en la pared con frisbees, collares, pelotas y palitos colgados.
+  - Cada zona con su obstáculo y su zona para abrir la ventana en su sección. Luz cálida bajo las repisas.
+
 ## Ropa nueva para mascotas y maniquíes de metal con conjuntos (02-10-2026)
 
 - (Publicación: la del commit "armaarios" falló en GitHub Pages en el último paso, `deploy-pages`: "No artifacts named

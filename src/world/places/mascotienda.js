@@ -13,7 +13,8 @@ import { addInterior } from '../physics.js';
 import { addArea } from '../zones.js';
 import { definePlace } from '../place.js';
 import { ARTICULOS } from '../../pets/catalog/articulos.js';
-import { buildPet } from '../../pets/models.js';
+import { FORMAS, animatePet, buildPet } from '../../pets/models.js';
+import { ponerExtras } from '../../pets/extras.js';
 import { animarRopa, ponerRopa } from '../../pets/ropa.js';
 
 // afuera: el centro del edificio (mira hacia la Calle Mora, −z); adentro: el centro de la sala, lejos del mapa
@@ -170,6 +171,16 @@ const CONJUNTOS = [
   ['conejo', ['pantalon_pijama', 'sombrero_mago', 'collar_musical']], ['perro', ['sueter', 'aureola']],
   ['gato', ['chaleco_mezclilla', 'cohete']], ['gato', ['collar', 'mono', 'antenas']],
 ];
+// un maniquí con forma de mascota: todo de un solo metal mate (también los ojos y la crin), de `alto` metros hasta lo
+// alto de la cabeza; devuelve la mascota (para ponerle ropa o artículos) y su escala
+function maniqui(especie, i, alto = ALTO_MANIQUI) {
+  const P = buildPet(especie, '#FFFFFF'); P.nombre = 'Arcoíris';
+  const metal = METALES[i % METALES.length];
+  P.root.traverse(o => { if (o.isMesh) { o.material = metal; o.castShadow = false; } });
+  const k = alto / (P.head.position.y + P.medidas.cabezaR);
+  P.root.scale.setScalar(k); P.root.userData.dynamic = true;
+  return { P, k };
+}
 function vitrina(g, x, z, largo, ry, color, onFrame) {
   const e = new THREE.Group(); e.position.set(x, 0, z); e.rotation.y = ry; g.add(e);
   const H = 2.7, D = 0.9, pisos = [0.14, 1.36];
@@ -208,13 +219,8 @@ function vitrina(g, x, z, largo, ry, color, onFrame) {
   CONJUNTOS.forEach(([especie, ids], i) => {
     const piso = Math.floor(i / porPiso), y = pisos[piso], px = -largo / 2 + ancho * (i % porPiso + 0.5);
     e.add(mesh(cyl(0.26, 0.28, 0.06, 24), pedestal, px, y + 0.03, -0.05)); e.add(mesh(cyl(0.285, 0.285, 0.02, 24), anillo, px, y + 0.05, -0.05));
-    const P = buildPet(especie, '#FFFFFF'); P.nombre = 'Arcoíris';
-    // todo de un solo metal mate (también los ojos y la crin): un maniquí, no una mascota
-    const metal = METALES[i % METALES.length];
-    P.root.traverse(o => { if (o.isMesh) o.material = metal; });
-    const k = ALTO_MANIQUI / (P.head.position.y + P.medidas.cabezaR);
-    P.root.scale.setScalar(k);
-    P.root.position.set(px, y + 0.06, -0.05); P.root.userData.dynamic = true; e.add(P.root);
+    const { P, k } = maniqui(especie, i);
+    P.root.position.set(px, y + 0.06, -0.05); e.add(P.root);
     const alto = (P.torso[0] - P.torso[2] / 2) * k;
     e.add(mesh(cyl(0.012, 0.012, alto, 8), palo, px, y + 0.06 + alto / 2, -0.05));
     ponerRopa(P, Object.fromEntries(ids.map(id => { const a = ARTICULOS.find(x => x.id === id); return [a.lugar, id]; })));
@@ -239,6 +245,7 @@ function vitrina(g, x, z, largo, ry, color, onFrame) {
   });
 }
 
+const LUZ_CALIDA = mat('#FFF2CC', { emissive: '#FFE3A0', emissiveIntensity: 1 });
 function estante(g, x, z, largo, ry, colores, secciones) {
   // un mueble abierto hacia adelante (+z): fondo de color, costados y techo del color del pasillo, y 3 repisas blancas
   // con el borde de color; encima, las cajas de los productos de sus secciones
@@ -253,6 +260,7 @@ function estante(g, x, z, largo, ry, colores, secciones) {
   for (const y of repisas) {
     e.add(mesh(rlo(largo, 0.06, D - 0.1, 0.02), tabla, 0, y - 0.03, 0));
     e.add(mesh(rlo(largo + 0.02, 0.1, 0.06, 0.03), marco, 0, y - 0.03, D / 2 - 0.05));   // el borde de color al frente
+    if (y > 0.5) e.add(mesh(box(largo - 0.1, 0.02, 0.05), LUZ_CALIDA, 0, y - 0.075, D / 2 - 0.14, false, false));   // luz bajo la repisa
   }
   productos(e, largo, D, secciones, repisas);
 }
@@ -287,6 +295,171 @@ function robi() {
   g.userData = { disco, perro, cabeza, antena, cola, luz };
   g.traverse(o => { o.castShadow = false; });
   return g;
+}
+
+/* ---------- las zonas especiales de la sala (mesa de destacados, escenario, juguetes, percheros) ---------- */
+// una caja suelta de un producto (con su etiqueta del atlas al frente, +z), parada en el suelo de su grupo
+function cajaSuelta(id, k = 1) {
+  const a = ARTICULOS.find(x => x.id === id), [w, h, d] = (CAJA[a.seccion] || CAJA.juguetes).map(v => v * k), G = { pos: [], nor: [], uv: [] };
+  const { celdas, material } = atlas();
+  caja(G, celdas[id], 0, 0, 0, w, h, d);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(G.pos, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(G.nor, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(G.uv, 2)); geo.computeBoundingSphere();
+  return new THREE.Mesh(geo, material);
+}
+// lámparas colgantes de papel (globos blancos que brillan, con su cable al techo)
+function lamparas(g, x, z, H, lista) {
+  const papel = mat('#FFFFFF', { emissive: '#FFF4DC', emissiveIntensity: 0.9 }), cable = mat('#8C8FA8');
+  for (const [dx, dz, y, r] of lista) {
+    g.add(mesh(sph(r, 18, 14), papel, x + dx, y, z + dz, false, false));
+    g.add(mesh(cyl(0.008, 0.008, H - y - r, 4), cable, x + dx, (H + y + r) / 2, z + dz, false, false));
+    g.add(mesh(new THREE.TorusGeometry(r * 0.98, 0.006, 4, 24), cable, x + dx, y, z + dz, false, false));
+  }
+}
+// Mesa de destacados (al centro): mesa redonda de dos pisos con cubierta de vidrio; arriba, un maniquí que se va
+// transformando (como el Convertidor sorpresa: un animal distinto cada 3 s, con un saltito) y alrededor las cajas de
+// lo más nuevo; encima, lámparas de papel y el cartel
+function mesaDestacados(g, x, z, H, onFrame) {
+  const crema = mat('#F6E7D8', { emissive: '#F6E7D8', emissiveIntensity: 0.15 }), dorado = mat('#E8C27A', { metalness: 0.5, roughness: 0.35 });
+  g.add(mesh(cyl(0.55, 0.65, 0.08, 32), crema, x, 0.04, z));
+  g.add(mesh(cyl(0.28, 0.32, 0.75, 24), crema, x, 0.45, z));
+  g.add(mesh(cyl(1.15, 1.15, 0.06, 40), crema, x, 0.42, z));                // el piso de abajo
+  g.add(mesh(cyl(1.0, 1.0, 0.07, 40), crema, x, 0.84, z));
+  const borde = mesh(new THREE.TorusGeometry(1.0, 0.025, 8, 48), dorado, x, 0.88, z); borde.rotation.x = Math.PI / 2; g.add(borde);
+  g.add(mesh(cyl(1.02, 1.02, 0.02, 40), new THREE.MeshStandardMaterial({ color: 0xDFF6FF, transparent: true, opacity: 0.35, roughness: 0.05, metalness: 0.3, depthWrite: false }), x, 0.89, z, false, false));
+  // las cajas de lo más nuevo: arriba alrededor del maniquí y abajo en el piso de abajo, mirando hacia afuera
+  const arriba = ['convertidor', 'platillo', 'pixeles', 'disfraz_dino', 'aro', 'castillo'], abajo = ['disfraz_astronauta', 'chaleco_acolchado', 'nave', 'botas_lluvia', 'disfraz_abeja', 'iglu', 'pantalon_pijama', 'torre_gato'];
+  arriba.forEach((id, i) => { const a = i / arriba.length * Math.PI * 2 + 0.3, c = cajaSuelta(id, 0.8); c.position.set(x + Math.sin(a) * 0.72, 0.9, z + Math.cos(a) * 0.72); c.rotation.y = a; g.add(c); });
+  abajo.forEach((id, i) => { const a = i / abajo.length * Math.PI * 2, c = cajaSuelta(id, 0.75); c.position.set(x + Math.sin(a) * 0.85, 0.45, z + Math.cos(a) * 0.85); c.rotation.y = a; g.add(c); });
+  // el maniquí que se transforma, sobre un platito que gira
+  const plato = new THREE.Group(); plato.position.set(x, 0.92, z); g.add(plato);
+  plato.add(mesh(cyl(0.32, 0.34, 0.05, 28), dorado, 0, 0.025, 0));
+  const formas = FORMAS.map((f, i) => { const { P } = maniqui(f.id, i, 0.5); P.root.position.y = 0.05; P.root.visible = i === 0; plato.add(P.root); return P; });
+  let cual = 0, cambio = 3;
+  onFrame((t, dt) => {
+    plato.rotation.y = t * 0.5;
+    if ((cambio -= dt) <= 0) { cambio = 3; formas[cual].root.visible = false; cual = (cual + 1) % formas.length; formas[cual].root.visible = true; }
+    const u = 3 - cambio, s = u < 0.3 ? 0.5 + u / 0.6 : 1;   // un saltito al aparecer
+    formas[cual].root.position.y = 0.05 + Math.max(0, Math.sin(Math.min(1, u / 0.4) * Math.PI)) * 0.08;
+    formas[cual].body.scale.setScalar(s);
+  });
+  lamparas(g, x, z, H, [[0, -0.2, 3.9, 0.3], [-0.6, 0.1, 4.25, 0.22], [0.55, -0.4, 4.3, 0.24]]);
+  const cartel = makeSign('⭐ Lo más nuevo', '#FFB547', '#FFFFFF', 2.4); cartel.position.set(x, 4.75, z + 0.5); g.add(cartel);
+  for (const s of [-1, 1]) g.add(mesh(cyl(0.01, 0.01, H - 4.75, 4), mat('#8C8FA8'), x + s * 1.0, (H + 4.75) / 2, z + 0.5, false, false));
+}
+// Escenario de transportes (esquina de atrás, a la izquierda): una tarima redonda que gira despacio, con luces en el
+// borde, y maniquíes usando los transportes de verdad (platillo con su rayo, globo, alitas que aletean, burbuja)
+function escenarioTransportes(g, x, z, onFrame) {
+  const tarima = new THREE.Group(); tarima.position.set(x, 0, z); g.add(tarima);
+  tarima.add(mesh(cyl(1.75, 1.85, 0.25, 40), mat('#CFE8FF', { emissive: '#CFE8FF', emissiveIntensity: 0.2 }), 0, 0.125, 0));
+  tarima.add(mesh(cyl(1.6, 1.6, 0.02, 40), mat('#FFFFFF'), 0, 0.26, 0));
+  const luces = [];
+  for (let i = 0; i < 20; i++) {
+    const a = i / 20 * Math.PI * 2, l = mesh(sph(0.045, 8, 6), new THREE.MeshStandardMaterial({ color: 0xFFFFFF, emissive: RAINBOW[i % 6], emissiveIntensity: 1 }), Math.cos(a) * 1.8, 0.14, Math.sin(a) * 1.8, false, false);
+    tarima.add(l); luces.push(l);
+  }
+  const lista = [['perro', 'platillo', 0.55], ['conejo', 'globo', 0.45], ['gato', 'alitas', 0.55], ['perro', 'burbuja', 0.5]];
+  const maniquies = lista.map(([especie, transporte, alto], i) => {
+    const { P } = maniqui(especie, i + 2, alto), a = i / lista.length * Math.PI * 2;
+    P.root.position.set(Math.sin(a) * 1.0, 0.27, Math.cos(a) * 1.0); P.root.rotation.y = a; tarima.add(P.root);
+    ponerExtras(P, { transporte });
+    P.root.traverse(o => { o.castShadow = false; });
+    return P;
+  });
+  onFrame((t, dt) => {
+    tarima.rotation.y = t * 0.25;
+    luces.forEach((l, i) => { l.material.emissiveIntensity = 0.4 + 0.8 * Math.max(0, Math.sin(t * 3 - i * 0.6)); });
+    maniquies.forEach((P, i) => animatePet(P, t + i * 1.7, 0, dt));
+  });
+  const cartel = makeSign('🛸 Transportes en acción', '#4FB6F5', '#FFFFFF', 3.0); cartel.position.set(x, 3.9, z + 0.4); g.add(cartel);
+  for (const s of [-1, 1]) g.add(mesh(cyl(0.01, 0.01, 1.6, 4), mat('#8C8FA8'), x + s * 1.3, 3.9 + 0.8 + 0.3, z + 0.4, false, false));
+}
+// el cajón de madera de los juguetes, con "TOYS" pintado al frente y una estrella
+let texCajon = null;
+function cajonTex() {
+  if (texCajon) return texCajon;
+  const c = document.createElement('canvas'); c.width = 256; c.height = 128; const x = c.getContext('2d');
+  x.fillStyle = '#F3ECE2'; x.fillRect(0, 0, 256, 128);
+  x.strokeStyle = 'rgba(150,120,90,.35)'; x.lineWidth = 3; [42, 86].forEach(y => { x.beginPath(); x.moveTo(0, y); x.lineTo(256, y); x.stroke(); });
+  x.fillStyle = '#8A8F9C'; x.font = '800 54px "Baloo 2", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('TOYS', 128, 70);
+  x.fillStyle = '#9ED8C8'; x.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 9 : 20; x.lineTo(222 + Math.cos(a) * r, 34 + Math.sin(a) * r); } x.fill();
+  return (texCajon = new THREE.CanvasTexture(c));
+}
+// Rincón de juguetes (esquina de atrás, a la derecha): cajones de madera "TOYS" con pelotas, frisbees y palitos, y
+// una mesa baja con un maniquí que juega con una pelota que rebota
+function rinconJuguetes(g, x, z, onFrame) {
+  const madera = mat('#F3ECE2'), frente = new THREE.MeshStandardMaterial({ map: cajonTex(), roughness: 0.8 }), rueda = mat('#5A5F6E');
+  const cajones = [[-1.6, -1.2, 0.2], [0, -1.3, 0], [1.6, -1.2, -0.2]];
+  cajones.forEach(([dx, dz, ry], i) => {
+    const c = new THREE.Group(); c.position.set(x + dx, 0, z + dz); c.rotation.y = ry; g.add(c);
+    const W = 1.1, Hc = 0.5, Dc = 0.7;
+    c.add(mesh(box(W, 0.06, Dc), madera, 0, 0.1, 0));
+    for (const s of [-1, 1]) c.add(mesh(box(0.05, Hc, Dc), madera, s * (W / 2 - 0.025), 0.07 + Hc / 2, 0));
+    c.add(mesh(box(W, Hc, 0.05), madera, 0, 0.07 + Hc / 2, -Dc / 2 + 0.025));
+    const f = new THREE.Mesh(new THREE.BoxGeometry(W, Hc, 0.05), [madera, madera, madera, madera, frente, madera]); f.position.set(0, 0.07 + Hc / 2, Dc / 2 - 0.025); c.add(f);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const r = mesh(cyl(0.05, 0.05, 0.04, 12), rueda, sx * 0.42, 0.05, sz * 0.25); r.rotation.z = Math.PI / 2; c.add(r); }
+    // lo de adentro: pelotas de colores, un frisbee parado y un palito
+    for (let k = 0; k < 7; k++) c.add(mesh(sph(0.11, 12, 10), mat(RAINBOW[(k + i * 2) % 6]), -0.38 + (k % 4) * 0.25, 0.5 + Math.floor(k / 4) * 0.12, -0.15 + (k % 2) * 0.22));
+    const fr = mesh(cyl(0.17, 0.15, 0.04, 20), mat(['#FF6FAE', '#4FB6F5', '#FFD23F'][i]), 0.3, 0.62, -0.1); fr.rotation.x = 1.2; c.add(fr);
+    const pa = mesh(cyl(0.025, 0.03, 0.6, 8), mat('#B98048'), -0.3, 0.68, 0.1); pa.rotation.z = 0.6; c.add(pa);
+  });
+  // la mesa baja con el maniquí y su pelota
+  g.add(mesh(cyl(0.8, 0.8, 0.06, 32), mat('#FFE9A8', { emissive: '#FFE9A8', emissiveIntensity: 0.15 }), x, 0.42, z + 0.6));
+  g.add(mesh(cyl(0.12, 0.16, 0.4, 16), mat('#F3ECE2'), x, 0.2, z + 0.6));
+  const { P } = maniqui('perro', 4, 0.5); P.root.position.set(x - 0.2, 0.45, z + 0.6); P.root.rotation.y = Math.PI / 2; P.root.userData.dynamic = true; g.add(P.root);
+  const pelota = mesh(sph(0.08, 14, 10), mat('#D7F542'), x + 0.35, 0.53, z + 0.6); pelota.userData.dynamic = true; g.add(pelota);
+  onFrame((t, dt) => {
+    const u = (t * 1.4) % 1;
+    pelota.position.y = 0.53 + Math.sin(u * Math.PI) * 0.45;
+    animatePet(P, t, 0, dt, true);
+    P.head.rotation.x = -Math.sin(u * Math.PI) * 0.35;   // la mira subir y bajar
+  });
+  const cartel = makeSign('🧸 Rincón de juguetes', '#FFB547', '#FFFFFF', 2.8); cartel.position.set(x, 3.9, z - 0.5); g.add(cartel);
+  for (const s of [-1, 1]) g.add(mesh(cyl(0.01, 0.01, 1.6, 4), mat('#8C8FA8'), x + s * 1.2, 3.9 + 0.8 + 0.3, z - 0.5, false, false));
+}
+// la silueta de un chaleco chiquito (para colgar en el perchero)
+function chalequito() {
+  const s = new THREE.Shape();
+  s.moveTo(-0.07, 0.17); s.lineTo(-0.15, 0.13); s.lineTo(-0.16, 0.02); s.lineTo(-0.12, 0.02); s.lineTo(-0.12, -0.17); s.lineTo(0.12, -0.17);
+  s.lineTo(0.12, 0.02); s.lineTo(0.16, 0.02); s.lineTo(0.15, 0.13); s.lineTo(0.07, 0.17); s.quadraticCurveTo(0, 0.1, -0.07, 0.17);
+  return new THREE.ExtrudeGeometry(s, { depth: 0.03, bevelEnabled: true, bevelSize: 0.01, bevelThickness: 0.01, bevelSegments: 2 });
+}
+// Percheros (adelante, a la izquierda): dos percheros con chalequitos de colores colgados y su cartel con precio, y en la
+// pared un tablero perforado con juguetes y accesorios colgados de ganchitos
+function percheros(g, x, z, W) {
+  const metal = mat('#C9CED8', { metalness: 0.6, roughness: 0.3 }), geo = chalequito(), madera = mat('#E9DCC8');
+  const COLORES = ['#FF8FC7', '#7FD6FF', '#FFD23F', '#9ED8C8', '#B98BFF', '#FF9F7A', '#FFFFFF', '#5BD66E', '#FF6FAE', '#4FB6F5'];
+  [[x, z - 1.2], [x, z + 1.2]].forEach(([px, pz], r) => {
+    const L = 2.2;
+    for (const s of [-1, 1]) {
+      g.add(mesh(cyl(0.025, 0.025, 1.5, 10), metal, px + s * L / 2, 0.75, pz));
+      g.add(mesh(box(0.06, 0.04, 0.6), metal, px + s * L / 2, 0.02, pz));
+    }
+    const barra = mesh(cyl(0.02, 0.02, L + 0.1, 10), metal, px, 1.48, pz); barra.rotation.z = Math.PI / 2; g.add(barra);
+    for (let k = 0; k < 9; k++) {
+      const hx = px - L / 2 + 0.2 + k * (L - 0.4) / 8;
+      const gancho = mesh(new THREE.TorusGeometry(0.03, 0.005, 4, 10, Math.PI * 1.3), metal, hx, 1.5, pz); gancho.rotation.y = Math.PI / 2; g.add(gancho);
+      const percha = mesh(box(0.28, 0.012, 0.012), madera, hx, 1.43, pz); percha.rotation.y = Math.PI / 2; g.add(percha);
+      const c = new THREE.Mesh(geo, mat(COLORES[(k + r * 4) % COLORES.length], { roughness: 0.85 })); c.position.set(hx + 0.015, 1.27, pz); c.rotation.y = Math.PI / 2 + (k % 3 - 1) * 0.08; c.castShadow = true; g.add(c);
+    }
+    const precio = makeSign(r ? '🧥 Abrigos 🦴35' : '🎽 Chalecos 🦴40', r ? '#7FD6FF' : '#FF8FC7', '#FFFFFF', 1.2); precio.position.set(px, 1.72, pz); precio.rotation.y = Math.PI / 2; g.add(precio);
+  });
+  // el tablero perforado, en la pared de la izquierda (mirando a +x)
+  const c = document.createElement('canvas'); c.width = c.height = 64; const t = c.getContext('2d');
+  t.fillStyle = '#F7F4EE'; t.fillRect(0, 0, 64, 64); t.fillStyle = '#C9C2B4'; for (const a of [16, 48]) for (const b of [16, 48]) { t.beginPath(); t.arc(a, b, 3.5, 0, Math.PI * 2); t.fill(); }
+  const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(W * 4, 2.2 * 4);
+  const tablero = mesh(new THREE.PlaneGeometry(W, 2.2), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9, emissive: '#FFFFFF', emissiveIntensity: 0.12, emissiveMap: tex }), x - 2.83, 1.6, z, false, true);
+  tablero.rotation.y = Math.PI / 2; g.add(tablero);
+  const marco = mat('#E9DCC8');
+  for (const s of [-1, 1]) { g.add(mesh(box(0.05, 2.3, 0.08), marco, x - 2.81, 1.6, z + s * W / 2)); g.add(mesh(box(0.05, 0.08, W + 0.08), marco, x - 2.81, 1.6 + s * 1.12, z)); }
+  // lo colgado: frisbees, collares, pelotas y palitos, en filas
+  const fila = (y, n, f) => { for (let k = 0; k < n; k++) f(x - 2.78, y, z - W / 2 + 0.35 + k * (W - 0.7) / (n - 1), k); };
+  fila(2.35, 6, (px, py, pz, k) => { const d = mesh(cyl(0.15, 0.13, 0.03, 20), mat(RAINBOW[k % 6]), px + 0.05, py, pz); d.rotation.z = Math.PI / 2; g.add(d); });
+  fila(1.85, 7, (px, py, pz, k) => { const r = mesh(new THREE.TorusGeometry(0.1, 0.02, 8, 20), mat(['#FF4F8B', '#4FB6F5', '#FFC93C', '#5BD66E'][k % 4]), px + 0.04, py - 0.1, pz); r.rotation.y = Math.PI / 2; g.add(r); });
+  fila(1.35, 6, (px, py, pz, k) => { for (let b = 0; b < 3; b++) g.add(mesh(sph(0.07, 10, 8), mat(RAINBOW[(k + b) % 6]), px + 0.08, py - 0.06 - b * 0.11, pz + (b - 1) * 0.04)); });
+  fila(0.85, 7, (px, py, pz, k) => { const p = mesh(cyl(0.02, 0.025, 0.4, 8), mat(k % 2 ? '#B98048' : '#FFD23F'), px + 0.04, py - 0.15, pz); g.add(p); });
+  const cartel = makeSign('🐾 Accesorios', '#9ED8C8', '#FFFFFF', 1.8); cartel.position.set(x - 2.79, 2.95, z); cartel.rotation.y = Math.PI / 2; g.add(cartel);
 }
 
 function sala({ world, addObs, addZone, onFrame }) {
@@ -360,6 +533,20 @@ function sala({ world, addObs, addZone, onFrame }) {
     addObs(X + a.x, Z, a.atras ? 0.95 : 0.5, 3.6);
     cartelYZona(a.cartel, a.color, a.x + (a.atras ? 0 : a.ry > 0 ? 1.4 : -1.4), 2.5, a.zx, 0.5, a.sec);
   }
+  // las zonas especiales: la mesa de lo más nuevo al centro, el escenario de transportes y el rincón de juguetes en las
+  // esquinas de atrás, y los percheros con el tablero de accesorios adelante a la izquierda
+  mesaDestacados(g, 0, -2.4, H, onFrame);
+  addObs(X, Z - 2.4, 1.2, 1.2);
+  addZone({ id: 'mascotienda', x: X, z: Z - 0.6, r: 1.3, label: '⭐ Mirar lo más nuevo', seccion: 'pociones' });
+  escenarioTransportes(g, -W / 2 + 3.6, -D / 2 + 2.6, onFrame);
+  addObs(X - W / 2 + 3.6, Z - D / 2 + 2.6, 1.9, 1.9);
+  addZone({ id: 'mascotienda', x: X - W / 2 + 6.2, z: Z - D / 2 + 3.6, r: 1.3, label: '🛸 Mirar transportes', seccion: 'transporte' });
+  rinconJuguetes(g, W / 2 - 3.6, -D / 2 + 2.4, onFrame);
+  addObs(X + W / 2 - 3.6, Z - D / 2 + 1.2, 2.4, 0.6); addObs(X + W / 2 - 3.6, Z - D / 2 + 3.0, 0.85, 0.85);
+  addZone({ id: 'mascotienda', x: X + W / 2 - 6.2, z: Z - D / 2 + 3.9, r: 1.3, label: '🧸 Mirar juguetes', seccion: 'juguetes' });
+  percheros(g, -W / 2 + 3.0, D / 2 - 2.6, 3.4);
+  addObs(X - W / 2 + 3.0, Z + D / 2 - 3.8, 1.2, 0.35); addObs(X - W / 2 + 3.0, Z + D / 2 - 1.4, 1.2, 0.35);
+  addZone({ id: 'mascotienda', x: X - W / 2 + 4.9, z: Z + D / 2 - 2.6, r: 1.3, label: '👕 Mirar ropa', seccion: 'ropa' });
   // el probador: una tarima redonda con un espejo y una cortina
   const PX = W / 2 - 2.6, PZ = D / 2 - 2.6;
   g.add(mesh(cyl(1.3, 1.4, 0.2, 32), mat('#FFE1EE'), PX, 0.1, PZ));
