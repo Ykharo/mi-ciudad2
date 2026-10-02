@@ -29,6 +29,8 @@ function panelIsSheet() { return window.innerWidth <= 760 || (window.innerHeight
 function updateCamera(dt) {
   const p = player.pos;
   let k;
+  // (para fotos de revisión, con los ganchos de prueba: cam.fijo = { pos: [x, y, z], look: [x, y, z] })
+  if (cam.fijo) { camera.position.set(...cam.fijo.pos); camera.lookAt(...cam.fijo.look); return; }
   if (state.mode === 'drive') {
     const c = driving;
     if (!cam.dragging) cam.yaw = lerpAngle(cam.yaw, c.heading + Math.PI, 1 - Math.exp(-dt * (Math.abs(c.speed) > 1 ? 2.6 : 0.8)));

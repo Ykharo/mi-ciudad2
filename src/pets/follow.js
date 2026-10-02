@@ -3,20 +3,21 @@ import { clamp, lerpAngle } from '../core/math.js';
 import { emit } from '../core/events.js';
 import { labelSprite } from '../engine/textures.js';
 import { collide } from '../world/physics.js';
-import { animatePet } from './models.js';
+import { animatePet, letreroMascota } from './models.js';
 
 // Mientras la dueña no se mueve (`ocio`), cada mascota pasa por su ciclo de espera: parada esperando, se sienta, se
 // acuesta, se aburre y salta alrededor de la dueña con su voz, y vuelve a empezar. Los segundos de cada parte
 // dependen de la especie (el gato duerme más y juega menos, el conejo juega más). Con sueño (`estado.energia` baja)
-// no se levanta a jugar; aburrida (`estado.diversion` baja) espera menos antes de pedir que jueguen con ella.
+// no se levanta a jugar; aburrida (`estado.diversion` baja) está menos rato sentada antes de pedir que jueguen con
+// ella. Antes de sentarse espera siempre al menos 30 s parada (el reposo no empieza de inmediato).
 // Con la dueña sentada o acostada (`ocio = 'descansa'`): sólo se sienta y después se acuesta.
 // `p.ocio = { fase, t, vueltas }` lo lee la ficha (game/fichas.js); `vueltas` (ciclos completos) el reposo de la
 // dueña (game/reposo.js), que empieza cuando la mascota terminó uno.
 const CICLOS = {
-  perro: { espera: 4, sentada: 6, acostada: 8, juega: 6, voz: 'guau', texto: '¡Guau!', giro: 2.4 },
-  gato: { espera: 5, sentada: 9, acostada: 14, juega: 4, voz: 'miau', texto: '¡Miau!', giro: 1.8 },
-  conejo: { espera: 3, sentada: 5, acostada: 6, juega: 7, voz: 'conejo', texto: '¡Ñiqui!', giro: 2.6 },
-  unicornio: { espera: 5, sentada: 7, acostada: 8, juega: 5, voz: 'relincho', texto: '¡Hiii!', giro: 2.0 },
+  perro: { espera: 30, sentada: 8, acostada: 10, juega: 6, voz: 'guau', texto: '¡Guau!', giro: 2.4 },
+  gato: { espera: 35, sentada: 10, acostada: 16, juega: 4, voz: 'miau', texto: '¡Miau!', giro: 1.8 },
+  conejo: { espera: 30, sentada: 6, acostada: 8, juega: 7, voz: 'conejo', texto: '¡Ñiqui!', giro: 2.6 },
+  unicornio: { espera: 32, sentada: 8, acostada: 10, juega: 5, voz: 'relincho', texto: '¡Hiii!', giro: 2.0 },
 };
 const ORDEN = ['espera', 'sentada', 'acostada', 'juega'];
 function avanzarOcio(p, dt, ocio) {
@@ -24,7 +25,7 @@ function avanzarOcio(p, dt, ocio) {
   O.t += dt;
   const E = p.estado || {}, sueno = E.energia < 25, aburrida = E.diversion < 40;
   const dur = f => (ocio === 'descansa' ? { espera: 1.5, sentada: 6, acostada: Infinity }[f]
-    : f === 'acostada' && sueno ? Infinity : (f === 'espera' || f === 'sentada') && aburrida ? C[f] * 0.5 : C[f]);
+    : f === 'acostada' && sueno ? Infinity : f === 'sentada' && aburrida ? C[f] * 0.5 : C[f]);   // (espera siempre lo suyo: al menos 30 s parada)
   if (O.fase === 'juega' && ocio === 'descansa') { O.fase = 'sentada'; O.t = 0; }
   if (O.t >= dur(O.fase)) {
     if (O.fase === 'juega') O.vueltas = (O.vueltas || 0) + 1;   // terminó un ciclo (después empieza el reposo de la dueña)
@@ -46,7 +47,7 @@ function jugarAlrededor(p, i, C, leader, dt) {
   if (O.ladra <= 0) { O.ladra = 1.3; O.salto = 0; emit('sonido', C.voz); }
   if (O.salto !== undefined && O.salto < 0.4) { O.salto += dt; y = Math.sin(Math.PI * Math.min(1, O.salto / 0.4)) * 0.28; }
   const P = p.obj;
-  if (!P.voz) { P.voz = labelSprite(C.texto, { scale: 0.0036, bubble: true }); P.root.add(P.voz); }
+  if (!P.voz) P.voz = letreroMascota(P, labelSprite(C.texto, { scale: 0.0036, bubble: true }));
   P.voz.visible = O.ladra > 0.6; P.voz.position.y = P.labelY + 0.45;
   return { moved: Math.max(moved, 2), y };
 }

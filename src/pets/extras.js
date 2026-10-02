@@ -3,7 +3,7 @@
 // lo que corresponde; la animación la hace `P.extrasUpdate` (lo llama animatePet en cada cuadro).
 // Todo se calza con el mapa de anclajes de cada especie (ANCLAJES en pets/models.js: espalda, lomo, cuello, cabeza,
 // cola y medidas): lo que va sobre el cuerpo cuelga de su ancla y se mueve con él al caminar, saltar o sentarse.
-//   patines   bajo las patas; al andar, las patas quietas y el cuerpo sin saltos; las ruedas giran y brillan
+//   patines   una bota con ruedas en cada pata; al andar patina (empuja en diagonal) sin saltos; las ruedas brillan
 //   burbuja   una burbuja grande alrededor; la mascota va sentada adentro, flotando
 //   alitas    alas de mariposa en la espalda (ancla `espalda`), que aletean
 //   globo     un globo aerostático grande y alto; la mascota va sentada en la canasta y Nina lleva la cuerda
@@ -12,27 +12,33 @@
 import { THREE } from '../engine/three.js';
 import { scene } from '../engine/renderer.js';
 import { RAINBOW } from '../engine/materials.js';
+import { rbox } from '../engine/geometry.js';
 
 const TAU = Math.PI * 2;
 const sinSombra = g => { g.traverse(o => { o.castShadow = false; o.receiveShadow = false; }); return g; };
 
-// Un patín (de 4 ruedas) en cada pata: la bota abraza la punta de la pata y las ruedas brillan. Se calza mirando
-// dónde termina cada pata (el borde de abajo de su malla), así sirve para todas las especies.
-const ALTO_PATIN = 0.085;
+// Un patín (de 4 ruedas) en cada pata. La bota es la parte de abajo de la pata "pintada" y un poco más ancha (una
+// funda redondeada que la envuelve, como si se hubiera extruido), con la suela y las ruedas debajo. Se calza con la
+// caja de la malla de cada pata en el espacio de la pata (dónde termina y qué tan gruesa es): sirve para todas las
+// especies. `alto`: lo que sube la mascota (la suela y las ruedas bajo la pata).
+const BOTA = 0.42, ENSANCHE = 1.16, RUEDA = 0.026;
+const ALTO_PATIN = 0.012 + 0.012 + RUEDA * 2 - 0.004;
 function patines(P) {
   const g = new THREE.Group(), rueda = [], patas = [];
   const bota = new THREE.MeshStandardMaterial({ color: 0xFF6FAE, roughness: 0.35 }), suela = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.4 });
-  const box = new THREE.Box3();
+  const box = new THREE.Box3(), caja = new THREE.Box3();
   P.legs.forEach((leg, i) => {
-    box.makeEmpty(); leg.children.forEach(m => { if (m.geometry) { m.geometry.computeBoundingBox(); box.union(m.geometry.boundingBox); } });
-    const w = Math.max(0.09, box.max.x - box.min.x), l = Math.max(0.12, box.max.z - box.min.z), fondo = box.min.y, cz = (box.max.z + box.min.z) / 2;
-    const p = new THREE.Group(); p.position.set(0, fondo, cz); leg.add(p); patas.push(p);
-    p.add(new THREE.Mesh(new THREE.BoxGeometry(w + 0.035, 0.07, l + 0.06), bota)).position.y = 0.01;
-    const pl = new THREE.Mesh(new THREE.BoxGeometry(w + 0.05, 0.02, l + 0.09), suela); pl.position.y = -0.03; p.add(pl);
+    box.makeEmpty();
+    leg.children.forEach(m => { if (m.geometry) { m.updateMatrix(); m.geometry.computeBoundingBox(); box.union(caja.copy(m.geometry.boundingBox).applyMatrix4(m.matrix)); } });
+    const w = box.max.x - box.min.x, l = box.max.z - box.min.z, fondo = box.min.y, cx = (box.max.x + box.min.x) / 2, cz = (box.max.z + box.min.z) / 2;
+    const hb = Math.min(0.15, (box.max.y - box.min.y) * BOTA);   // la caña de la bota: la parte de abajo de la pata
+    const p = new THREE.Group(); p.position.set(cx, fondo, cz); leg.add(p); patas.push(p);
+    const b = new THREE.Mesh(rbox(w * ENSANCHE, hb, l * ENSANCHE, Math.min(w, l) * 0.35), bota); b.position.y = hb / 2 - 0.006; p.add(b);
+    const pl = new THREE.Mesh(rbox(w * 1.25, 0.024, l * 1.45, 0.01), suela); pl.position.set(0, -0.012, l * 0.1); p.add(pl);
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
       const m = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, emissive: RAINBOW[(i + (sx > 0 ? 1 : 0) + (sz > 0 ? 2 : 0)) % 6], emissiveIntensity: 0.9 });
-      const r = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.022, 12), m); r.rotation.z = Math.PI / 2;
-      r.position.set(sx * (w / 2 + 0.005), -0.058, sz * (l / 2 + 0.01)); p.add(r); rueda.push(r);
+      const r = new THREE.Mesh(new THREE.CylinderGeometry(RUEDA, RUEDA, 0.022, 12), m); r.rotation.z = Math.PI / 2;
+      r.position.set(sx * w * 0.42, -0.024 - RUEDA + 0.004, l * 0.1 + sz * l * 0.5); p.add(r); rueda.push(r);
     }
     // de qué lado y si es de adelante: para empujar en diagonal al patinar
     patas.at(-1).userData = { lado: Math.sign(leg.position.x) || 1, frente: Math.sign(leg.position.z - 0.001) || 1 };
@@ -71,7 +77,7 @@ function alitas(P) {
     alas.push({ pivote, s });
   }
   P.anclas.espalda.add(g);
-  return { g, alto: 0.45, alas, flota: true, vuela: true, inercia: { k: 6, c: 3.0, max: 0.45 }, lean: 0 };
+  return { g, alto: 0.45, alas, flota: true, vuela: true, inercia: { k: 5, c: 2.6, max: 0.45 }, lean: 0 };
 }
 // el mimbre de la canasta: tejido café, con una franja arcoíris y estrellitas (textura hecha aquí; se puede cambiar por
 // una imagen propia)
@@ -222,14 +228,24 @@ function animarExtras(P, t, dt, speed) {
       etiqueta = E.r * 0.9;
     }
     if (E.alas) {
-      // gravedad cero: sin saltos, las patas estiradas (las de adelante hacia adelante, las de atrás hacia atrás)
-      // remando despacio, el cuerpo se deja llevar por la inercia y se inclina un poco al avanzar
-      P.body.position.y = 0;
-      const zm = P.legs.reduce((a, l) => a + l.position.z, 0) / P.legs.length;
-      P.legs.forEach((l, i) => { const fr = l.position.z > zm; l.rotation.x = (fr ? -0.65 : 0.7) + Math.sin(t * 1.6 + i * 1.3) * 0.12; l.rotation.z = 0; });
-      E.lean += ((anda ? 0.16 : 0) - E.lean) * Math.min(1, dt * 1.5);
-      P.body.rotation.x = E.lean + Math.sin(t * 0.8) * 0.04;
-      P.body.rotation.z = Math.sin(t * 0.6) * 0.05 - lx * 0.5;
+      // caminata lunar: pasos lentos y grandes, en diagonal (una de adelante con la de atrás del otro lado), que llegan
+      // a las patas bien estiradas (se quedan un momento ahí: la curva `estira`); en cada paso el cuerpo sube y baja
+      // suave, como con poca gravedad. Quieta, flota con las patas colgando y remando apenas. Se pasa de una a otra
+      // poco a poco (E.mueve) y el cuerpo se deja llevar por la inercia.
+      E.mueve = (E.mueve || 0) + ((anda ? 1 : 0) - (E.mueve || 0)) * Math.min(1, dt * 2);
+      E.paso = (E.paso || 0) + dt * (1.5 + Math.min(speed, 3) * 0.5) * E.mueve;
+      const m = E.mueve, estira = v => Math.sign(v) * Math.pow(Math.abs(v), 0.55);
+      const xm = P.legs.reduce((a, l) => a + l.position.x, 0) / P.legs.length, zm = P.legs.reduce((a, l) => a + l.position.z, 0) / P.legs.length;
+      P.legs.forEach((l, i) => {
+        const lado = l.position.x > xm ? 1 : -1, fr = l.position.z > zm ? 1 : -1;
+        const camina = -0.85 * estira(Math.sin(E.paso + (lado * fr > 0 ? 0 : Math.PI)));
+        const flota = (fr > 0 ? -0.35 : 0.4) + Math.sin(t * 1.4 + i * 1.3) * 0.1;
+        l.rotation.x = camina * m + flota * (1 - m); l.rotation.z = 0;
+      });
+      P.body.position.y = Math.abs(Math.sin(E.paso)) * 0.11 * m;   // un saltito suave en cada paso
+      E.lean += ((anda ? 0.08 : 0) - E.lean) * Math.min(1, dt * 1.5);
+      P.body.rotation.x = E.lean + Math.sin(E.paso * 2) * 0.04 * m + Math.sin(t * 0.8) * 0.03 * (1 - m);
+      P.body.rotation.z = Math.sin(E.paso) * 0.04 * m + Math.sin(t * 0.6) * 0.04 * (1 - m) - lx * 0.5;
       P.body.position.x = lx; P.body.position.z = lz;
       // aletear suave: cada ala gira sobre el eje del lomo (z): casi juntas arriba ↔ abiertas hacia su lado
       const f = anda ? 6 : 4;

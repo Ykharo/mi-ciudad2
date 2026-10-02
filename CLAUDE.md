@@ -61,6 +61,7 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
     `state.lastCar`, `state.shopSpec`, `state.ttModel/ttSpin/ttDrag`, `state.musicOn`, `state.joyId`, `state.preview`).
   - `main.js` importa todos los módulos en el orden original de las secciones: ese orden define el arranque.
   - Ganchos de prueba `window.__juego` (state, player, npcs, cars, cam, `teleport(x, z)`): sólo en desarrollo o con `?test`.
+    Para fotos de revisión: `cam.fijo = { pos: [x, y, z], look: [x, y, z] }` deja la cámara fija (null la suelta).
 - `src/styles/juego.css` — estilos.
 - Imágenes del juego en `src/assets/imagenes/` (se importan desde el código; Vite las publica como archivos aparte). Cartel de la competencia de farmear aura: `world/places/cartel.js` (letrero + zona "Mirar el
   cartel") y `game/cartel.js` (espectador que lo lee con la animación `mirar_cartel`); `main.js` espera la imagen.
@@ -182,6 +183,8 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
   artículos en `pets/catalog/articulos.js` y sus efectos en `pets/extras.js` (`ponerExtras(P, { transporte, arcoiris })`).
   Lo que se pone a una mascota se calza con el **mapa de anclajes** (`ANCLAJES` en `pets/models.js`: espalda, lomo,
   cuello, cabeza, cola + medidas; `P.anclas.*` son Object3D que siguen al cuerpo). Usarlo para capas, monturas, cohetes.
+  `escala` de la especie (el perro 0,8) se aplica a `P.root`: el mapa está en el espacio propio, antes de escalar.
+  El libro de Nina también tiene su mapa (`agarre` en `characters/libro.js`: el centro del borde de cada tapa).
 - Guardado en `localStorage` con clave `ciudadArcoiris.v2`: `{ version: 2, jugador, nina: { look }, personajes, pets (con extras), cars, shop, huesitos, mascotienda: { comprados } }`
   (`game/save.js`). Una partida `ciudadArcoiris.v1` se migra al cargar y la clave v1 no se borra. Envolver en try/catch.
   Todo lo guardado se valida al cargar (`fixLook`, `fixCarSpec`, tipos de mascota).

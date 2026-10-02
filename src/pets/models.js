@@ -19,8 +19,11 @@ const PET_NAMES = ['Toby', 'Luna', 'Nube', 'Coco', 'Maní', 'Bombón', 'Estrella
 //   cuello   collar, bufanda                                cabeza lo alto de la cabeza (sombrero, corona)
 //   cola     el nacimiento de la cola
 //   medidas: ancho y largo del cuerpo, y `alto` (el lomo sobre el suelo) para calzar cosas alrededor
+//   escala: el tamaño de la especie en el juego (se aplica a P.root). Las coordenadas de arriba y las medidas están
+//            en el espacio propio de la mascota, ANTES de la escala: lo que se le pone se arma con ellas y se achica
+//            junto con ella (el perro va al 80 %: la burbuja, el globo y las alitas guardan su proporción)
 export const ANCLAJES = {
-  perro: { espalda: [0, 0.65, 0.1], lomo: [0, 0.65, -0.05], cuello: [0, 0.62, 0.24], cabeza: [0, 0.27, 0], cola: [0, 0.58, -0.32], ancho: 0.44, largo: 0.66, alto: 0.65 },
+  perro: { espalda: [0, 0.65, 0.1], lomo: [0, 0.65, -0.05], cuello: [0, 0.62, 0.24], cabeza: [0, 0.27, 0], cola: [0, 0.58, -0.32], ancho: 0.44, largo: 0.66, alto: 0.65, escala: 0.8 },
   gato: { espalda: [0, 0.59, 0.08], lomo: [0, 0.59, -0.04], cuello: [0, 0.6, 0.2], cabeza: [0, 0.25, 0], cola: [0, 0.5, -0.3], ancho: 0.36, largo: 0.6, alto: 0.59 },
   conejo: { espalda: [0, 0.6, 0.02], lomo: [0, 0.6, -0.06], cuello: [0, 0.56, 0.14], cabeza: [0, 0.22, 0], cola: [0, 0.38, -0.33], ancho: 0.54, largo: 0.66, alto: 0.6 },
   unicornio: { espalda: [0, 0.89, 0.12], lomo: [0, 0.89, -0.08], cuello: [0, 1.0, 0.32], cabeza: [0, 0.14, 0.04], cola: [0, 0.82, -0.38], ancho: 0.42, largo: 0.74, alto: 0.89 },
@@ -92,11 +95,15 @@ function buildPet(kind, color) {
   }
   P.medidas = A;
   P.labelY = kind === 'unicornio' ? 1.75 : 1.2;
+  // el tamaño de la especie: se achica todo junto (cuerpo, anclajes y lo que tenga puesto), salvo las etiquetas
+  P.root.scale.setScalar(A.escala || 1);
   return P;
 }
+// un letrero sobre la mascota, del mismo tamaño aunque la especie sea más chica (pets/follow.js: el globito de su voz)
+function letreroMascota(P, sprite) { sprite.scale.multiplyScalar(1 / P.root.scale.x); P.root.add(sprite); return sprite; }
 function setPetName(P, name) {
   if (P.label) P.root.remove(P.label);
-  P.label = labelSprite(name, { scale: 0.0042 }); P.label.position.y = P.labelY; P.root.add(P.label);
+  P.label = letreroMascota(P, labelSprite(name, { scale: 0.0042 })); P.label.position.y = P.labelY;
 }
 function disposePet(P) { scene.remove(P.root); P.disposables.forEach(g => g.dispose()); }
 // `sentada`: se sienta (quieta, esperando): el cuerpo se inclina con la cola abajo, las patas de adelante quedan
@@ -128,4 +135,4 @@ function animatePet(P, t, speed01, dt, sentada = false) {
   if (P.head) P.head.rotation.y = hop ? 0 : Math.sin(t * 0.9 + P.phase) * 0.28;
 }
 
-export { PET_COLORS, PET_KINDS, PET_NAMES, animatePet, buildPet, disposePet, setPetName };   // (y ANCLAJES, arriba)
+export { PET_COLORS, PET_KINDS, PET_NAMES, animatePet, buildPet, disposePet, letreroMascota, setPetName };   // (y ANCLAJES, arriba)

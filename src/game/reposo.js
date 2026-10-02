@@ -8,12 +8,12 @@ import { scene } from '../engine/renderer.js';
 import { state } from '../core/state.js';
 import { pick } from '../core/math.js';
 import { avatarDo, avatarStop } from '../characters/animator.js';
-import { LIBROS, abrir, hacerLibro, pasarHoja, tirarLibro } from '../characters/libro.js';
+import { LIBROS, abrir, agarre, hacerLibro, pasarHoja, tirarLibro } from '../characters/libro.js';
 import { pastoCerca } from '../world/pasto.js';
 import { player } from './actors.js';
 
 export const ANIMS_REPOSO = new Set(['sentarse_suelo', 'bostezo', 'leer_sentada', 'leer_acostada', 'acostarse_leer', 'sentarse_leer']);
-const ESPERA_SOLA = 25, REINTENTO = 20, LEJOS = 12;
+const ESPERA_SOLA = 40, REINTENTO = 20, LEJOS = 12;
 // cada fase: animación, cuánto dura, si el libro está y abierto, y cuál sigue
 const FASES = {
   camina: { sigue: 'sentarse', dur: 15 },
@@ -43,7 +43,7 @@ function entrar(fase) {
   const F = FASES[fase];
   R.fase = fase; R.t = 0;
   if (F.anim) avatarDo(player.ch, F.anim, { loop: !!F.loop, hold: !F.loop });
-  if (F.libro && !R.libro) { R.libro = hacerLibro(R.cual); R.libro.scale.setScalar(0.01); scene.add(R.libro); R.abre = 0; R.hoja = 4; }
+  if (F.libro && !R.libro) { R.libro = hacerLibro(R.cual); R.libro.scale.setScalar(0.01); scene.add(R.libro); R.abre = 0; R.hoja = 4; R.aparece = 0; }
   if (!F.libro) quitarLibro();
 }
 // ¿ya puede descansar? cuando alguna de sus mascotas terminó un ciclo de espera (o sola, después de un rato)
@@ -77,17 +77,30 @@ export function updateReposo(dt) {
   if (R.libro) moverLibro(dt);
 }
 
-// el libro entre las dos manos, mirando hacia la cara; se abre para leer y cada tanto da vuelta una hoja
+// El libro tomado con las dos manos por su mapa de anclaje (characters/libro.js, `agarre`: el centro del borde
+// exterior de cada tapa): cada borde va a la palma de su mano (la muñeca + PALMA en la dirección del antebrazo), y el
+// libro se ajusta un poco al ancho entre las palmas; mira hacia la cara. Se abre para leer y cada tanto pasa una hoja.
+const PALMA = 0.055, _f = new THREE.Vector3();
+function palma(mano, codo, out) {
+  mano.getWorldPosition(out); codo.getWorldPosition(_f);
+  return out.addScaledVector(_f.subVectors(out, _f).normalize(), PALMA * player.ch.k);
+}
 function moverLibro(dt) {
   const F = FASES[R.fase], L = R.libro, b = player.ch.bones, k = player.ch.k;   // (el libro está en unidades del modelo)
-  const s = Math.min(1, L.scale.x / k + dt * 4); L.scale.setScalar(s * k);
+  R.aparece = Math.min(1, (R.aparece || 0) + dt * 4);
   R.abre += ((F.abierto ? 1 : 0) - R.abre) * Math.min(1, dt * 5);
   abrir(L, R.abre);
   if (F.abierto) { R.hoja -= dt; if (R.hoja < -0.6) R.hoja = 4 + Math.random() * 3; pasarHoja(L, Math.max(0, -R.hoja / 0.6)); } else pasarHoja(L, 0);
-  b.HandL.getWorldPosition(_l); b.HandR.getWorldPosition(_r); b.HeadBone.getWorldPosition(_h);
+  palma(b.HandL, b.ForearmL, _l); palma(b.HandR, b.ForearmR, _r); b.HeadBone.getWorldPosition(_h);
+  const ajuste = Math.min(1.15, Math.max(0.85, _l.distanceTo(_r) / (agarre(R.abre).ancho * k)));
+  L.scale.setScalar(k * ajuste * R.aparece);
   L.position.addVectors(_l, _r).multiplyScalar(0.5);
   _x.subVectors(_r, _l).normalize();                                        // hacia la mano derecha
-  _z.subVectors(_h, L.position); _z.addScaledVector(_x, -_z.dot(_x)).normalize();   // hacia la cara
+  // hacia la cara, y además hacia Nina (hacia atrás de donde mira): así queda inclinado como un libro que se lee, no
+  // plano sobre la falda
+  const f = player.facing;
+  _z.subVectors(_h, L.position).normalize(); _z.x -= Math.sin(f) * 0.7; _z.z -= Math.cos(f) * 0.7;
+  _z.addScaledVector(_x, -_z.dot(_x)).normalize();
   _y.crossVectors(_z, _x);
   L.quaternion.setFromRotationMatrix(_m.makeBasis(_x, _y, _z));
 }

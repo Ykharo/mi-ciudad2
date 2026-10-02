@@ -108,6 +108,9 @@ export function hacerLibro(L) {
   libro.traverse(o => { o.castShadow = true; });
   return libro;
 }
+// Mapa de anclaje del libro: dónde lo toman las manos. El punto de contacto es el centro del borde exterior de cada
+// tapa; abierto quedan a ±W del lomo, cerrado a ±W/2 (el libro se centra). En el espacio del libro, sin escalar.
+export function agarre(o) { const x = W * (1 + o) / 2; return { izq: new THREE.Vector3(-x, 0, 0), der: new THREE.Vector3(x, 0, 0), ancho: 2 * x }; }
 export function abrir(libro, o) {
   const { izq, centro } = libro.userData;
   izq.rotation.y = (1 - o) * Math.PI * 0.985 - o * 0.25;   // abierto, un poco en V

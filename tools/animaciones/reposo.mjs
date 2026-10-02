@@ -1,4 +1,4 @@
-﻿// Animaciones del reposo de la jugadora (las usa src/game/reposo.js), horneadas en nina_base.glb con los bailes.
+// Animaciones del reposo de la jugadora (las usa src/game/reposo.js), horneadas en nina_base.glb con los bailes.
 // Cuando se queda quieta un rato: se sienta en el pasto con las piernas cruzadas, bosteza, se acuesta boca abajo a
 // leer un libro y cada tanto se sienta a leer, y vuelve a acostarse. El libro lo pone el juego entre las dos manos.
 //   sentarse_suelo   de pie → en cuclillas → sentada con las piernas cruzadas, las manos en las rodillas (1,8 s)
@@ -16,11 +16,13 @@ const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
 export function reposo(S) {
   const { Pose, resolver, brazo, piesQuietos } = crearPoses(S), { SX } = S;
 
-  // el libro: delante del pecho (en el espacio del pecho), las manos a sus lados
-  const LIBRO = { abajo: -0.07, frente: 0.27, ancho: 0.085 };
+  // el libro: delante del pecho (en el espacio del pecho), las manos a sus lados. Lo toman por el centro del borde
+  // exterior de cada tapa (el mapa de anclaje de src/characters/libro.js: abierto a ±0,13 del lomo, cerrado a ±0,065);
+  // la muñeca queda un poco antes del borde (la palma lo toca) y los codos doblados.
+  const LIBRO = { abajo: -0.01, frente: 0.24, ancho: 0.118, cerrado: 0.06 };
   const manosLibro = (p, sd, polo, mas = {}) => {
-    const { abajo = LIBRO.abajo, frente = LIBRO.frente } = mas;
-    p.arm[sd] = [(P, W) => P.Chest.clone().add(V3(SX[sd] * LIBRO.ancho, abajo, frente).applyQuaternion(W.Chest)), null, polo, 1];
+    const { abajo = LIBRO.abajo, frente = LIBRO.frente, ancho = LIBRO.ancho } = mas;
+    p.arm[sd] = [(P, W) => P.Chest.clone().add(V3(SX[sd] * ancho, abajo, frente).applyQuaternion(W.Chest)), null, polo, 1];
   };
 
   // sentada en el suelo con las piernas cruzadas (los tobillos cruzados delante, las rodillas afuera)
@@ -65,7 +67,7 @@ export function reposo(S) {
     p.rot.Hips = E({ x: 30 }); p.rot.Spine = E({ x: 12 }); p.rot.Chest = E({ x: 6 }); p.rot.HeadBone = E({ x: -10 });
     for (const sd of ['L', 'R']) {
       p.leg[sd] = [V3(SX[sd] * 0.1, 0.06, -0.2), E({ x: 80 }), V3(SX[sd] * 0.2, 0, 1)];
-      manosLibro(p, sd, V3(SX[sd], -1, -0.2), { abajo: -0.16, frente: 0.2 });
+      manosLibro(p, sd, V3(SX[sd], -1, -0.2), { abajo: -0.16, frente: 0.2, ancho: LIBRO.cerrado });
     }
     return p;
   }
@@ -89,7 +91,7 @@ export function reposo(S) {
       p.rot['Shin' + sd] = E({ x: 80 + 32 * Math.sin(TAU * (u + f)) });
       p.rot['Foot' + sd] = E({ x: 35 });
       // los codos en el suelo, las manos un poco más arriba sujetando el libro, delante de la cara
-      p.arm[sd] = [P => V3(SX[sd] * LIBRO.ancho, 0.24, P.Chest.z + 0.35), null, V3(SX[sd] * 0.6, -1, -0.2), 1];
+      p.arm[sd] = [P => V3(SX[sd] * LIBRO.ancho, 0.27, P.Chest.z + 0.29), null, V3(SX[sd] * 0.6, -1, -0.2), 1];
     }
     return p;
   }

@@ -5,6 +5,25 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Ajustes: perro al 80 %, patines como botas, caminata lunar, libro tomado por los bordes (02-10-2026)
+
+- Perro más chico: `escala: 0.8` en `ANCLAJES.perro`; `buildPet` la aplica a `P.root`, así se achica todo junto
+  (cuerpo, anclajes y lo que tenga puesto: burbuja, globo, alitas guardan su proporción). Las coordenadas del mapa de
+  anclajes siguen en el espacio propio de la mascota, antes de la escala. Las etiquetas no se achican
+  (`letreroMascota`); en el auto se respeta la escala (`driving.js`).
+- Patines: estaban arriba de las patas (se medía la caja de la geometría sin la posición de la malla). Ahora la caja
+  va en el espacio de la pata, y la bota es la parte de abajo de la pata (42 %) "pintada" de rosado y un 16 % más ancha
+  (funda redondeada), con suela y 4 ruedas debajo; `alto` = suela + ruedas.
+- Alitas: caminata lunar: pasos lentos y grandes en diagonal que llegan a las patas bien estiradas (curva que se
+  queda en los extremos), un saltito suave en cada paso, se pasa de flotar a caminar poco a poco; más inercia.
+- Mascotas: esperan al menos 30 s paradas antes de sentarse (perro 30, gato 35, conejo 30, unicornio 32); sin
+  mascotas, Nina descansa a los 40 s.
+- Libro: mapa de anclaje (`agarre(o)` en `characters/libro.js`): el centro del borde exterior de cada tapa. En el
+  juego cada borde va a la palma (muñeca + 0,055 en la dirección del antebrazo) y el libro se ajusta un poco al ancho
+  entre las palmas; mira hacia la cara y hacia atrás (inclinado, no plano en la falda). Las animaciones abren las
+  manos al ancho del libro abierto (±0,118 la muñeca) con los codos doblados; cerrado, ±0,06.
+- `cam.fijo = { pos, look }` (con los ganchos de prueba): cámara fija para fotos de revisión.
+
 ## Artículos con movimiento, ciclo de espera de las mascotas y reposo de Nina (01-10-2026)
 
 - Pedidos: la burbuja con inercia (se adelanta un poco al frenar y vuelve suave); el globo esférico, más chico, con
