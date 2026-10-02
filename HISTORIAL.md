@@ -5,6 +5,19 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Veredas sin hundirse, libro al derecho y el perro que salta de lado (02-10-2026)
+
+- Nina, los vecinos y las mascotas se hundían en las veredas (0,18 m de alto; todos caminaban a altura 0).
+  `enVereda(x, z)` en `world/layout.js` (franjas a WALK ± 1 m del eje, cortadas donde cruza la otra calle salvo las
+  esquinas) y `sueloEn` ahora devuelve también la vereda (`ALTO_VEREDA`). La jugadora sube y baja el escalón suave
+  (`game/player.js`); vecinos y mascotas con `sueloSuave(quien, x, z, dt)` (`world/physics.js`). La mascota del
+  archivador también.
+- Libro: 1,2 veces más grande (W 0,156 × H 0,216); las manos de las animaciones se abren a su ancho (±0,142).
+  Estaba entero girado en 180° en las manos (el título abajo y las hojas pasando al revés): el eje x del libro va de
+  la mano derecha del modelo a la izquierda (`moverLibro` en `game/reposo.js`).
+- El perro pide atención dando la vuelta alrededor de Nina a saltitos de lado, siempre mirándola: recorre medio
+  círculo, se detiene a ladrar con un salto (a veces se devuelve) y sigue; ladra también mientras salta.
+
 ## Ajustes: perro al 80 %, patines como botas, caminata lunar, libro tomado por los bordes (02-10-2026)
 
 - Perro más chico: `escala: 0.8` en `ANCLAJES.perro`; `buildPet` la aplica a `P.root`, así se achica todo junto

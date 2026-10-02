@@ -1,5 +1,6 @@
 // Obstáculos y choques contra ellos.
 import { clamp } from '../core/math.js';
+import { ALTO_VEREDA, enVereda } from './layout.js';
 
 const obstacles = [];   // {x,z,hw,hd}
 function addObs(x, z, hw, hd, h = 0) { obstacles.push({ x, z, hw, hd, h }); }
@@ -34,7 +35,13 @@ function pisoEn(x, z) {
   }
   return mejor;
 }
-function sueloEn(x, z) { const p = pisoEn(x, z); return p ? p.h : 0; }
+// la altura del suelo: un piso, la vereda (0,18 m) o el suelo
+function sueloEn(x, z) { const p = pisoEn(x, z); return Math.max(p ? p.h : 0, enVereda(x, z) ? ALTO_VEREDA : 0); }
+// la misma, pero subiendo y bajando escalones chicos de a poco (vecinos, mascotas): guarda la altura en `quien.ySuelo`
+function sueloSuave(quien, x, z, dt) {
+  const s = sueloEn(x, z), y = quien.ySuelo ?? s;
+  return (quien.ySuelo = Math.abs(s - y) < 0.3 ? y + (s - y) * Math.min(1, dt * 18) : s);
+}
 
 // Interiores (salas aparte, fuera del mapa: la Mascotienda por dentro): { area: [x0, x1, z0, z1], techo }. Adentro
 // no rige el límite de la ciudad (game/player.js) y la cámara no sube más que el techo (game/camera.js).
@@ -42,4 +49,4 @@ const interiores = [];
 function addInterior(i) { interiores.push(i); }
 const interiorEn = (x, z) => interiores.find(i => x > i.area[0] && x < i.area[1] && z > i.area[2] && z < i.area[3]) || null;
 
-export { addInterior, addObs, addObsRot, addPiso, collide, interiorEn, obstacles, pisoEn, sueloEn };
+export { addInterior, addObs, addObsRot, addPiso, collide, interiorEn, obstacles, pisoEn, sueloEn, sueloSuave };

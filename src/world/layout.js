@@ -24,4 +24,15 @@ function manzana(x, z) {
   return [...tramo(x), ...tramo(z)];
 }
 
-export { EXT, LINES, ROAD_HALF, STREET, WALK, manzana, world };
+// ¿Está (x, z) sobre una vereda? Las veredas (world/ground.js) son franjas de 2 m a WALK del eje de cada calle, de
+// ALTO_VEREDA de alto; se cortan donde cruza la otra calle (salvo las esquinas). Para que quien camina vaya encima y
+// no hundido (world/physics.js, sueloEn).
+const ALTO_VEREDA = 0.18;
+function enVereda(x, z) {
+  if (Math.abs(x) > EXT || Math.abs(z) > EXT) return false;
+  const franja = v => LINES.some(L => Math.abs(Math.abs(v - L) - WALK) <= 1);
+  const calle = v => LINES.some(L => Math.abs(v - L) < ROAD_HALF);
+  return (franja(z) && !calle(x)) || (franja(x) && !calle(z));
+}
+
+export { ALTO_VEREDA, EXT, LINES, ROAD_HALF, STREET, WALK, enVereda, manzana, world };

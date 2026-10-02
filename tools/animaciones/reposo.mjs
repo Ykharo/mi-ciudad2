@@ -17,9 +17,9 @@ export function reposo(S) {
   const { Pose, resolver, brazo, piesQuietos } = crearPoses(S), { SX } = S;
 
   // el libro: delante del pecho (en el espacio del pecho), las manos a sus lados. Lo toman por el centro del borde
-  // exterior de cada tapa (el mapa de anclaje de src/characters/libro.js: abierto a ±0,13 del lomo, cerrado a ±0,065);
-  // la muñeca queda un poco antes del borde (la palma lo toca) y los codos doblados.
-  const LIBRO = { abajo: -0.01, frente: 0.24, ancho: 0.118, cerrado: 0.06 };
+  // exterior de cada tapa (el mapa de anclaje de src/characters/libro.js: abierto a ±0,156 del lomo, cerrado a
+  // ±0,078); la muñeca queda un poco antes del borde (la palma lo toca) y los codos doblados.
+  const LIBRO = { abajo: -0.01, frente: 0.25, ancho: 0.142, cerrado: 0.072 };
   const manosLibro = (p, sd, polo, mas = {}) => {
     const { abajo = LIBRO.abajo, frente = LIBRO.frente, ancho = LIBRO.ancho } = mas;
     p.arm[sd] = [(P, W) => P.Chest.clone().add(V3(SX[sd] * ancho, abajo, frente).applyQuaternion(W.Chest)), null, polo, 1];

@@ -95,7 +95,9 @@ function moverLibro(dt) {
   const ajuste = Math.min(1.15, Math.max(0.85, _l.distanceTo(_r) / (agarre(R.abre).ancho * k)));
   L.scale.setScalar(k * ajuste * R.aparece);
   L.position.addVectors(_l, _r).multiplyScalar(0.5);
-  _x.subVectors(_r, _l).normalize();                                        // hacia la mano derecha
+  // el eje x del libro (de la tapa de adelante hacia la de atrás, como lo ve quien lee) va de la mano derecha del
+  // modelo a la izquierda: al revés quedaba girado en 180° (título abajo, las hojas pasando al revés)
+  _x.subVectors(_l, _r).normalize();
   // hacia la cara, y además hacia Nina (hacia atrás de donde mira): así queda inclinado como un libro que se lee, no
   // plano sobre la falda
   const f = player.facing;

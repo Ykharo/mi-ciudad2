@@ -65,7 +65,7 @@ function updatePlayer(dt) {
   // el suelo puede estar más alto (una tarima: world/physics.js, addPiso)
   const suelo = sueloEn(player.pos.x, player.pos.z);
   if (player.air) { player.vy -= 24 * dt; player.y += player.vy * dt; if (player.y <= suelo) { player.y = suelo; player.vy = 0; player.air = false; player.lanzada = false; } }
-  else if (!player.seat) player.y = suelo;
+  else if (!player.seat) player.y = Math.abs(suelo - player.y) < 0.3 ? player.y + (suelo - player.y) * Math.min(1, dt * 18) : suelo;   // (subir a la vereda: suave)
   player.speed01 = clamp(sp / PLAYER_SPEED, 0, 1);
   player.happy = Math.max(0, player.happy - dt);
   if (player.iceTime > 0) { player.iceTime -= dt; if (player.iceTime <= 0) setHolding(ch, null); }

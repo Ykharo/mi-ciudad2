@@ -5,6 +5,7 @@ import { TAU, lerpAngle, pick, seeded } from '../core/math.js';
 import { scene } from '../engine/renderer.js';
 import { labelSprite } from '../engine/textures.js';
 import { LINES, WALK } from '../world/layout.js';
+import { sueloSuave } from '../world/physics.js';
 import { carDist, cars } from '../cars/fleet.js';
 import { NINA_SCALE, makeAvatar } from '../characters/avatar.js';
 import { randomLook } from '../characters/looks.js';
@@ -60,7 +61,7 @@ function updateNPCs(dt, t) {
   for (const n of npcs) {
     if (n.uso) {
       const r = n.uso.update(dt, t) || {};
-      if (!r.raiz) { n.ch.root.position.set(n.pos.x, 0, n.pos.z); n.ch.root.rotation.set(0, n.facing, 0); }
+      if (!r.raiz) { n.ch.root.position.set(n.pos.x, sueloSuave(n, n.pos.x, n.pos.z, dt), n.pos.z); n.ch.root.rotation.set(0, n.facing, 0); }
       updateAvatar(n.ch, dt, r.anda || 0, r.cara || null);
       if (n.pets.length) followChain(n.pets, n.pos, dt, t, 1.7, !!r.sentado);
       continue;
@@ -90,7 +91,7 @@ function updateNPCs(dt, t) {
         n.facing = lerpAngle(n.facing, Math.atan2(dx, dz), 1 - Math.exp(-dt * 10));
       }
     }
-    n.ch.root.position.set(n.pos.x, 0, n.pos.z); n.ch.root.rotation.set(0, n.facing, 0);
+    n.ch.root.position.set(n.pos.x, sueloSuave(n, n.pos.x, n.pos.z, dt), n.pos.z); n.ch.root.rotation.set(0, n.facing, 0);
     updateAvatar(n.ch, dt, moving ? n.speed : 0, n.greet > 0 ? 'feliz' : null);
     if (n.pets.length) followChain(n.pets, n.pos, dt, t);
   }

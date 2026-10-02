@@ -4,7 +4,7 @@
 // hoja de derecha a izquierda.
 import { THREE } from '../engine/three.js';
 
-const W = 0.13, H = 0.18, TAPA = 0.007, HOJAS = 0.014;
+const W = 0.156, H = 0.216, TAPA = 0.008, HOJAS = 0.016;
 export const LIBROS = [
   { color: '#FF6FAE', dibujo: 'estrella' }, { color: '#4FB6F5', dibujo: 'cohete' }, { color: '#3DD6A8', dibujo: 'flor' },
   { color: '#FFB547', dibujo: 'gato' }, { color: '#A77BF3', dibujo: 'luna' }, { color: '#FF5E5E', dibujo: 'corazon' },

@@ -23,7 +23,8 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
     `onFrame`. `area` = `[x0, x1, z0, z1]` da el nombre del lugar; no cambiar el `orden` de los que existen.
     Un lugar en una manzana de afuera reemplaza su casa (`ocupada` en `city.js`). Ej.: `places/plaza.js`.
     `area: manzana(x, z)` (`world/layout.js`) calcula la manzana; `articulo` ('el'/'la') para las frases.
-    Pisos más altos que el suelo (una tarima): `addPiso` (`world/physics.js`); la jugadora sube sola. Con
+    Pisos más altos que el suelo (una tarima): `addPiso` (`world/physics.js`); la jugadora sube sola. `sueloEn(x, z)`
+    incluye las veredas (0,18 m, `enVereda` en `world/layout.js`); vecinos y mascotas usan `sueloSuave`. Con
     `espera: { x, z, mira }` las mascotas no suben: esperan sentadas ahí (`waitAt` en `pets/follow.js`).
     Mascotas sentadas: `animatePet(…, sentada)`; también junto a la jugadora sentada.
   - **Vecinos en los juegos** (`game/vecinosJuegos.js`): eligen al llegar a una esquina (gancho `onEsquina` de

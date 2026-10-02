@@ -2,7 +2,7 @@
 import { clamp, lerpAngle } from '../core/math.js';
 import { emit } from '../core/events.js';
 import { labelSprite } from '../engine/textures.js';
-import { collide } from '../world/physics.js';
+import { collide, sueloSuave } from '../world/physics.js';
 import { animatePet, letreroMascota } from './models.js';
 
 // Mientras la dueña no se mueve (`ocio`), cada mascota pasa por su ciclo de espera: parada esperando, se sienta, se
@@ -33,23 +33,37 @@ function avanzarOcio(p, dt, ocio) {
   }
   return C;
 }
-// saltar y hacer su voz alrededor de la dueña: da vueltas en un círculo, cada tanto salta con un globito
+// Pedir atención: da la vuelta alrededor de la dueña saltando de lado, siempre mirándola. Recorre medio círculo a
+// saltitos, se detiene un momento a hacer su voz (con un salto y un globito) y sigue —a veces se devuelve— hasta que
+// termina esta parte del ciclo. También hace su voz de vez en cuando mientras salta.
+const SALTITO = 0.36;   // cada salto de lado (segundos)
 function jugarAlrededor(p, i, C, leader, dt) {
-  const O = p.ocio;
-  O.ang = (O.ang ?? Math.atan2(p.pos.x - leader.x, p.pos.z - leader.z) + i * Math.PI) + C.giro / 1.4 * dt;
-  const R = 1.4 + i * 0.5, tx = leader.x + Math.sin(O.ang) * R, tz = leader.z + Math.cos(O.ang) * R;
-  const dx = tx - p.pos.x, dz = tz - p.pos.z, d = Math.hypot(dx, dz);
-  let moved = 0;
-  if (d > 0.01) { const step = Math.min(d, 6 * dt); p.pos.x += dx / d * step; p.pos.z += dz / d * step; moved = step / Math.max(dt, 1e-4); p.facing = lerpAngle(p.facing, Math.atan2(dx, dz), 1 - Math.exp(-dt * 10)); }
+  const O = p.ocio, P = p.obj;
+  if (O.ang === undefined) { O.ang = Math.atan2(p.pos.x - leader.x, p.pos.z - leader.z) + i * Math.PI; O.dir = 1; O.recorre = 0; O.pausa = 0; O.h = 0; }
+  const R = 1.4 + i * 0.5;
+  let y = 0, quieta = false;
+  const ladrar = () => { O.ladra = 1.3; emit('sonido', C.voz); };
+  if (O.pausa > 0) {   // detenida mirándola: un salto en el lugar con su voz
+    O.pausa -= dt; quieta = true;
+    y = Math.sin(Math.PI * Math.min(1, (0.9 - O.pausa) / 0.4)) * 0.22 * (O.pausa > 0.5 ? 1 : 0);
+  } else {
+    // a saltitos: avanza sólo mientras está en el aire
+    O.h += dt / SALTITO;
+    const aire = Math.sin(Math.PI * (O.h % 1)), paso = C.giro / R * dt * 1.6 * aire;
+    O.ang += O.dir * paso; O.recorre += paso;
+    y = aire * 0.16;
+    if (O.recorre >= Math.PI) { O.recorre = 0; O.pausa = 0.9; ladrar(); if (Math.random() < 0.5) O.dir = -O.dir; }
+  }
+  const tx = leader.x + Math.sin(O.ang) * R, tz = leader.z + Math.cos(O.ang) * R, dx = tx - p.pos.x, dz = tz - p.pos.z, d = Math.hypot(dx, dz);
+  if (d > 0.01) { const step = Math.min(d, 6 * dt); p.pos.x += dx / d * step; p.pos.z += dz / d * step; }
   collide(p.pos, 0.35);
+  p.facing = lerpAngle(p.facing, Math.atan2(leader.x - p.pos.x, leader.z - p.pos.z), 1 - Math.exp(-dt * 12));   // siempre mirándola
   O.ladra -= dt;
-  let y = 0;
-  if (O.ladra <= 0) { O.ladra = 1.3; O.salto = 0; emit('sonido', C.voz); }
-  if (O.salto !== undefined && O.salto < 0.4) { O.salto += dt; y = Math.sin(Math.PI * Math.min(1, O.salto / 0.4)) * 0.28; }
-  const P = p.obj;
+  if (O.ladra <= -1.2 && !quieta) ladrar();
   if (!P.voz) P.voz = letreroMascota(P, labelSprite(C.texto, { scale: 0.0036, bubble: true }));
   P.voz.visible = O.ladra > 0.6; P.voz.position.y = P.labelY + 0.45;
-  return { moved: Math.max(moved, 2), y };
+  // (salta de lado: las patas sin el paso de caminar; el salto lo da `y`)
+  return { moved: 0, y };
 }
 
 // `sentadas`: si la dueña está sentada (banca, graderías, un juego), las que llegan a su lado se sientan.
@@ -73,7 +87,7 @@ function followChain(list, leaderPos, dt, t, firstGap = 1.7, sentadas = false, o
       if (C) pose = p.ocio.fase === 'acostada' ? 'acostada' : p.ocio.fase === 'sentada' || (sentadas && moved < 0.5);
       else pose = sentadas && moved < 0.5;
     }
-    p.obj.root.position.set(p.pos.x, y, p.pos.z); p.obj.root.rotation.y = p.facing;
+    p.obj.root.position.set(p.pos.x, y + sueloSuave(p, p.pos.x, p.pos.z, dt), p.pos.z); p.obj.root.rotation.y = p.facing;
     animatePet(p.obj, t + i, clamp(moved / 5, 0, 3), dt, pose);
     leader = p.pos;
   });
@@ -94,7 +108,7 @@ function waitAt(list, punto, dt, t, descansa = false) {
     else if (d > 0.05) { const step = Math.min(d, (d > 3 ? 9 : 5) * dt); p.pos.x += dx / d * step; p.pos.z += dz / d * step; moved = step / Math.max(dt, 1e-4); }
     if (!punto.y) collide(p.pos, 0.35);
     p.facing = lerpAngle(p.facing, d > 0.4 ? Math.atan2(dx, dz) : punto.mira, 1 - Math.exp(-dt * 6));
-    const y = punto.y ? punto.y * clamp(1 - (d - 0.1) / 1.2, 0, 1) + Math.sin(Math.PI * clamp(1 - (d - 0.1) / 1.2, 0, 1)) * 0.25 : 0;
+    const y = punto.y ? punto.y * clamp(1 - (d - 0.1) / 1.2, 0, 1) + Math.sin(Math.PI * clamp(1 - (d - 0.1) / 1.2, 0, 1)) * 0.25 : sueloSuave(p, p.pos.x, p.pos.z, dt);
     p.obj.root.position.set(p.pos.x, y, p.pos.z); p.obj.root.rotation.y = p.facing;
     if (p.obj.voz) p.obj.voz.visible = false;
     if (descansa && d < 0.4) avanzarOcio(p, dt, 'descansa'); else p.ocio = null;

@@ -13,6 +13,7 @@ import { save } from './save.js';
 import { disposePet, setPetName } from '../pets/models.js';
 import { enterMenu, leaveMenu } from './modes.js';
 import { emit } from '../core/events.js';
+import { sueloEn } from '../world/physics.js';
 
 export const FOTOS = 4;
 const DIA = 86400000;
@@ -105,5 +106,5 @@ export function updateArchivador() {
   const p = player.pets[elegida]; if (!p) return;
   const yaw = cam.menuYaw, fx = Math.sin(yaw), fz = Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
   p.pos.set(player.pos.x + fx * 1.5 + rx * 1.2, 0, player.pos.z + fz * 1.5 + rz * 1.2);
-  p.obj.root.position.copy(p.pos); p.obj.root.rotation.y = yaw - 0.4;
+  p.obj.root.position.set(p.pos.x, sueloEn(p.pos.x, p.pos.z), p.pos.z); p.obj.root.rotation.y = yaw - 0.4;
 }
