@@ -180,13 +180,15 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
 - "Mis mascotas" (botón 🐾 Mascotas): el archivador personal, `ui/panels/archivador.js` + `game/fichas.js` (adopción,
   estado energía/diversión que cambia solo, controles médicos, fotos; se guardan con cada mascota). Adoptar: en el Refugio.
 - Mascotienda Arcoíris: `world/places/mascotienda.js` (fachada + sala de adentro lejos del mapa, `addInterior`),
-  `game/mascotienda.js` (entrar/salir, comprar, ponerse; `player.articulos`, `p.extras`), `ui/panels/mascotienda.js`,
+  `game/mascotienda.js` (entrar/salir, comprar, ponerse; `p.cosas` = lo comprado PARA cada mascota, `p.extras` = lo
+  puesto; las dos se guardan con la mascota), `ui/panels/mascotienda.js`,
   artículos en `pets/catalog/articulos.js` y sus efectos en `pets/extras.js` (`ponerExtras(P, { transporte, arcoiris })`).
   Lo que se pone a una mascota se calza con el **mapa de anclajes** (`ANCLAJES` en `pets/models.js`: espalda, lomo,
   cuello, cabeza, cola + medidas; `P.anclas.*` son Object3D que siguen al cuerpo). Usarlo para capas, monturas, cohetes.
-  `escala` de la especie (el perro 0,8) se aplica a `P.root`: el mapa está en el espacio propio, antes de escalar.
+  `escala` de la especie (perro 0,8, gato 0,6, conejo 0,4) se aplica a `P.root`: el mapa está en el espacio propio,
+  antes de escalar.
   El libro de Nina también tiene su mapa (`agarre` en `characters/libro.js`: el centro del borde de cada tapa).
-- Guardado en `localStorage` con clave `ciudadArcoiris.v2`: `{ version: 2, jugador, nina: { look }, personajes, pets (con extras), cars, shop, huesitos, mascotienda: { comprados } }`
+- Guardado en `localStorage` con clave `ciudadArcoiris.v2`: `{ version: 2, jugador, nina: { look }, personajes, pets (con ficha, cosas y extras), cars, shop, huesitos }`
   (`game/save.js`). Una partida `ciudadArcoiris.v1` se migra al cargar y la clave v1 no se borra. Envolver en try/catch.
   Todo lo guardado se valida al cargar (`fixLook`, `fixCarSpec`, tipos de mascota).
 - Personajes guiados por datos: `characters/catalog/` (paletas, prendas con canales y derivados, personajes y

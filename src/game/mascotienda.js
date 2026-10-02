@@ -1,7 +1,9 @@
 // La Mascotienda Arcoíris: entrar y salir (la tienda por dentro es una sala aparte: world/places/mascotienda.js),
 // comprar artículos con Huesitos de Aura, ponérselos a las mascotas y guardarlos.
-//   comprados: los artículos que tiene la jugadora (sirven para todas sus mascotas)
-//   p.extras: lo que tiene puesto cada mascota ({ transporte, arcoiris }) (se guarda con la mascota)
+//   p.cosas: lo comprado PARA cada mascota (cada una tiene las suyas: se compra para la mascota elegida)
+//   p.extras: lo que tiene puesto cada mascota ({ transporte, arcoiris })
+// Las dos se guardan con la mascota. Una partida de antes (lo comprado era de todas: `mascotienda.comprados`) le da
+// esa lista a cada mascota que no tenga la suya.
 // La ventana (ui/panels/mascotienda.js) se abre con el evento 'mascotienda' y llama a estas funciones.
 import { THREE } from '../engine/three.js';
 import { labelSprite } from '../engine/textures.js';
@@ -16,30 +18,35 @@ import { gastarHuesitos, ganarHuesitos } from './huesitos.js';
 import { enterMenu, leaveMenu } from './modes.js';
 import { save } from './save.js';
 
-// (lo comprado vive en player.articulos: así lo guarda game/save.js)
-const comprados = { has: id => player.articulos.includes(id), add: id => { if (!player.articulos.includes(id)) player.articulos.push(id); }, clear: () => { player.articulos.length = 0; } };
 const articulo = id => ARTICULOS.find(a => a.id === id);
+const tiene = (p, id) => !!(p && p.cosas && p.cosas.includes(id));
+// sólo artículos que existen, sin repetir
+const validas = l => (Array.isArray(l) ? [...new Set(l.filter(id => typeof id === 'string' && articulo(id)))] : []);
 
-// lo guardado, validado: sólo artículos que existen; lo puesto en cada mascota, sólo si lo tiene comprado
+// lo guardado, validado: lo de cada mascota (o, de una partida de antes, la lista de todas); lo puesto, sólo si es suyo
 function cargarMascotienda(saved) {
-  comprados.clear();
-  for (const id of (saved && saved.mascotienda && saved.mascotienda.comprados) || []) if (articulo(id)) comprados.add(id);
-  const pets = (saved && saved.pets) || [];
-  player.pets.forEach((p, i) => ponerA(p, fixExtras(pets[i] && pets[i].extras)));
+  const antes = validas(saved && saved.mascotienda && saved.mascotienda.comprados), pets = (saved && saved.pets) || [];
+  player.pets.forEach((p, i) => {
+    const g = pets[i] || {};
+    p.cosas = Array.isArray(g.cosas) ? validas(g.cosas) : [...antes];
+    ponerA(p, fixExtras(g.extras, p));
+  });
 }
-function fixExtras(e) {
-  const t = e && typeof e.transporte === 'string' && comprados.has(e.transporte) && articulo(e.transporte).tipo === 'transporte' ? e.transporte : null;
-  return { transporte: t, arcoiris: !!(e && e.arcoiris && comprados.has('arcoiris')) };
+function fixExtras(e, p) {
+  const t = e && typeof e.transporte === 'string' && tiene(p, e.transporte) && articulo(e.transporte).tipo === 'transporte' ? e.transporte : null;
+  return { transporte: t, arcoiris: !!(e && e.arcoiris && tiene(p, 'arcoiris')) };
 }
 function ponerA(p, extras) { p.extras = { ...extras }; ponerExtras(p.obj, p.extras); }
 
-// comprar: 'ok', 'ya' (ya lo tenía) o 'faltan' (+ cuántos)
+// comprar para una mascota: 'ok', 'ya' (ya lo tenía), 'sin' (no hay mascota) o 'faltan' (+ cuántos)
 function comprar(id, mascota) {
   const a = articulo(id);
   if (!a) return { r: 'no' };
-  if (comprados.has(id)) return { r: 'ya' };
+  if (!mascota) return { r: 'sin' };
+  if (!mascota.cosas) mascota.cosas = [];
+  if (tiene(mascota, id)) return { r: 'ya' };
   if (!gastarHuesitos(a.precio)) return { r: 'faltan', faltan: a.precio - (player.huesitos || 0) };
-  comprados.add(id); save();
+  mascota.cosas.push(id); save();
   emit('sonido', 'adopt');
   // el diario de la mascota: una frase para leer (y un regalito por leerla: ui la muestra y llama a leerDiario)
   if (mascota) emit('mascotienda', { que: 'diario', frase: a.frase.replace('{n}', mascota.name) });
@@ -48,7 +55,7 @@ function comprar(id, mascota) {
 function leerDiario() { ganarHuesitos(3, '¡Leíste el diario!'); }
 // ponérselo o quitárselo a una mascota (si es un transporte, reemplaza al que tenía)
 function equipar(p, id, on) {
-  const a = articulo(id); if (!p || !a || !comprados.has(id)) return;
+  const a = articulo(id); if (!p || !a || !tiene(p, id)) return;
   const e = { ...(p.extras || {}) };
   if (a.tipo === 'transporte') e.transporte = on ? id : (e.transporte === id ? null : e.transporte);
   else e.arcoiris = !!on;
@@ -108,6 +115,7 @@ const _v = new THREE.Vector3();
 
 // mientras la ventana está abierta: la mascota elegida se pone delante de la jugadora, mirando a la cámara
 let elegida = 0;
+const cual = () => Math.min(elegida, Math.max(0, player.pets.length - 1));   // (por si alguna se fue a casa)
 function updateMascotienda(dt) {
   robiHabla(dt);
   // la cuerda del globo va a la mano izquierda de Nina (pets/extras.js la dibuja)
@@ -118,15 +126,16 @@ function updateMascotienda(dt) {
     p.obj.mano = mano.getWorldPosition(p.obj.mano || new THREE.Vector3());
   }
   if (state.mode !== 'mascotienda') return;
-  const p = player.pets[elegida]; if (!p) return;
+  const p = player.pets[cual()]; if (!p) return;
   const yaw = cam.menuYaw, fx = Math.sin(yaw), fz = Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
   p.pos.set(player.pos.x + fx * 1.5 + rx * 1.2, 0, player.pos.z + fz * 1.5 + rz * 1.2);
   p.obj.root.position.copy(p.pos); p.obj.root.rotation.y = yaw - 0.4;
 }
 
 const mascotienda = {
-  comprados: () => [...player.articulos], comprar, equipar, probar, dejarDeProbar, cerrar: cerrarMascotienda, leerDiario,
-  elegir(i) { elegida = i; dejarDeProbar(); }, elegida: () => elegida,
+  comprados: p => [...((p && p.cosas) || [])],   // (lo de esa mascota)
+  comprar, equipar, probar, dejarDeProbar, cerrar: cerrarMascotienda, leerDiario,
+  elegir(i) { elegida = i; dejarDeProbar(); }, elegida: () => cual(),
 };
 
 export { cargarMascotienda, mascotienda, updateMascotienda };

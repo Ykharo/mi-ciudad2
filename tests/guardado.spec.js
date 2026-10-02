@@ -23,6 +23,30 @@ test('los Huesitos de Aura se guardan, se muestran y se validan', async ({ page,
   expect(await page.evaluate(() => window.__juego.player.huesitos)).toBe(0);
 });
 
+test('las cosas de la Mascotienda son de cada mascota (y una partida de antes las reparte a todas)', async ({ page, jugar }) => {
+  await sembrar(page, 'ciudadArcoiris.v2', { version: 2, cars: [], pets: [
+    { kind: 'perro', color: '#E9B77A', name: 'Toby', cosas: ['patines', 'no-existe'], extras: { transporte: 'patines' } },
+    { kind: 'gato', color: '#FFFFFF', name: 'Luna', cosas: [], extras: { transporte: 'patines' } },   // no son suyos: no se los pone
+  ] });
+  await jugar();
+  expect(await page.evaluate(() => window.__juego.player.pets.map(p => [p.cosas, p.extras.transporte]))).toEqual([[['patines'], 'patines'], [[], null]]);
+  // en el archivador, Luna no tiene los patines de Toby
+  await page.locator('#btnPets').click();
+  await page.locator('#archTabs [data-pet="1"]').click();
+  await page.locator('#archSecs [data-sec="cosas"]').click();
+  await expect(page.locator('#archBody [data-poner]')).toHaveCount(0);
+  await page.locator('#archTabs [data-pet="0"]').click();
+  await expect(page.locator('#archBody [data-poner="patines"]')).toHaveCount(1);
+  await page.locator('#archDone').click();
+  expect((await leer(page, 'ciudadArcoiris.v2')).pets.map(p => p.cosas)).toEqual([['patines'], []]);
+  // una partida de antes: lo comprado era de todas
+  await page.evaluate(() => localStorage.setItem('ciudadArcoiris.v2', JSON.stringify({ version: 2, cars: [], mascotienda: { comprados: ['burbuja'] },
+    pets: [{ kind: 'perro', color: '#E9B77A', name: 'Toby' }, { kind: 'conejo', color: '#FFFFFF', name: 'Coco', extras: { transporte: 'burbuja' } }] })));
+  await page.reload();
+  await expect(page.locator('#btnPlay')).toHaveText('¡A jugar!', { timeout: 60_000 });
+  expect(await page.evaluate(() => window.__juego.player.pets.map(p => [p.cosas, p.extras.transporte]))).toEqual([[['burbuja'], null], [['burbuja'], 'burbuja']]);
+});
+
 test('una partida v1 se migra a v2 sin perder nada', async ({ page, jugar }) => {
   await sembrar(page, 'ciudadArcoiris.v1', V1);
   await jugar();

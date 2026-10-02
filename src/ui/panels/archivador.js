@@ -71,11 +71,12 @@ function render() {
     }
     h += '<p class="note">🏥 La veterinaria abre pronto: ahí se harán los controles pendientes.</p>';
   } else {
-    const tengo = M.comprados();
+    const tengo = M.comprados(p);   // (las cosas son de cada mascota)
+    h += `<p class="note">Las cosas de ${esc(p.name)}. A cada mascota se le compran las suyas en la Mascotienda Arcoíris.</p>`;
     for (const C of CATEGORIAS) {
       const lista = ARTICULOS.filter(a => C.secciones.includes(a.seccion) && tengo.includes(a.id));
       h += `<h3>${C.ic} ${C.nombre}</h3>`;
-      if (!lista.length) { h += '<p class="note">Todavía no tiene. ¡Búscalas en la Mascotienda Arcoíris!</p>'; continue; }
+      if (!lista.length) { h += `<p class="note">${esc(p.name)} todavía no tiene.</p>`; continue; }
       for (const a of lista) {
         const puesto = p.extras && (a.tipo === 'transporte' ? p.extras.transporte === a.id : p.extras.arcoiris);
         h += `<div class="cosa${puesto ? ' puesto' : ''}"><span class="ic">${a.ic}</span><b>${esc(a.nombre)}</b><button class="toy ${puesto ? '' : 'mint'}" data-poner="${a.id}" data-on="${puesto ? '' : '1'}">${puesto ? 'Quitárselo' : 'Ponérselo'}</button></div>`;

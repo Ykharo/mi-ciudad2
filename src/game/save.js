@@ -1,5 +1,6 @@
 // Guardado en localStorage. Versión 2: { version: 2, jugador, nina: { look }, personajes: { amiga: { look }, … },
-// pets (con lo que tiene puesto de la Mascotienda: extras), cars, shop, huesitos, mascotienda: { comprados } }. `jugador`: con quién se está jugando; el look de Nina sigue en `nina` (como antes) y el de los
+// pets (con su ficha y lo de la Mascotienda: cosas compradas para ella y extras puestos), cars, shop, huesitos }.
+// (Antes lo comprado era de todas: `mascotienda: { comprados }`; al cargar se le da a cada mascota sin `cosas`.) `jugador`: con quién se está jugando; el look de Nina sigue en `nina` (como antes) y el de los
 // otros personajes jugables en `personajes` (game/personajes.js). Si falta algo, cada uno queda como es él.
 // Si sólo hay una partida v1 ({ pets, cars, shop }) se migra: mascotas, autos y diseño pasan tal cual y Nina
 // queda con su look de fábrica. La clave v1 no se borra (así se puede volver a una versión anterior del juego).
@@ -26,13 +27,12 @@ function save() {
       nina: { look: looks.nina },
       personajes: Object.fromEntries(Object.entries(looks).filter(([id]) => id !== 'nina').map(([id, look]) => [id, { look }])),
       // (con su ficha: game/fichas.js)
-      pets: player.pets.map(p => ({ kind: p.kind, color: p.color, name: p.name, extras: p.extras || {},
+      pets: player.pets.map(p => ({ kind: p.kind, color: p.color, name: p.name, extras: p.extras || {}, cosas: p.cosas || [],
         adopcion: p.adopcion, estado: p.estado && { energia: Math.round(p.estado.energia), diversion: Math.round(p.estado.diversion) },
         controles: p.controles, fotos: p.fotos })),
       cars: ownedCars.map(c => ({ spec: c.spec, x: Math.round(c.x * 100) / 100, z: Math.round(c.z * 100) / 100, h: Math.round(c.heading * 1000) / 1000 })),
       shop: state.shopSpec,
       huesitos: player.huesitos || 0,   // la moneda (game/huesitos.js; se valida al cargar)
-      mascotienda: { comprados: player.articulos },   // (game/mascotienda.js; se valida al cargar)
       regaloPrueba: player.regaloPrueba || false,       // TEMPORAL: ya recibió los Huesitos de regalo (game/huesitos.js)
     }));
   } catch (e) { }

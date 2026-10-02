@@ -5,6 +5,17 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Gato y conejo más chicos, cosas de cada mascota y carpetas del archivador (02-10-2026)
+
+- `escala` en el mapa de anclajes: gato 0,6 y conejo 0,4 (el perro 0,8); se achica todo junto con lo que tengan puesto.
+- Las cosas de la Mascotienda ahora son de cada mascota: `p.cosas` (se guarda con la mascota). Se compra para la
+  mascota elegida en la tienda ("Comprando para …"); sin mascota no se compra. Lo puesto sólo vale si es suyo. El
+  archivador muestra las cosas de esa mascota. Partidas de antes (`mascotienda.comprados`, de todas): cada mascota sin
+  `cosas` recibe esa lista. `player.articulos` ya no existe. Prueba nueva en `guardado.spec.js`.
+- "No aparecen las otras fichas": no se pudo reproducir (adoptando 3 más, las 4 carpetas aparecen y se eligen en
+  pantalla ancha, iPad y teléfono), pero en el teléfono la cuarta carpeta quedaba cortada (se deslizaba de lado sin
+  que se notara). Ahora las carpetas se reparten el ancho y se ven todas; el nombre largo se corta.
+
 ## Veredas sin hundirse, libro al derecho y el perro que salta de lado (02-10-2026)
 
 - Nina, los vecinos y las mascotas se hundían en las veredas (0,18 m de alto; todos caminaban a altura 0).

@@ -170,10 +170,13 @@ button:focus-visible{outline:4px solid var(--sky);outline-offset:3px;}
    adentro, una hoja de papel con pestañas de índice a la izquierda: Ficha, Estado, Salud, Cosas */
 #archPanel .phead{background:#C98B4F;}
 #archTabs{display:flex;gap:4px;padding:12px 12px 0;overflow-x:auto;flex:none;scrollbar-width:none;}
-#archTabs .carpeta{flex:none;border:0;border-radius:16px 16px 0 0;padding:10px 14px 8px;font:800 16px/1 var(--display);color:var(--ink);
-  background:var(--c,#FFE7A8);opacity:.6;box-shadow:inset 0 -3px 0 rgba(0,0,0,.08);display:flex;align-items:center;gap:6px;}
+/* (las carpetas se reparten el ancho: con 4 mascotas se ven todas también en el teléfono; el nombre largo se corta) */
+#archTabs .carpeta{flex:1 1 0;min-width:0;border:0;border-radius:16px 16px 0 0;padding:10px 8px 8px;font:800 16px/1 var(--display);color:var(--ink);
+  background:var(--c,#FFE7A8);opacity:.6;box-shadow:inset 0 -3px 0 rgba(0,0,0,.08);display:flex;align-items:center;justify-content:center;gap:5px;max-width:160px;}
+#archTabs .carpeta b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #archTabs .carpeta.on{opacity:1;padding-bottom:12px;box-shadow:none;}
-#archTabs .carpeta .ic{font-size:20px;}
+#archTabs .carpeta .ic{font-size:20px;flex:none;}
+@media (max-width:480px){ #archTabs .carpeta{font-size:13px;padding:9px 5px 7px;gap:3px;} #archTabs .carpeta .ic{font-size:16px;} }
 #archHoja{flex:1;display:flex;min-height:0;margin:0 12px 12px;background:var(--c,#FFE7A8);border-radius:0 18px 18px 18px;padding:10px 10px 10px 0;}
 #archSecs{display:flex;flex-direction:column;gap:6px;padding-top:6px;flex:none;}
 #archSecs button{border:0;border-radius:0 14px 14px 0;padding:10px 10px 10px 8px;font:800 14px/1 var(--display);color:var(--ink);

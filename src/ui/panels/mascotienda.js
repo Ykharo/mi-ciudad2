@@ -24,21 +24,23 @@ function render() {
   tabs.innerHTML = SECCIONES.map(s => `<button class="tab${s.id === seccion ? ' on' : ''}" data-sec="${s.id}">${s.ic} ${esc(s.nombre)}</button>`).join('');
   const pets = player.pets, el = M.elegida(), p = pets[el];
   let h = '';
+  // se compra PARA una mascota (cada una tiene sus cosas): se elige a cuál
+  if (pets.length) h += `<p class="note">Comprando para <b>${esc(p.name)}</b>${pets.length > 1 ? ' (elige a quién):' : ''}</p>`;
   if (pets.length > 1) h += '<div class="mascotas">' + pets.map((m, i) => `<button class="${i === el ? 'on' : ''}" data-pet="${i}">${esc(m.name)}</button>`).join('') + '</div>';
-  if (!pets.length) h += '<p class="note">Adopta una mascota en el Refugio para ponerle lo que compres. ¡Igual puedes comprar!</p>';
+  if (!pets.length) h += '<p class="note">Adopta una mascota en el Refugio: aquí le compras sus cosas.</p>';
   if (diario) h += `<div class="diario">📔 El diario de ${esc(diario.nombre)}<p>${esc(diario.frase)}</p><button class="toy sun" data-leido="1">¡Lo leí!</button></div>`;
   const S = SECCIONES.find(s => s.id === seccion);
   const lista = ARTICULOS.filter(a => a.seccion === seccion);
   if (S.pronto || !lista.length) h += '<p class="empty" style="margin-top:14px">¡Muy pronto llegan cosas nuevas a este pasillo!</p>';
-  const tengo = M.comprados();
+  const tengo = M.comprados(p);
   for (const a of lista) {
     const mio = tengo.includes(a.id), puesto = p && p.extras && (a.tipo === 'transporte' ? p.extras.transporte === a.id : p.extras.arcoiris);
     h += `<div class="art${probando === a.id ? ' probando' : ''}"><span class="ic">${a.ic}</span>
       <div class="nombre">${esc(a.nombre)}<button data-voz="${a.id}" aria-label="Escuchar">🔊</button></div>
       <div class="desc">${esc(a.desc)}</div><div class="botones">` +
-      (mio ? `<span class="tengo">✔ ¡Es tuyo!</span>` + (p ? `<button class="toy ${puesto ? '' : 'mint'}" data-poner="${a.id}">${puesto ? 'Quitárselo' : 'Ponérselo'}</button>` : '')
-        : `<span class="precio">🦴 ${a.precio}</span>` + (p ? `<button class="toy" data-probar="${a.id}">${probando === a.id ? 'Probando…' : 'Probar'}</button>` : '') +
-          `<button class="toy pink" data-comprar="${a.id}">Comprar</button>`) + '</div></div>';
+      (mio ? `<span class="tengo">✔ ¡Es de ${esc(p.name)}!</span><button class="toy ${puesto ? '' : 'mint'}" data-poner="${a.id}">${puesto ? 'Quitárselo' : 'Ponérselo'}</button>`
+        : `<span class="precio">🦴 ${a.precio}</span>` + (p ? `<button class="toy" data-probar="${a.id}">${probando === a.id ? 'Probando…' : 'Probar'}</button>` +
+          `<button class="toy pink" data-comprar="${a.id}">Comprar</button>` : '')) + '</div></div>';
   }
   body.innerHTML = h;
   saldo.textContent = `Tienes 🦴 ${player.huesitos || 0} Huesitos`;
