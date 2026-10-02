@@ -30,6 +30,7 @@ function save() {
       shop: state.shopSpec,
       huesitos: player.huesitos || 0,   // la moneda (game/huesitos.js; se valida al cargar)
       mascotienda: { comprados: player.articulos },   // (game/mascotienda.js; se valida al cargar)
+      regaloPrueba: player.regaloPrueba || false,       // TEMPORAL: ya recibió los Huesitos de regalo (game/huesitos.js)
     }));
   } catch (e) { }
 }

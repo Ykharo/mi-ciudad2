@@ -5,6 +5,13 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## TEMPORAL: 1000 Huesitos de regalo para probar la Mascotienda (01-10-2026)
+
+- Pedido: agregar temporalmente 1000 Huesitos para comprar y ver los artículos ("es sólo algo temporal, en el juego hay
+  que ganárselos"). `REGALO_PRUEBA` en `game/huesitos.js`: al cargar, si la partida no lo recibió (`regaloPrueba` en el
+  guardado), a los 1,5 s da 1000 con el motivo "¡Regalo para probar la Mascotienda!"; no se repite al recargar. No se
+  da con `?test` (las pruebas no cambian). **Quitar** poniendo `REGALO_PRUEBA = 0` (anotado en `PLAN.md`).
+
 ## Mascotienda Arcoíris (tienda de mascotas, etapa 2) (01-10-2026)
 
 - Pedido: la tienda 3D por dentro, con pasillos/estantes por sección, probadores, carteles y el vendedor (un perro
@@ -31,6 +38,7 @@ el resumen.
   grande y 🔊 (lo dice en voz alta, es-CL), precio, Probar/Comprar o Ponérselo/Quitárselo; el saldo abajo. Mientras está
   abierta, la mascota elegida se pone delante de Nina.
 - Prueba nueva (entrar, probar, no alcanza, comprar, diario, salir, y lo puesto sigue al recargar). Capturas regeneradas.
+  Chromium (dev y web): **101/101**.
 
 ## Huesitos de Aura (tienda de mascotas, etapa 1) (01-10-2026)
 

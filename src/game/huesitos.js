@@ -9,11 +9,20 @@ import { save } from './save.js';
 const MAX = 999999;
 export const HUESITOS = { CODIGO: 10, CODIGO_RAPIDO: 5, COMPETIR: 10, GANAR: 30 };
 
+// TEMPORAL (para probar la Mascotienda): un regalo de REGALO_PRUEBA Huesitos, una sola vez por partida (queda anotado
+// en el guardado: `regaloPrueba`). No se da en las pruebas automáticas (?test). Para quitarlo: REGALO_PRUEBA = 0.
+const REGALO_PRUEBA = 1000;   // (la marca va en player.regaloPrueba: así la guarda game/save.js)
+
 // lo guardado, validado (un número entero entre 0 y MAX)
 export function cargarHuesitos(saved) {
   const n = saved && Number(saved.huesitos);
   player.huesitos = Number.isFinite(n) ? Math.max(0, Math.min(MAX, Math.floor(n))) : 0;
+  player.regaloPrueba = !!(saved && saved.regaloPrueba);
   emit('huesitos', { total: player.huesitos, delta: 0, motivo: null });
+  if (REGALO_PRUEBA && !player.regaloPrueba && !new URLSearchParams(location.search).has('test')) {
+    player.regaloPrueba = true;
+    setTimeout(() => ganarHuesitos(REGALO_PRUEBA, '¡Regalo para probar la Mascotienda!'), 1500);
+  }
 }
 export function ganarHuesitos(n, motivo = '') {
   n = Math.floor(n); if (!(n > 0)) return;

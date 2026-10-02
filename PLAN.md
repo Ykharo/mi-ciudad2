@@ -74,6 +74,9 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
 - Juegos: el arenero (sentarse a jugar con la pala). (Los vecinos ya usan los juegos y las bancas.)
 
 **Pendientes y avisos**
+- **TEMPORAL — quitar**: regalo de 1000 Huesitos (una vez por partida) para probar la Mascotienda. En el juego hay que
+  ganárselos. Para quitarlo: `REGALO_PRUEBA = 0` en `game/huesitos.js` (y, si se quiere, borrar `regaloPrueba` del
+  guardado en `game/save.js`).
 - **WebKit no arranca en este PC** (Windows lo bloquea, código `0xC0E90002`): las pruebas de iPad no corren. Revisar
   la seguridad de Windows o `npx playwright install webkit`.
 - Probar en un iPad real (pendiente desde la etapa 0).
