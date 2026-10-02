@@ -28,7 +28,8 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
   (cabeza, orejas, cara, cuello, espalda, manos). Cabeza redonda (forma `redonda`) para el amigo y algunos vecinos.
 - 24 animaciones: las 11 originales + 9 bailes (aura, Six Seven, sigma, Take the L, Siuuu, Griddy, Spin, Fresh,
   Floss) + `mirar_cartel` + las de los juegos (`subir_escalera`, `tobogan`, `columpio` y sus versiones `_de_pie`) +
-  las de la competencia (`alzar_estrella`, `aplaudir`): 28. Cartel de la competencia de farmear aura frente a la Boutique, con alguien leyéndolo.
+  las de la competencia (`alzar_estrella`, `aplaudir`) + las del reposo (`sentarse_suelo`, `bostezo`, `leer_sentada`,
+  `leer_acostada`, `acostarse_leer`, `sentarse_leer`): 34. Cartel de la competencia de farmear aura frente a la Boutique, con alguien leyéndolo.
 - Probador (`src/debug/probador.html`) con comparador de referencias (vistas frente/lado, transparencia, alinear).
 
 - **Competencia de aura, etapa A hecha** (sin commit): el Escenario del Aura en la Calle Mora frente a la Plaza de
@@ -51,6 +52,9 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
 2. La Mascotienda Arcoíris ✅ (frente al Refugio; adentro, sala 3D con pasillos, carteles, probador y Robi, el perro
    robot; jarabe arcoíris, patines, burbuja, mini globo, alitas; diario de la mascota).
    "Mis mascotas" ✅: el archivador personal (ficha, estado, salud, cosas). Falta la veterinaria (controles pendientes).
+   Artículos con movimiento ✅ (inercia de burbuja, globo y alitas; un patín en cada pata). Ciclo de espera de las
+   mascotas ✅ (espera, se sienta, se acuesta, salta con su voz; en la ficha "Ahora: …") y **reposo de Nina** ✅ (tras
+   un ciclo de la mascota: busca pasto, se sienta, bosteza y lee un libro acostada / sentada; `game/reposo.js`).
 3. Más artículos (pastillas de diseño, ropa, juguetes del pasillo "¡pronto!"). 4. Poción transformadora. 5. Encargos de lectura de los vecinos.
 6. Letreros escondidos, diario de la mascota, racha diaria.
 

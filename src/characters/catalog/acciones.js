@@ -30,6 +30,9 @@ export const AUTO_FACE = {
   subir_escalera: 'normal', tobogan: 'feliz', columpio: 'feliz', tobogan_de_pie: 'feliz', columpio_de_pie: 'feliz',
   // la competencia de aura (game/aura.js): el jurado alza la estrella y el público aplaude
   alzar_estrella: 'feliz', aplaudir: 'feliz',
+  // el reposo (game/reposo.js): el bostezo con la boca abierta y después los ojos cerrados un momento
+  bostezo: [[0, 'normal'], [0.7, 'sorpresa'], [2.1, 'feliz'], [2.8, 'normal']],
+  sentarse_suelo: 'normal', leer_sentada: 'normal', leer_acostada: 'normal', acostarse_leer: 'normal', sentarse_leer: 'normal',
   siuu: [[0, 'feliz'], [1.05, 'sorpresa'], [2.9, 'feliz']],   // el grito, con la boca abierta
   spin: [[0, 'feliz'], [1.35, 'guino'], [T_SPIN, 'feliz']],
 };

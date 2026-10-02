@@ -16,19 +16,28 @@ import { RAINBOW } from '../engine/materials.js';
 const TAU = Math.PI * 2;
 const sinSombra = g => { g.traverse(o => { o.castShadow = false; o.receiveShadow = false; }); return g; };
 
+// Un patín (de 4 ruedas) en cada pata: la bota abraza la punta de la pata y las ruedas brillan. Se calza mirando
+// dónde termina cada pata (el borde de abajo de su malla), así sirve para todas las especies.
+const ALTO_PATIN = 0.085;
 function patines(P) {
-  const M = P.medidas, g = new THREE.Group();
-  const tabla = new THREE.MeshStandardMaterial({ color: 0xFF6FAE, roughness: 0.4 }), rueda = [];
-  for (const s of [-1, 1]) {
-    const t = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, M.largo * 0.75), tabla); t.position.set(s * M.ancho * 0.3, 0.09, 0); g.add(t);
-    for (const z of [-1, 1]) {
-      const m = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, emissive: RAINBOW[(s + 1 + z + 1) % 6], emissiveIntensity: 0.9 });
-      const r = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.05, 12), m); r.rotation.z = Math.PI / 2;
-      r.position.set(s * M.ancho * 0.3, 0.045, z * M.largo * 0.28); g.add(r); rueda.push(r);
+  const g = new THREE.Group(), rueda = [], patas = [];
+  const bota = new THREE.MeshStandardMaterial({ color: 0xFF6FAE, roughness: 0.35 }), suela = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.4 });
+  const box = new THREE.Box3();
+  P.legs.forEach((leg, i) => {
+    box.makeEmpty(); leg.children.forEach(m => { if (m.geometry) { m.geometry.computeBoundingBox(); box.union(m.geometry.boundingBox); } });
+    const w = Math.max(0.09, box.max.x - box.min.x), l = Math.max(0.12, box.max.z - box.min.z), fondo = box.min.y, cz = (box.max.z + box.min.z) / 2;
+    const p = new THREE.Group(); p.position.set(0, fondo, cz); leg.add(p); patas.push(p);
+    p.add(new THREE.Mesh(new THREE.BoxGeometry(w + 0.035, 0.07, l + 0.06), bota)).position.y = 0.01;
+    const pl = new THREE.Mesh(new THREE.BoxGeometry(w + 0.05, 0.02, l + 0.09), suela); pl.position.y = -0.03; p.add(pl);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      const m = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, emissive: RAINBOW[(i + (sx > 0 ? 1 : 0) + (sz > 0 ? 2 : 0)) % 6], emissiveIntensity: 0.9 });
+      const r = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.022, 12), m); r.rotation.z = Math.PI / 2;
+      r.position.set(sx * (w / 2 + 0.005), -0.058, sz * (l / 2 + 0.01)); p.add(r); rueda.push(r);
     }
-  }
-  P.root.add(g);
-  return { g, alto: 0.08, rueda, patina: true };
+    // de qué lado y si es de adelante: para empujar en diagonal al patinar
+    patas.at(-1).userData = { lado: Math.sign(leg.position.x) || 1, frente: Math.sign(leg.position.z - 0.001) || 1 };
+  });
+  return { g, alto: ALTO_PATIN, rueda, patas, patina: true, fase: 0, quitar() { patas.forEach(p => { p.parent.remove(p); p.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); }); } };
 }
 function burbuja(P) {
   const M = P.medidas, r = Math.max(M.largo, M.alto) * 0.95 + 0.12;
@@ -40,7 +49,7 @@ function burbuja(P) {
   const b2 = new THREE.Mesh(new THREE.SphereGeometry(r * 0.07, 10, 6), brillo); b2.position.set(-r * 0.2, r * 0.68, r * 0.66); g.add(b2);
   P.root.add(g);
   P.siempreSentada = true;
-  return { g, alto: 0.3, bola: b, r, flota: true };
+  return { g, alto: 0.3, bola: b, r, flota: true, inercia: { k: 14, c: 3.4, max: 0.5 } };
 }
 function alitas(P) {
   // alas de mariposa (dos pares: las de arriba más grandes), en el plano de la espalda, abriéndose hacia los lados
@@ -62,35 +71,63 @@ function alitas(P) {
     alas.push({ pivote, s });
   }
   P.anclas.espalda.add(g);
-  return { g, alto: 0.45, alas, flota: true };
+  return { g, alto: 0.45, alas, flota: true, vuela: true, inercia: { k: 6, c: 3.0, max: 0.45 }, lean: 0 };
+}
+// el mimbre de la canasta: tejido café, con una franja arcoíris y estrellitas (textura hecha aquí; se puede cambiar por
+// una imagen propia)
+let texMimbre = null;
+function mimbreTex() {
+  if (texMimbre) return texMimbre;
+  const c = document.createElement('canvas'); c.width = 256; c.height = 64; const x = c.getContext('2d');
+  x.fillStyle = '#B9783F'; x.fillRect(0, 0, 256, 64);
+  for (let f = 0; f < 4; f++) for (let k = 0; k < 16; k++) {   // el tejido: ladrillitos alternados con sombra
+    const ox = k * 16 + (f % 2 ? 8 : 0), oy = f * 16;
+    x.fillStyle = (k + f) % 2 ? '#D49A5A' : '#C4874A'; x.fillRect(ox + 1, oy + 1, 14, 14);
+    x.fillStyle = 'rgba(80,40,10,.25)'; x.fillRect(ox + 1, oy + 12, 14, 3);
+  }
+  RAINBOW.forEach((col, i) => { x.fillStyle = col; x.fillRect(0, 26 + i * 2, 256, 2); });
+  x.fillStyle = '#FFF3B0';
+  for (let k = 0; k < 8; k++) {
+    const cx = 16 + k * 32, cy = 31; x.beginPath();
+    for (let j = 0; j < 10; j++) { const a = -Math.PI / 2 + j * Math.PI / 5, r = j % 2 ? 2.6 : 6; x.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); }
+    x.fill();
+  }
+  texMimbre = new THREE.CanvasTexture(c); texMimbre.wrapS = THREE.RepeatWrapping; texMimbre.repeat.set(2, 1);
+  return texMimbre;
 }
 function globo(P) {
-  // la canasta bajo la mascota (sentada adentro), el globo grande arriba con sus cuerdas, y la cuerda hasta la mano de Nina
-  const M = P.medidas, ALTO = 1.6, rc = Math.max(M.ancho, M.largo) * 0.55 + 0.08, RB = 0.95;
+  // la canasta bajo la mascota (sentada adentro), decorada; arriba (`alto`, que se inclina con la inercia) el globo
+  // redondo con sus cuerdas; y la cuerda hasta la mano de Nina
+  const M = P.medidas, ALTO = 1.6, rc = Math.max(M.ancho, M.largo) * 0.55 + 0.08, RB = 0.72;
   const g = new THREE.Group();
-  const mimbre = new THREE.MeshStandardMaterial({ color: 0xC98B4F, roughness: 0.8 });
-  const canasta = new THREE.Mesh(new THREE.CylinderGeometry(rc, rc * 0.85, 0.36, 18, 1, true), new THREE.MeshStandardMaterial({ color: 0xC98B4F, roughness: 0.8, side: THREE.DoubleSide }));
+  const canasta = new THREE.Mesh(new THREE.CylinderGeometry(rc, rc * 0.85, 0.36, 24, 1, true), new THREE.MeshStandardMaterial({ map: mimbreTex(), roughness: 0.8, side: THREE.DoubleSide }));
   canasta.position.y = ALTO + 0.12; g.add(canasta);
-  const fondo = new THREE.Mesh(new THREE.CircleGeometry(rc * 0.85, 18), mimbre); fondo.rotation.x = -Math.PI / 2; fondo.position.y = ALTO - 0.06; g.add(fondo);
+  const fondo = new THREE.Mesh(new THREE.CircleGeometry(rc * 0.85, 18), new THREE.MeshStandardMaterial({ color: 0xA86A35, roughness: 0.8 })); fondo.rotation.x = -Math.PI / 2; fondo.position.y = ALTO - 0.06; g.add(fondo);
   const borde = new THREE.Mesh(new THREE.TorusGeometry(rc, 0.035, 6, 24), new THREE.MeshStandardMaterial({ color: 0x8A5A2E })); borde.rotation.x = Math.PI / 2; borde.position.y = ALTO + 0.3; g.add(borde);
-  // el globo, con gajos de colores
-  const geo = new THREE.SphereGeometry(RB, 24, 18), col = [], c = new THREE.Color(), pos = geo.attributes.position;
+  // banderines de colores colgando del borde
+  for (let i = 0; i < 10; i++) {
+    const a = i / 10 * TAU, f = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.1, 3), new THREE.MeshStandardMaterial({ color: RAINBOW[i % 6] }));
+    f.position.set(Math.cos(a) * (rc + 0.02), ALTO + 0.24, Math.sin(a) * (rc + 0.02)); f.rotation.x = Math.PI; g.add(f);
+  }
+  // arriba: el globo, con gajos de colores, y sus 4 cuerdas (se inclina desde el borde de la canasta)
+  const arriba = new THREE.Group(); arriba.position.y = ALTO + 0.3; g.add(arriba);
+  const geo = new THREE.SphereGeometry(RB, 28, 20), col = [], c = new THREE.Color(), pos = geo.attributes.position;
   for (let i = 0; i < pos.count; i++) { const a = Math.atan2(pos.getZ(i), pos.getX(i)); c.set(RAINBOW[Math.floor(((a + Math.PI) / TAU) * 12) % 6]); col.push(c.r, c.g, c.b); }
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); geo.scale(1, 1.18, 1);
-  const bola = new THREE.Group(); bola.position.y = ALTO + M.alto + 1.5; g.add(bola);
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  const bola = new THREE.Group(); bola.position.y = M.alto + 1.05; arriba.add(bola);
   bola.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5 })));
   const cuerdas = new THREE.MeshBasicMaterial({ color: 0xF4E8D8 });
   for (let i = 0; i < 4; i++) {
-    const a = i / 4 * TAU + Math.PI / 4, p0 = new THREE.Vector3(Math.cos(a) * rc, ALTO + 0.3, Math.sin(a) * rc), p1 = new THREE.Vector3(Math.cos(a) * RB * 0.55, bola.position.y - RB * 1.05, Math.sin(a) * RB * 0.55);
+    const a = i / 4 * TAU + Math.PI / 4, p0 = new THREE.Vector3(Math.cos(a) * rc, 0, Math.sin(a) * rc), p1 = new THREE.Vector3(Math.cos(a) * RB * 0.5, bola.position.y - RB * 0.86, Math.sin(a) * RB * 0.5);
     const L = p0.distanceTo(p1), h = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, L, 4), cuerdas);
-    h.position.copy(p0).add(p1).multiplyScalar(0.5); h.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), p1.clone().sub(p0).normalize()); g.add(h);
+    h.position.copy(p0).add(p1).multiplyScalar(0.5); h.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), p1.clone().sub(p0).normalize()); arriba.add(h);
   }
   P.root.add(g);
   // la cuerda de Nina: un tubo delgado del fondo de la canasta a su mano, con una pequeña curva (en el mundo)
   const cuerda = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 2, 0)]), 12, 0.012, 5), new THREE.MeshBasicMaterial({ color: 0xFFFFFF }));
   cuerda.frustumCulled = false; cuerda.visible = false; scene.add(cuerda);
   P.siempreSentada = true;
-  return { g, alto: ALTO, bola, canastaY: ALTO - 0.06, cuerda, flota: true, globo: true, quitar() { scene.remove(cuerda); cuerda.geometry.dispose(); cuerda.material.dispose(); } };
+  return { g, alto: ALTO, bola, arriba, canastaY: ALTO - 0.06, cuerda, flota: true, globo: true, inercia: { k: 9, c: 3.2, max: 0.7 }, quitar() { scene.remove(cuerda); cuerda.geometry.dispose(); cuerda.material.dispose(); } };
 }
 const TRANSPORTES = { patines, burbuja, alitas, globo };
 export const ES_TRANSPORTE = id => !!TRANSPORTES[id];
@@ -116,6 +153,7 @@ export function ponerExtras(P, extras = {}) {
     P.ext.g.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
     if (P.ext.quitar) P.ext.quitar();
     P.ext = null; P.siempreSentada = false;
+    P.body.position.x = P.body.position.z = 0; P.body.rotation.z = 0; P.legs.forEach(l => { l.rotation.z = 0; });
   }
   if (extras.transporte && !P.ext && TRANSPORTES[extras.transporte]) {
     P.ext = TRANSPORTES[extras.transporte](P); P.ext.id = extras.transporte;
@@ -128,6 +166,44 @@ export function ponerExtras(P, extras = {}) {
 }
 
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _m = new THREE.Vector3();
+// Inercia: un resorte poco amortiguado entre la mascota y lo que flota con ella. Cuando la mascota acelera, lo que
+// flota se queda atrás; cuando frena, se adelanta un poco y vuelve suave. `E.inercia`: { k: rigidez, c: freno, max }.
+// Devuelve el desplazamiento en el espacio de la mascota (x: costado, z: adelante).
+function inercia(P, E, dt) {
+  const I = E.inercia, R = P.root.position, S = E.res || (E.res = { px: R.x, pz: R.z, vx: 0, vz: 0, ox: 0, oz: 0, wx: 0, wz: 0 });
+  dt = Math.min(dt, 0.05);
+  if (dt <= 0) return [0, 0];
+  let vx = (R.x - S.px) / dt, vz = (R.z - S.pz) / dt;
+  if (Math.hypot(R.x - S.px, R.z - S.pz) > 2) { vx = S.vx; vz = S.vz; S.ox = S.oz = S.wx = S.wz = 0; }   // un salto (teletransporte)
+  S.px = R.x; S.pz = R.z;
+  vx = S.vx + (vx - S.vx) * Math.min(1, dt * 12); vz = S.vz + (vz - S.vz) * Math.min(1, dt * 12);   // sin tirones
+  S.wx -= (vx - S.vx) * 0.5; S.wz -= (vz - S.vz) * 0.5;   // lo que acelera la mascota empuja al revés lo que flota
+  S.vx = vx; S.vz = vz;
+  S.wx += (-I.k * S.ox - I.c * S.wx) * dt; S.wz += (-I.k * S.oz - I.c * S.wz) * dt;
+  S.ox += S.wx * dt; S.oz += S.wz * dt;
+  const d = Math.hypot(S.ox, S.oz);
+  if (d > I.max) { S.ox *= I.max / d; S.oz *= I.max / d; }
+  const a = P.root.rotation.y, c = Math.cos(a), s = Math.sin(a);
+  return [S.ox * c - S.oz * s, S.ox * s + S.oz * c];
+}
+// Patinar: empuja con las patas en diagonal (una de adelante con la de atrás del otro lado), hacia atrás y un poco
+// hacia afuera, mientras el cuerpo se mece de lado y no salta. Quieta, la mascota hace lo de siempre.
+function patinar(P, E, dt, speed, anda) {
+  E.rueda.forEach(r => { r.rotation.x += dt * speed * 30; });
+  E.mece = (E.mece || 0) + ((anda ? 1 : 0) - (E.mece || 0)) * Math.min(1, dt * 5);
+  const m = E.mece;
+  if (m < 0.01) { P.body.rotation.z = 0; P.legs.forEach(l => { l.rotation.z = 0; }); return; }
+  E.fase += dt * (3.5 + Math.min(speed, 3) * 1.5);
+  const xm = P.legs.reduce((a, l) => a + l.position.x, 0) / P.legs.length, zm = P.legs.reduce((a, l) => a + l.position.z, 0) / P.legs.length;
+  P.body.position.y *= 1 - m;
+  P.body.rotation.z = Math.sin(E.fase) * 0.09 * m;
+  P.legs.forEach(l => {
+    const lado = l.position.x > xm ? 1 : -1, fr = l.position.z > zm ? 1 : -1;
+    const emp = Math.max(0, Math.sin(E.fase + (lado * fr > 0 ? 0 : Math.PI)));   // 0 = deslizando, 1 = empujando
+    l.rotation.x = l.rotation.x * (1 - m) + (fr > 0 ? 0.25 * emp - 0.1 : 0.5 * emp) * m;
+    l.rotation.z = lado * 0.22 * emp * m;
+  });
+}
 function animarExtras(P, t, dt, speed) {
   const E = P.ext, anda = speed > 0.05;
   if (P.arco) {
@@ -136,28 +212,41 @@ function animarExtras(P, t, dt, speed) {
   }
   let alto = 0, etiqueta = 0;
   if (E) {
-    alto = E.alto + (E.flota ? Math.sin(t * 2.2) * 0.06 : 0);
-    if (E.patina) {
-      // patinando: las patas quietas, el cuerpo no salta, las ruedas giran
-      if (anda) { P.legs.forEach(l => { l.rotation.x *= 0.1; }); P.body.position.y *= 0.15; }
-      E.rueda.forEach(r => { r.rotation.x += dt * speed * 25; });
-    }
-    if (E.bola && E.r) {   // burbuja: rodea a la mascota sentada, flota y tiembla un poco
+    alto = E.alto + (E.vuela ? Math.sin(t * 1.3) * 0.09 : E.flota ? Math.sin(t * 2.2) * 0.06 : 0);
+    const [lx, lz] = E.inercia ? inercia(P, E, dt) : [0, 0];
+    if (E.patina) patinar(P, E, dt, speed, anda);
+    if (E.bola && E.r) {   // burbuja: rodea a la mascota sentada, flota y tiembla un poco; se adelanta y vuelve
       const p = 1 + Math.sin(t * 3) * 0.02; E.bola.scale.set(p, 1 / p, p);
-      E.g.position.y = alto + E.r * 0.62;
+      E.g.position.set(lx, alto + E.r * 0.62, lz);
+      P.body.position.x = lx; P.body.position.z = lz;
       etiqueta = E.r * 0.9;
     }
-    // aletear: cada ala gira sobre el eje del lomo (z): casi juntas arriba ↔ abiertas hacia su lado
-    if (E.alas) E.alas.forEach(({ pivote, s }) => { pivote.rotation.z = -s * (0.25 + (Math.sin(t * (anda ? 14 : 7)) * 0.5 + 0.5) * 0.7); });
+    if (E.alas) {
+      // gravedad cero: sin saltos, las patas estiradas (las de adelante hacia adelante, las de atrás hacia atrás)
+      // remando despacio, el cuerpo se deja llevar por la inercia y se inclina un poco al avanzar
+      P.body.position.y = 0;
+      const zm = P.legs.reduce((a, l) => a + l.position.z, 0) / P.legs.length;
+      P.legs.forEach((l, i) => { const fr = l.position.z > zm; l.rotation.x = (fr ? -0.65 : 0.7) + Math.sin(t * 1.6 + i * 1.3) * 0.12; l.rotation.z = 0; });
+      E.lean += ((anda ? 0.16 : 0) - E.lean) * Math.min(1, dt * 1.5);
+      P.body.rotation.x = E.lean + Math.sin(t * 0.8) * 0.04;
+      P.body.rotation.z = Math.sin(t * 0.6) * 0.05 - lx * 0.5;
+      P.body.position.x = lx; P.body.position.z = lz;
+      // aletear suave: cada ala gira sobre el eje del lomo (z): casi juntas arriba ↔ abiertas hacia su lado
+      const f = anda ? 6 : 4;
+      E.alas.forEach(({ pivote, s }) => { pivote.rotation.z = -s * (0.3 + (Math.sin(t * f) * 0.5 + 0.5) * 0.55); });
+    }
     if (E.globo) {
-      // el globo se mece; la mascota va sentada en la canasta; la cuerda baja hasta la mano de Nina
-      E.g.position.y = Math.sin(t * 2.2) * 0.06;
-      E.g.rotation.z = Math.sin(t * 1.1) * 0.05; E.g.rotation.x = Math.sin(t * 0.9) * 0.04;
+      // el globo se mece y se queda atrás con la inercia (se inclina como un péndulo); la mascota va sentada en la
+      // canasta; la cuerda baja hasta la mano de Nina
+      E.g.position.set(lx * 0.6, Math.sin(t * 2.2) * 0.06, lz * 0.6);
+      E.g.rotation.z = Math.sin(t * 1.1) * 0.05 - lx * 0.15; E.g.rotation.x = Math.sin(t * 0.9) * 0.04 + lz * 0.15;
+      E.arriba.rotation.z = -lx * 0.45; E.arriba.rotation.x = lz * 0.45;
+      P.body.position.x = E.g.position.x; P.body.position.z = E.g.position.z;
       E.bola.rotation.y = t * 0.2;
-      etiqueta = E.bola.position.y + 1.2 - P.labelY;
+      etiqueta = E.arriba.position.y + E.bola.position.y + 0.9 - E.alto - P.labelY;
       if (P.mano && P.root.parent) {
         P.root.updateMatrixWorld(true);
-        _a.set(0, E.canastaY + E.g.position.y, 0).applyMatrix4(P.root.matrixWorld); _b.copy(P.mano);
+        _a.set(E.g.position.x, E.canastaY + E.g.position.y, E.g.position.z).applyMatrix4(P.root.matrixWorld); _b.copy(P.mano);
         const d = _a.distanceTo(_b);
         E.cuerda.visible = d < 8;
         if (E.cuerda.visible) {

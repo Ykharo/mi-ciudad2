@@ -28,7 +28,14 @@ function updatePlayer(dt) {
   const palanca = [jx, jy];   // para los juegos que se manejan con la palanca (el columpio)
   if (player.seat) { jx = jy = 0; mag = 0; }
   const fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
-  const dx = rx * jx - fx * jy, dz = rz * jx - fz * jy;
+  let dx = rx * jx - fx * jy, dz = rz * jx - fz * jy;
+  // caminar sola hasta un punto (`player.ir = { x, z }`, game/reposo.js: a buscar pasto); tocar los controles lo deja
+  player.mando = mag > 0;
+  if (player.ir && (mag > 0 || state.mode !== 'play' || player.seat)) player.ir = null;
+  else if (player.ir) {
+    const ex = player.ir.x - player.pos.x, ez = player.ir.z - player.pos.z, d = Math.hypot(ex, ez);
+    if (d < 0.25) player.ir.llegue = true; else { dx = ex / d * 0.3; dz = ez / d * 0.3; }
+  }
   // lanzada desde un juego (saltar del columpio): en el aire casi no frena
   const acc = 1 - Math.exp(-dt * (player.lanzada && player.air ? 0.6 : mag > 0 ? 10 : 12));
   player.vel.x += (dx * PLAYER_SPEED - player.vel.x) * acc;

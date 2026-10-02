@@ -55,6 +55,10 @@ export function animo(p) {
   return { ic: '😐', texto: 'Más o menos' };
 }
 
+// qué está haciendo ahora (el ciclo de espera de pets/follow.js), sin género
+const AHORA = { espera: '🐾 Esperando a que te muevas', sentada: '🪑 Se sentó a esperar', acostada: '💤 Se echó a descansar', juega: '🎾 ¡Se aburrió y te pide jugar!' };
+export const ahora = p => (p.ocio ? AHORA[p.ocio.fase] : '🚶 Va contigo');
+
 // cada cuadro: el estado cambia según lo que está pasando; se guarda cada medio minuto
 let guardar = 30;
 export function updateFichas(dt) {
@@ -65,7 +69,9 @@ export function updateFichas(dt) {
     if (!p.estado) prepararFicha(p);
     const E = p.estado, t = p.extras && p.extras.transporte;
     E.energia = Math.max(0, Math.min(100, E.energia + dt * (anda && !t ? (rapido ? -0.7 : -0.3) : anda ? -0.1 : 0.5)));
-    E.diversion = Math.max(0, Math.min(100, E.diversion + dt * (juega ? 1.2 : t ? 0.15 : -0.12)));
+    // esperando a que Nina se mueva se aburre más (y más aún cuando ya salta pidiendo que jueguen: pets/follow.js)
+    const espera = p.ocio ? (p.ocio.fase === 'juega' ? -0.4 : -0.2) : -0.12;
+    E.diversion = Math.max(0, Math.min(100, E.diversion + dt * (juega ? 1.2 : t ? 0.15 : espera)));
   }
   if ((guardar -= dt) <= 0) { guardar = 30; if (player.pets.length) save(); }
 }

@@ -13,6 +13,7 @@
 import * as THREE from 'three';
 import { E, K, TAU, lerp, crearPoses, esqueleto } from './pose.mjs';
 import { juegos } from './juegos.mjs';
+import { reposo } from './reposo.mjs';
 
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
 
@@ -301,7 +302,7 @@ export function agregarBailes(doc) {
   const S = esqueleto(doc), { resolver } = crearPoses(S), buf = doc.getRoot().listBuffers()[0];
   const acc = (arr, tipo) => doc.createAccessor().setArray(arr).setType(tipo).setBuffer(buf);
   const hechos = [];
-  for (const { nombre, fn, T, loop } of [...bailes(S), ...juegos(S, { sit: poseFinal(doc, 'sit') })]) {
+  for (const { nombre, fn, T, loop } of [...bailes(S), ...juegos(S, { sit: poseFinal(doc, 'sit') }), ...reposo(S)]) {
     const n = Math.round(T * FPS), tiempos = Float32Array.from({ length: n + 1 }, (_, i) => (i === n ? T : i / FPS));
     const rot = Object.fromEntries(S.HUESOS.map(b => [b, new Float32Array((n + 1) * 4)])), pos = new Float32Array((n + 1) * 3);
     const antes = {};

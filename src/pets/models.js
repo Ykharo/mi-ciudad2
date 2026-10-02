@@ -102,21 +102,27 @@ function disposePet(P) { scene.remove(P.root); P.disposables.forEach(g => g.disp
 // `sentada`: se sienta (quieta, esperando): el cuerpo se inclina con la cola abajo, las patas de adelante quedan
 // derechas y las de atrás se doblan hacia adelante. Pasa de una pose a la otra suavemente (P.sit, 0…1).
 // (`P.siempreSentada`: va sentada aunque se mueva —en la burbuja, en la canasta del globo—: pets/extras.js)
+// `sentada = 'acostada'`: se echa: el cuerpo baja hasta el suelo con las patas dobladas hacia adelante (P.lie, 0…1).
 function animatePet(P, t, speed01, dt, sentada = false) {
   const vel = speed01;
   if (P.siempreSentada) { sentada = true; speed01 = 0; }
-  const hop = speed01 > 0.05;
+  const hop = speed01 > 0.05, acostada = sentada === 'acostada' && !hop;
   P.phase += dt * (hop ? 9 + Math.min(speed01, 3) * 5 : 0);
   const k = P.kind === 'conejo' ? 1.7 : 1;
-  P.sit = (P.sit || 0) + ((sentada && !hop ? 1 : 0) - (P.sit || 0)) * Math.min(1, dt * 6);
-  const s = P.sit, incl = P.kind === 'conejo' ? 0.25 : 0.45;
-  P.body.position.y = (hop ? Math.abs(Math.sin(P.phase)) * 0.13 * k : Math.abs(Math.sin(t * 2.5)) * 0.01) * (1 - s) - 0.05 * s;
-  P.body.rotation.x = -incl * s;
+  P.sit = (P.sit || 0) + ((sentada && !hop && !acostada ? 1 : 0) - (P.sit || 0)) * Math.min(1, dt * 6);
+  P.lie = (P.lie || 0) + ((acostada ? 1 : 0) - (P.lie || 0)) * Math.min(1, dt * 3);
+  const s = P.sit, L = P.lie, incl = P.kind === 'conejo' ? 0.25 : 0.45;
+  if (P.cadera === undefined) P.cadera = Math.max(...P.legs.map(l => l.position.y));
+  const zm = P.legs.reduce((a, l) => a + l.position.z, 0) / P.legs.length;
+  P.body.position.y = ((hop ? Math.abs(Math.sin(P.phase)) * 0.13 * k : Math.abs(Math.sin(t * 2.5)) * 0.01) * (1 - s) - 0.05 * s) * (1 - L)
+    - P.cadera * (P.kind === 'conejo' ? 0.5 : 0.8) * L + Math.sin(t * 1.6) * 0.006 * L;   // (acostada: respira)
+  P.body.rotation.x = -incl * s * (1 - L);
   P.legs.forEach((l, i) => {
     const anda = hop ? Math.sin(P.phase + (i % 2 ? Math.PI : 0) + (i > 1 ? Math.PI / 2 : 0)) * 0.6 : 0;
-    l.rotation.x = anda * (1 - s) + (i > 1 ? incl : P.kind === 'conejo' ? 0 : -1.0) * s;   // (0 y 1: las de atrás; el conejo ya va sentado)
+    const sent = anda * (1 - s) + (i > 1 ? incl : P.kind === 'conejo' ? 0 : -1.0) * s;   // (0 y 1: las de atrás; el conejo ya va sentado)
+    l.rotation.x = sent * (1 - L) + (l.position.z > zm ? -1.45 : P.kind === 'conejo' ? -0.3 : -1.3) * L;
   });
-  if (P.head) P.head.rotation.x = incl * 0.7 * s;   // la cabeza mira adelante aunque el cuerpo se incline
+  if (P.head) P.head.rotation.x = incl * 0.7 * s * (1 - L) + 0.12 * L;   // la cabeza mira adelante aunque el cuerpo se incline
   if (P.extrasUpdate) P.extrasUpdate(t, dt, vel);   // artículos de la Mascotienda (pets/extras.js)
   if (P.tail) P.tail.rotation.z = Math.sin(t * (hop ? 16 : 7)) * (P.kind === 'conejo' ? 0.2 : 0.45);
   if (P.head) P.head.rotation.y = hop ? 0 : Math.sin(t * 0.9 + P.phase) * 0.28;

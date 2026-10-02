@@ -60,7 +60,12 @@ function sfx(kind) {
   else if (kind === 'open') { tone(660, t, 0.12, 'sine', 0.4, sfxGain); tone(990, t + 0.07, 0.16, 'sine', 0.35, sfxGain); }
   else if (kind === 'adopt') [72, 76, 79, 84].forEach((m, i) => tone(mtof(m), t + i * 0.09, 0.3, 'triangle', 0.45, sfxGain));
   else if (kind === 'bonk') { tone(150, t, 0.22, 'sine', 0.8, sfxGain, 0.004, 55); tone(90, t, 0.12, 'triangle', 0.4, sfxGain); }
-  else if (kind === 'horn') [0, 0.24].forEach(d => { tone(466, t + d, 0.2, 'square', 0.12, sfxGain, 0.01); tone(587, t + d, 0.2, 'square', 0.1, sfxGain, 0.01); });
+  // las voces de las mascotas cuando se aburren (pets/follow.js)
+  else if (kind === 'guau') [0, 0.18].forEach(d => { toneF(520, t + d, 0.13, 'sawtooth', 0.5, 'bandpass', 900, 260, 0.006); tone(300, t + d, 0.1, 'triangle', 0.3, sfxGain, 0.006, 180); });
+  else if (kind === 'miau') { toneF(620, t, 0.42, 'sawtooth', 0.35, 'bandpass', 1300, 480, 0.06); tone(900, t, 0.3, 'sine', 0.12, sfxGain, 0.08, 620); }
+  else if (kind === 'conejo') [0, 0.1, 0.2].forEach(d => tone(1500, t + d, 0.06, 'sine', 0.3, sfxGain, 0.004, 1900));
+  else if (kind === 'relincho') { toneF(700, t, 0.5, 'sawtooth', 0.3, 'bandpass', 1500, 1000, 0.02); [0, 0.07, 0.14, 0.21, 0.28].forEach(d => tone(1100 - d * 800, t + d, 0.06, 'triangle', 0.18, sfxGain)); }
+  else if (kind === 'horn')[0, 0.24].forEach(d => { tone(466, t + d, 0.2, 'square', 0.12, sfxGain, 0.01); tone(587, t + d, 0.2, 'square', 0.1, sfxGain, 0.01); });
 }
 
 function toneF(freq, t, dur, type, gain, fType, fFreq, freqEnd, attack = 0.01) {

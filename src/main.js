@@ -46,6 +46,7 @@ import { crearEspectador, updateEspectador } from './game/cartel.js';
 import { crearPublico, lookPublico, updatePublico } from './game/aura.js';
 import { PERSONAJES } from './characters/catalog/personajes.js';
 import { updatePlayer } from './game/player.js';
+import { ANIMS_REPOSO, updateReposo } from './game/reposo.js';
 import './game/juegos.js';
 import './game/vecinosJuegos.js';
 import { lookVecinos, spawnNPCs, updateNPCs } from './game/npcs.js';
@@ -73,16 +74,24 @@ import { mostrarPersonajes } from './ui/personajes.js';
 import { installTestHooks } from './debug/hooks.js';
 
 let last = performance.now(), placeT = 0;
+// el ciclo de espera de las mascotas (pets/follow.js): Nina quieta, o sentada/acostada (sólo se sientan y se acuestan)
+const DESCANSA = new Set(['sit', 'lie']);
+function ocioMascotas() {
+  if (player.speed01 > 0.05 || state.mode === 'intro') return null;
+  const sp = player.ch && player.ch.sp;
+  return player.seat || (sp && (DESCANSA.has(sp.name) || ANIMS_REPOSO.has(sp.name))) ? 'descansa' : 'quieta';
+}
 const placeName = $('#placeName');
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (now - last) / 1000); last = now; state.clock += dt;
   if (state.mode === 'drive') updateCar(dt); else updatePlayer(dt);
+  updateReposo(dt);
   const piso = state.mode === 'drive' ? null : pisoEn(player.pos.x, player.pos.z);
   if (state.mode === 'drive') followChain(player.pets.filter(p => !p.riding), player.pos, dt, state.clock, driving.hl + 1.3);
   else if (piso && piso.espera) waitAt(player.pets, piso.espera, dt, state.clock);   // en la tarima: esperan abajo
-  else if (player.seat && player.seat.mascotas) waitAt(player.pets, player.seat.mascotas, dt, state.clock);   // a su lado
-  else followChain(player.pets, player.pos, dt, state.clock, 1.7, !!player.seat);
+  else if (player.seat && player.seat.mascotas) waitAt(player.pets, player.seat.mascotas, dt, state.clock, true);   // a su lado
+  else followChain(player.pets, player.pos, dt, state.clock, 1.7, !!player.seat, ocioMascotas());
   updateNPCs(dt, state.clock);
   updateEspectador(dt);
   updatePublico(dt);

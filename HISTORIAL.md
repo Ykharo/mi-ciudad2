@@ -5,6 +5,45 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Artículos con movimiento, ciclo de espera de las mascotas y reposo de Nina (01-10-2026)
+
+- Pedidos: la burbuja con inercia (se adelanta un poco al frenar y vuelve suave); el globo esférico, más chico, con
+  inercia y la canasta decorada; las alitas con las patas estiradas y un movimiento suave "de gravedad cero"; patines de
+  verdad en cada pata y animación de patinar. Las mascotas con un ciclo de espera cuando Nina no se mueve (esperando →
+  sentada → acostada → salta y ladra alrededor de Nina → otra vez; según la especie, y que se vea en la ficha; si Nina
+  está sentada o acostada, sólo se sienta y se acuesta). Nina con su ciclo de reposo, que empieza cuando la mascota
+  terminó un ciclo: se sienta en el pasto (no donde pasa la gente), bosteza, se acuesta a leer un libro; cada tanto lo
+  cierra, se sienta a leer sentada y se vuelve a acostar. Libros distintos con un dibujito en la tapa.
+- `pets/extras.js`: `inercia()` es un resorte poco amortiguado entre la mascota y lo que flota con ella (lo que la
+  mascota acelera empuja al revés; `{ k, c, max }` por artículo); devuelve el desplazamiento en el espacio de la
+  mascota. Burbuja: la burbuja y la mascota se corren juntas. Globo: sin el `scale(1, 1.18, 1)` (era ovalado), radio
+  0,72; la canasta se corre y el globo con sus cuerdas (`arriba`) se inclina como péndulo; canasta con textura de mimbre
+  hecha en un canvas (tejido, franja arcoíris, estrellitas) y banderines (no hizo falta un png). Alitas: sin saltos,
+  patas de adelante hacia adelante y las de atrás hacia atrás remando lento, inclinación suave al avanzar, aleteo más
+  lento. Patines: una bota con 4 ruedas en cada pata (se calza mirando el borde de abajo de la malla de la pata, sirve
+  para todas las especies); al andar, `patinar()` empuja con las patas en diagonal hacia atrás y afuera, el cuerpo se
+  mece de lado y no salta.
+- `pets/follow.js`: `followChain(…, ocio)` con `ocio` = null / 'quieta' / 'descansa' (lo calcula `main.js`:
+  `ocioMascotas()`). `CICLOS` por especie (segundos de cada parte, voz, texto del globito); con sueño no se levanta a
+  jugar; aburrida espera la mitad. En "juega" da vueltas alrededor de Nina (radio 1,4 m + 0,5 por mascota) y cada 1,3 s
+  salta con su voz (`emit('sonido', 'guau' | 'miau' | 'conejo' | 'relincho')`, sintetizadas en `audio/audio.js`) y un
+  globito "¡Guau!" (`labelSprite` con `bubble`). `waitAt(…, descansa)` en las graderías: sentada y después acostada.
+  `pets/models.js`: `animatePet(…, 'acostada')`: el cuerpo baja (80 % de la altura de la cadera), patas dobladas hacia
+  adelante, respira. Ficha (😊 Estado): "Ahora: 🐾 Esperando… / 🪑 Se sentó a esperar / 💤 Se echó a descansar / 🎾 ¡Se
+  aburrió y te pide jugar!"; esperando se aburre más rápido (−0,2/s, −0,4/s cuando pide jugar).
+- Reposo de Nina: `game/reposo.js` (fases con su animación y duración; empieza cuando una mascota completa un ciclo
+  —`p.ocio.vueltas`— o, sin mascotas, a los 25 s). Busca pasto con `world/pasto.js` (`esPasto`: fuera de calles y
+  veredas, senderos, pisos, interiores, de lo marcado con `sinPasto` —el piso de goma de la plaza— y a 1 m de los
+  obstáculos; `pastoCerca` busca en anillos hasta 12 m; si no hay, no se sienta y reintenta a los 20 s). Camina sola
+  hasta ahí (`player.ir`, en `game/player.js`; tocar los controles lo deja). El libro (`characters/libro.js`: 8 libros
+  de colores con estrella, cohete, flor, gato, luna, corazón, pez o arcoíris dibujados en canvas; se abre, se cierra y
+  pasa hojas) va entre las dos manos mirando hacia la cara, calculado cada cuadro con los huesos.
+- Animaciones nuevas (`tools/animaciones/reposo.mjs`, horneadas por `separar_glb.mjs`): `sentarse_suelo`, `bostezo`
+  (cara con la boca abierta y los ojos cerrados: `AUTO_FACE`), `leer_sentada`, `acostarse_leer`, `sentarse_leer`,
+  `leer_acostada` (boca abajo en los codos, los pies arriba). Las de en medio mezclan poses resueltas (`mezcla`). Total
+  34 animaciones.
+- Revisado con fotos en el juego y en el probador. Capturas regeneradas (sólo se movieron vecinos: hay más materiales).
+
 ## "Mis mascotas": el archivador personal de las mascotas (01-10-2026)
 
 - Pedido: el botón 🐾 Mascotas debe ser el apartado personal de las mascotas del jugador: sus fichas (nombre, fotos,

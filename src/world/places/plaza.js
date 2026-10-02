@@ -9,6 +9,7 @@ import { G, box, cone, cyl, mesh, rlo, sph } from '../../engine/geometry.js';
 import { makeSign, stripeTexture } from '../../engine/textures.js';
 import { ancla, definePlace } from '../place.js';
 import { flowers, tree } from '../nature.js';
+import { sinPasto } from '../pasto.js';
 import { bench } from './park.js';
 
 const CX = 61, CZ = 20;   // centro del piso de goma; la entrada mira a la Avenida Menta (x = 40)
@@ -109,6 +110,7 @@ function plaza(ctx) {
   });
   // piso de goma, y el camino desde la vereda
   world.add(mesh(rlo(26, 0.06, 22, 0.03), mat('#9C86D9', { roughness: 0.95 }), CX, 0.03, CZ, false, true));
+  sinPasto([CX - 13, CX + 13, CZ - 11, CZ + 11]);   // (ahí no se sienta a descansar: world/pasto.js)
   world.add(mesh(box(3, 0.04, 3), mat('#EADCC6'), 46.6, 0.025, CZ, false, true));
   // arco de entrada con el letrero, mirando a la avenida
   const poste = mat('#3DD6A8');

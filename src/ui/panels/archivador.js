@@ -9,7 +9,7 @@ import { on } from '../../core/events.js';
 import { camera, canvas, renderer, scene } from '../../engine/renderer.js';
 import { sfx } from '../../audio/audio.js';
 import { player } from '../../game/actors.js';
-import { FOTOS, abrirArchivador, animo, borrarFoto, cerrarArchivador, elegirFicha, felicidad, fichaElegida, guardarFoto, llevarACasa, renombrar } from '../../game/fichas.js';
+import { FOTOS, abrirArchivador, ahora, animo, borrarFoto, cerrarArchivador, elegirFicha, felicidad, fichaElegida, guardarFoto, llevarACasa, renombrar } from '../../game/fichas.js';
 import { mascotienda as M } from '../../game/mascotienda.js';
 import { PET_KINDS } from '../../pets/models.js';
 import { ARTICULOS } from '../../pets/catalog/articulos.js';
@@ -60,6 +60,7 @@ function render() {
   } else if (seccion === 'estado') {
     const a = animo(p), E = p.estado;
     h += `<div class="animo"><span>${a.ic}</span>${esc(p.name)}: ${a.texto}</div>`;
+    h += `<p class="note">Ahora: ${ahora(p)}</p>`;
     h += barra('Felicidad', '💖', felicidad(p), '#FF6FAE') + barra('Energía', '⚡', E.energia, '#FFD23F') + barra('Diversión', '🎈', E.diversion, '#4FB6F5');
     h += '<p class="note">Pasear cansa y descansar da energía. Los juegos, la competencia de aura y sus cosas (patines, globo…) la divierten.</p>';
   } else if (seccion === 'salud') {

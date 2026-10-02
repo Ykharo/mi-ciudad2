@@ -162,7 +162,10 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
   `tools/animaciones/pose.mjs` (las utilidades de `reanimar_avatar.py` en JavaScript: poses, IK de pies y brazos,
   curvas `K`; validado contra "wave") y `tools/animaciones/bailes.mjs` (+ `juegos.mjs`: escalera, tobogán, columpio,
   alzar_estrella, aplaudir —éste parte de la pose final de "sit"—); `separar_glb.mjs` los hornea en
-  `nina_base.glb` (`SIN_BAILES=1` para armarla sin ellos). En el menú Acción: `characters/catalog/acciones.js`
+  `nina_base.glb` (`SIN_BAILES=1` para armarla sin ellos). También los de los juegos (`juegos.mjs`) y los del reposo
+  (`reposo.mjs`: sentarse en el suelo, bostezar, leer sentada/acostada; los usa `game/reposo.js`, que empieza cuando
+  la mascota termina su ciclo de espera de `pets/follow.js`, busca pasto con `world/pasto.js` y pone el libro de
+  `characters/libro.js` entre las manos). En el menú Acción: `characters/catalog/acciones.js`
   (`AUTO_FACE` puede cambiar la cara con el tiempo: `[[segundo, cara], …]`).
 - Las texturas de los .glb se cargan como imágenes `data:` (no `blob:`): venía del visor donde se publicaba antes,
   que bloqueaba `fetch(blob:)` en Safari iPad. Ya no es necesario, pero funciona en todos lados.
