@@ -61,14 +61,20 @@ function fachada({ world, addObs, addZone }) {
 
 /* ---------- adentro ---------- */
 function estante(g, x, z, largo, ry, colores, cosas) {
-  // un mueble de 3 repisas (blanco con bordes de color) y cosas encima de cada repisa
+  // un mueble abierto hacia adelante (+z): fondo de color, costados y techo del color del pasillo, y 3 repisas blancas
+  // con el borde de color; las cosas van paradas sobre cada repisa (antes el mueble era macizo y las tapaba)
   const e = new THREE.Group(); e.position.set(x, 0, z); e.rotation.y = ry; g.add(e);
-  const madera = mat(tint(colores, 0.6), { emissive: tint(colores, 0.6), emissiveIntensity: 0.2 }), borde = mat(colores);
-  e.add(mesh(rlo(largo, 2.4, 0.9, 0.08), madera, 0, 1.2, 0));
-  for (let i = 0; i < 3; i++) e.add(mesh(rlo(largo + 0.1, 0.1, 1.0, 0.04), borde, 0, 0.5 + i * 0.75, 0.02));
-  for (let i = 0; i < 3; i++) for (let k = 0; k < Math.floor(largo / 0.7); k++) {
-    const cx = -largo / 2 + 0.45 + k * 0.7;
-    cosas(e, cx, 0.55 + i * 0.75, 0.3, i * 7 + k);
+  const H = 2.7, D = 0.9, fondo = mat(tint(colores, 0.35), { emissive: tint(colores, 0.35), emissiveIntensity: 0.25 });
+  const marco = mat(colores, { emissive: colores, emissiveIntensity: 0.15 }), tabla = mat('#FFFFFF', { emissive: '#FFFFFF', emissiveIntensity: 0.15 });
+  e.add(mesh(rlo(largo, H, 0.08, 0.03), fondo, 0, H / 2, -D / 2 + 0.04));
+  for (const s of [-1, 1]) e.add(mesh(rlo(0.1, H, D, 0.04), marco, s * (largo / 2 + 0.05), H / 2, 0));
+  e.add(mesh(rlo(largo + 0.2, 0.1, D, 0.04), marco, 0, H, 0));
+  e.add(mesh(rlo(largo, 0.12, D, 0.04), marco, 0, 0.06, 0));   // el zócalo
+  for (let i = 0; i < 3; i++) {
+    const y = 0.45 + i * 0.75;
+    e.add(mesh(rlo(largo, 0.06, D - 0.1, 0.02), tabla, 0, y - 0.03, 0));
+    e.add(mesh(rlo(largo + 0.02, 0.1, 0.06, 0.03), marco, 0, y - 0.03, D / 2 - 0.05));   // el borde de color al frente
+    for (let k = 0; k < Math.floor(largo / 0.7); k++) cosas(e, -largo / 2 + 0.45 + k * 0.7, y, 0.05, i * 7 + k);
   }
 }
 const botella = (e, x, y, z, n) => {
@@ -174,9 +180,11 @@ function sala({ world, addObs, addZone, onFrame }) {
     { sec: 'juguetes', x: W / 2 - 0.7, ry: -Math.PI / 2, cosas: pelota, color: '#FFD23F', zx: W / 2 - 2.6, cartel: '🧸 Juguetes' },
   ];
   for (const a of P) {
-    estante(g, a.x, 0, 7, a.ry, a.color, a.cosas);
-    if (a.doble) estante(g, a.x + (a.ry > 0 ? -0.1 : 0.1), 0, 7, a.ry + Math.PI, a.color, a.cosas);
-    addObs(X + a.x, Z, a.doble ? 0.7 : 0.5, 3.6);
+    // (los del medio: dos muebles espalda con espalda, cada uno mirando a su pasillo)
+    const f = Math.sin(a.ry) * 0.45;
+    if (a.doble) { estante(g, a.x + f, 0, 7, a.ry, a.color, a.cosas); estante(g, a.x - f, 0, 7, a.ry + Math.PI, a.color, a.cosas); }
+    else estante(g, a.x, 0, 7, a.ry, a.color, a.cosas);
+    addObs(X + a.x, Z, a.doble ? 0.95 : 0.5, 3.6);
     const cartel = makeSign(a.cartel, a.color, '#FFFFFF', 3.4); cartel.position.set(a.x + (a.doble ? 0 : a.ry > 0 ? 1.4 : -1.4), 4.0, 2.5); g.add(cartel);
     for (const s of [-1, 1]) g.add(mesh(cyl(0.02, 0.02, H - 4.3, 4), mat('#8C8FA8'), cartel.position.x + s * 1.3, 4.0 + (H - 4.0) / 2 + 0.2, 2.5, false, false));
     addZone({ id: 'mascotienda', x: X + a.zx, z: Z + 0.5, r: 1.7, label: `${a.cartel.split(' ')[0]} Mirar ${a.cartel.split(' ')[1].toLowerCase()}`, seccion: a.sec });

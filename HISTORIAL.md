@@ -5,6 +5,14 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Estantes de la Mascotienda con productos a la vista (02-10-2026)
+
+- Los estantes de la sala (`estante` en `world/places/mascotienda.js`) eran un bloque macizo: las cosas de cada repisa
+  quedaban adentro (sólo asomaba lo de arriba) y el mueble se veía blanco. Ahora es un mueble abierto: fondo del
+  color del pasillo, costados, techo y zócalo de color, 3 repisas blancas con borde de color, y las cosas paradas
+  encima. Los dos muebles del medio de cada pasillo doble van espalda con espalda (antes estaban casi encimados y el
+  fondo de uno tapaba al otro); su obstáculo es más ancho (0,95).
+
 ## Tanda: convertidor, píxeles, platillo, aro, trucos y casitas (02-10-2026)
 
 - **Convertidor sorpresa** (poción `convertidor`): al ponérselo y después cada 20–30 s la mascota se convierte en otro
