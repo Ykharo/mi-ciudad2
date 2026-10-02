@@ -28,8 +28,8 @@ test('una partida v1 se migra a v2 sin perder nada', async ({ page, jugar }) => 
   await jugar();
   // mascotas y auto vuelven a aparecer
   await page.locator('#btnPets').click();
-  await expect(page.locator('#petPanel .mypet b')).toHaveText(['Nube', 'Chispa']);
-  await page.locator('#petDone').click();
+  await expect(page.locator('#archTabs .carpeta b')).toHaveText(['Nube', 'Chispa']);
+  await page.locator('#archDone').click();
   expect(await page.evaluate(() => window.__juego.cars.filter(c => c.owned).map(c => [c.spec.type, c.x, c.z]))).toEqual([['buggy', 61, -1.9]]);
   // quedó guardada como v2, con Nina de fábrica y el diseño de la tienda
   const v2 = await leer(page, 'ciudadArcoiris.v2');
@@ -45,7 +45,7 @@ test('una partida v1 se migra a v2 sin perder nada', async ({ page, jugar }) => 
   await expect(page.locator('#btnPlay')).toHaveText('¡A jugar!', { timeout: 60_000 });
   await page.locator('#btnPlay').click();
   await page.locator('#btnPets').click();
-  await expect(page.locator('#petPanel .mypet b')).toHaveText(['Nube', 'Chispa']);
+  await expect(page.locator('#archTabs .carpeta b')).toHaveText(['Nube', 'Chispa']);
 });
 
 test('la forma de cabeza del look se aplica a la cabeza y a lo que va sobre ella', async ({ page, jugar }) => {
@@ -84,5 +84,5 @@ test('un guardado dañado no rompe el juego', async ({ page, jugar }) => {
   expect(look.prendas.pelo).toEqual({ id: 'mono' });
   expect(look.prendas.torso).toEqual({ id: 'peto', colores: { principal: '#FF4F5E' }, extras: { Top_Emblem: false } });
   await page.locator('#btnPets').click();
-  await expect(page.locator('#petPanel .mypet b')).toHaveText(['Coco']);
+  await expect(page.locator('#archTabs .carpeta b')).toHaveText(['Coco']);
 });

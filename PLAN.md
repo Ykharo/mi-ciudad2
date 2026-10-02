@@ -50,7 +50,8 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
 1. Huesitos de Aura ✅ (`game/huesitos.js`, contador en el HUD; se ganan en la competencia).
 2. La Mascotienda Arcoíris ✅ (frente al Refugio; adentro, sala 3D con pasillos, carteles, probador y Robi, el perro
    robot; jarabe arcoíris, patines, burbuja, mini globo, alitas; diario de la mascota).
-3. Más artículos (pastillas de diseño, juguetes del pasillo "¡pronto!"). 4. Poción transformadora. 5. Encargos de lectura de los vecinos.
+   "Mis mascotas" ✅: el archivador personal (ficha, estado, salud, cosas). Falta la veterinaria (controles pendientes).
+3. Más artículos (pastillas de diseño, ropa, juguetes del pasillo "¡pronto!"). 4. Poción transformadora. 5. Encargos de lectura de los vecinos.
 6. Letreros escondidos, diario de la mascota, racha diaria.
 
 **Competencia de aura (plan por etapas)**

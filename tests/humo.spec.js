@@ -60,7 +60,10 @@ test('menú Acción', async ({ page, jugar }) => {
 
 test('adoptar una mascota y que siga ahí al recargar', async ({ page, jugar }) => {
   await jugar();
-  await page.locator('#btnPets').click();
+  // se adopta en el Refugio (el botón 🐾 Mascotas abre el archivador)
+  await page.evaluate(() => window.__juego.teleport(15, 10.1));
+  await expect(page.locator('#btnAction')).toHaveText('🐾 Adoptar mascota');
+  await page.locator('#btnAction').click({ force: true });
   const panel = page.locator('#petPanel');
   await expect(panel).toBeVisible();
   await expect(page.locator('#game')).toHaveClass(/menu/);
@@ -82,5 +85,33 @@ test('adoptar una mascota y que siga ahí al recargar', async ({ page, jugar }) 
   await expect(page.locator('#btnPlay')).toHaveText('¡A jugar!', { timeout: 60_000 });
   await page.locator('#btnPlay').click();
   await page.locator('#btnPets').click();
-  await expect(panel.locator('.mypet b')).toHaveText(['Toby', 'Luna']);
+  await expect(page.locator('#archTabs .carpeta b')).toHaveText(['Toby', 'Luna']);
+});
+
+test('Mis mascotas: el archivador con ficha, estado, salud y cosas', async ({ page, jugar }) => {
+  await page.addInitScript(() => { if (!localStorage.getItem('ciudadArcoiris.v2')) localStorage.setItem('ciudadArcoiris.v2', JSON.stringify({ version: 2, cars: [],
+    mascotienda: { comprados: ['patines'] }, pets: [{ kind: 'perro', color: '#E9B77A', name: 'Toby', adopcion: '2026-09-01T12:00:00Z', estado: { energia: 20, diversion: 90 } }] })); });
+  await jugar();
+  await page.locator('#btnPets').click();
+  await expect(page.locator('#archPanel')).toBeVisible();
+  await expect(page.locator('#archTabs .carpeta b')).toHaveText(['Toby']);
+  // ficha: cambiarle el nombre y sacarle una foto
+  await page.locator('#archNombre').fill('Tobías');
+  await page.locator('#archBody [data-renombrar]').click();
+  await expect(page.locator('#archTabs .carpeta b')).toHaveText(['Tobías']);
+  await page.locator('#archBody [data-foto]').click();
+  await expect(page.locator('#archBody .foto img')).toHaveCount(1);
+  // estado: con poca energía, tiene sueño
+  await page.locator('#archSecs [data-sec="estado"]').click();
+  await expect(page.locator('#archBody .animo')).toContainText('Tiene sueño');
+  // salud: el control de adopción hecho y los próximos
+  await page.locator('#archSecs [data-sec="salud"]').click();
+  await expect(page.locator('#archBody .control')).toHaveCount(3);
+  // cosas: ponerle los patines
+  await page.locator('#archSecs [data-sec="cosas"]').click();
+  await page.locator('#archBody [data-poner="patines"]').click();
+  expect(await page.evaluate(() => window.__juego.player.pets[0].extras.transporte)).toBe('patines');
+  await page.locator('#archDone').click();
+  const g = await page.evaluate(() => JSON.parse(localStorage.getItem('ciudadArcoiris.v2')).pets[0]);
+  expect([g.name, g.fotos.length, g.extras.transporte, g.adopcion]).toEqual(['Tobías', 1, 'patines', '2026-09-01T12:00:00Z']);
 });

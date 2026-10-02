@@ -5,6 +5,26 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## "Mis mascotas": el archivador personal de las mascotas (01-10-2026)
+
+- Pedido: el botón 🐾 Mascotas debe ser el apartado personal de las mascotas del jugador: sus fichas (nombre, fotos,
+  estado —feliz, aburrida, cansada…—, controles médicos con fechas, sus cosas por categoría), fácil de revisar y
+  administrar, como un archivador, para usar lo comprado. Adoptar sigue siendo en el Refugio (la zona).
+- `game/fichas.js`: por mascota `adopcion`, `estado` { energia, diversion } (felicidad = promedio, +8 con el jarabe
+  arcoíris), `controles` [{ tipo, fecha, hecho }] (al adoptar: el de adopción hecho; vacunas a los 7 días y control
+  general a los 30, pendientes: la veterinaria todavía no existe) y `fotos` (hasta 4, jpg de 240 px). El estado cambia
+  solo: pasear cansa (correr más; con un transporte casi nada), descansar recupera; el tiempo aburre, los juegos, la
+  competencia y tener un transporte puesto divierten. `animo()`: "Tiene sueño", "Quiere jugar", "¡Muy feliz!", "Está
+  bien"… (sin género). Se guarda con la mascota (y cada 30 s); se valida al cargar. Modo `'archivador'`: la mascota
+  elegida se pone delante de Nina.
+- `ui/panels/archivador.js` (`#archPanel`): una carpeta por mascota (pestaña de su color), una hoja con renglones y
+  pestañas de índice: 📋 Ficha (nombre editable, especie, color, adopción y días juntos, fotos tipo polaroid con 📸 Sacar
+  foto —lo que se ve en pantalla— y borrar, 🏠 Llevar a casa con confirmación), 😊 Estado (carita, ánimo y barras de
+  felicidad, energía y diversión, que se actualizan), 🩺 Salud (controles hechos, pendientes y ⏰ atrasados, con fecha),
+  🎒 Cosas (Ropa, Artículos, Pociones, Juguetes: lo comprado, con Ponérselo/Quitárselo).
+- Pruebas: adoptar ahora va por la zona del Refugio; las de guardado leen las carpetas; prueba nueva del archivador
+  (renombrar, foto, estado, salud, ponerle patines, guardado). Captura 5 regenerada (ahora es el archivador).
+
 ## Mascotienda: cámaras, burbuja, globo, alitas y mapa de anclajes de las mascotas (01-10-2026)
 
 - Pedidos: la cámara del probador y la de Robi a veces quedaban tapadas (el biombo, una pared); la burbuja con la

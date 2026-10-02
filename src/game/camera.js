@@ -79,7 +79,7 @@ function updateCamera(dt) {
   cam.pos.lerp(_pos, k); cam.look.lerp(_look, k);
   camera.position.copy(cam.pos); camera.lookAt(cam.look);
   fill.position.set(cam.pos.x, cam.pos.y + 3, cam.pos.z); fill.target.position.copy(cam.look);
-  fill.intensity = lerp(fill.intensity, ['pets', 'shop', 'wardrobe', 'mascotienda'].includes(state.mode) ? 0.7 : 0.3, k);
+  fill.intensity = lerp(fill.intensity, ['pets', 'shop', 'wardrobe', 'mascotienda', 'archivador'].includes(state.mode) ? 0.7 : 0.3, k);
   sun.position.set(p.x + SUN_OFF.x, SUN_OFF.y, p.z + SUN_OFF.z);
   sun.target.position.set(p.x, 0, p.z);
 }

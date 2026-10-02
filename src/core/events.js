@@ -7,6 +7,8 @@
 //   'auto'   ('subir' | 'bajar', auto)
 //   'motor'  (velocidad, tono)      cada cuadro mientras se maneja
 //   'personaje' (id)                se cambió el personaje con que se juega
+//   'archivador' ({ que: 'abrir' })    abrir "Mis mascotas" (game/fichas.js → ui/panels/archivador.js)
+//   'mascotienda' ({ que, … })       la ventana de la Mascotienda: 'abrir', 'diario'
 //   'huesitos' ({ total, delta, motivo })  cambió la cantidad de Huesitos de Aura (game/huesitos.js)
 //   'aura'   ({ que, … })            competencia de aura: 'elegir' (abrir la ventana de los 3 movimientos, con `bailes`)
 const listeners = new Map();

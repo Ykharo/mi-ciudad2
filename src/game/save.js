@@ -25,7 +25,10 @@ function save() {
       jugador: player.personaje,
       nina: { look: looks.nina },
       personajes: Object.fromEntries(Object.entries(looks).filter(([id]) => id !== 'nina').map(([id, look]) => [id, { look }])),
-      pets: player.pets.map(p => ({ kind: p.kind, color: p.color, name: p.name, extras: p.extras || {} })),
+      // (con su ficha: game/fichas.js)
+      pets: player.pets.map(p => ({ kind: p.kind, color: p.color, name: p.name, extras: p.extras || {},
+        adopcion: p.adopcion, estado: p.estado && { energia: Math.round(p.estado.energia), diversion: Math.round(p.estado.diversion) },
+        controles: p.controles, fotos: p.fotos })),
       cars: ownedCars.map(c => ({ spec: c.spec, x: Math.round(c.x * 100) / 100, z: Math.round(c.z * 100) / 100, h: Math.round(c.heading * 1000) / 1000 })),
       shop: state.shopSpec,
       huesitos: player.huesitos || 0,   // la moneda (game/huesitos.js; se valida al cargar)

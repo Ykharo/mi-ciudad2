@@ -172,6 +172,8 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
   los `baseColorFactor` de lineal a sRGB.
 - Huesitos de Aura 🦴 (la moneda): `game/huesitos.js` (`ganarHuesitos`, `gastarHuesitos`), `player.huesitos`,
   contador `ui/huesitos.js`. Se ganan leyendo (Código Aura) y compitiendo.
+- "Mis mascotas" (botón 🐾 Mascotas): el archivador personal, `ui/panels/archivador.js` + `game/fichas.js` (adopción,
+  estado energía/diversión que cambia solo, controles médicos, fotos; se guardan con cada mascota). Adoptar: en el Refugio.
 - Mascotienda Arcoíris: `world/places/mascotienda.js` (fachada + sala de adentro lejos del mapa, `addInterior`),
   `game/mascotienda.js` (entrar/salir, comprar, ponerse; `player.articulos`, `p.extras`), `ui/panels/mascotienda.js`,
   artículos en `pets/catalog/articulos.js` y sus efectos en `pets/extras.js` (`ponerExtras(P, { transporte, arcoiris })`).

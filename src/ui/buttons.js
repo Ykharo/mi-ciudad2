@@ -10,7 +10,7 @@ import { callCar, driving, exitCar } from '../game/driving.js';
 import { hornSound, initAudio, startMusic, stopMusic } from '../audio/audio.js';
 import { $, btnAction, btnAction2 } from './dom.js';
 import { soltarPalanca } from './joystick.js';
-import { openPets } from './panels/pets.js';
+import { abrirArchivador } from './panels/archivador.js';
 
 $('#btnJump').addEventListener('pointerdown', e => { e.preventDefault(); input.jump = true; });
 $('#btnJump').addEventListener('click', e => { if (e.detail === 0) input.jump = true; });
@@ -30,7 +30,8 @@ function honk() {
   npcs.forEach(n => { if (n.pos.distanceTo(player.pos) < 12 && n.cool <= 4) { n.greet = 2.2; n.cool = 8; npcSay(n, pick(['¡Tuut tuut!', '¡Qué lindo auto!', '¡Hola!', '¡Qué auto tan bonito!'])); } });
 }
 $('#btnHorn').addEventListener('click', honk);
-$('#btnPets').addEventListener('click', openPets);
+// 🐾 Mascotas: el archivador personal de las mascotas (adoptar es en el Refugio)
+$('#btnPets').addEventListener('click', abrirArchivador);
 $('#btnMyCar').addEventListener('click', callCar);
 // cada zona trae su acción (ver world/zones.js: onZoneAction); con `opciones`, cada botón pasa la suya
 const opcion = (z, i) => z && z.opciones && z.opciones[i] ? z.opciones[i].id : undefined;
