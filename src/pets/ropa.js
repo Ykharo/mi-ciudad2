@@ -3,7 +3,7 @@
 //   cuello  collar con placa (la inicial de su nombre)                 ancla `cuello`
 //   cabeza  corona, gorro de cumpleaños o sombrero de mago             ancla `cabeza` (sigue los giros de la cabeza)
 //   lomo    capa de superhéroe, que flamea al andar                    sobre el lomo, desde el cuello hacia la cola
-//   cuello  (o) bufanda a rayas con puntas que se mecen                ancla `cuello`
+//   cuello  (o) bufanda arcoíris larguísima que se arrastra            ancla `cuello` (la cola, en la escena)
 //   cara    lentes de sol                                              `ojos` (en el espacio de la cabeza)
 //   cola    moño en la punta de la cola                                `colaLargo` (en el espacio de la cola)
 // `ponerRopa(P, { cuello, cabeza, lomo })` arma o quita lo que corresponde; `animarRopa(P, t, dt, speed)` mueve la capa.
@@ -11,6 +11,7 @@
 import { THREE } from '../engine/three.js';
 import { RAINBOW } from '../engine/materials.js';
 import { stripeTexture } from '../engine/textures.js';
+import { scene } from '../engine/renderer.js';
 
 export const LUGAR_ROPA = { collar: 'cuello', bufanda: 'cuello', corona: 'cabeza', gorro_cumple: 'cabeza', sombrero_mago: 'cabeza', capa: 'lomo', lentes: 'cara', mono: 'cola' };
 const LUGARES = ['cuello', 'cabeza', 'lomo', 'cara', 'cola'];
@@ -84,19 +85,51 @@ function capa(P) {
   P.body.add(g);
   return { g, tela, base, w, L, cuerpo: M.ancho * 0.42, estrella: s, ondea: 0 };
 }
-// la bufanda: un rollo de lana a rayas alrededor del cuello y dos puntas que cuelgan adelante (se mecen al andar)
+// la bufanda arcoíris larguísima: un rollo de lana a rayas de colores alrededor del cuello y una cola larga que cae y
+// se arrastra por el suelo detrás de la mascota. La cola es una cuerda de TRAMOS segmentos (uno de cada color) que se
+// simula en el mundo (verlet: gravedad, largo fijo y el suelo), así queda atrás al caminar y se ondula al girar.
+const TRAMOS = 16;
 function bufanda(P) {
   const M = P.medidas, r = (M.cuelloR || M.ancho * 0.4) + 0.02, g = new THREE.Group();
-  const lana = est('#FFFFFF', { map: stripeTexture('#4FB6F5', '#FFFFFF', 10), roughness: 0.9 });
-  g.add(new THREE.Mesh(new THREE.TorusGeometry(r, 0.05, 10, 28), lana));
-  const puntas = new THREE.Group(); puntas.position.set(r * 0.35, -r * 0.6, 0.06); g.add(puntas);
-  [0, 0.09].forEach((dx, i) => {
-    const pu = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.2 - i * 0.04, 0.03), lana); pu.position.set(dx, -0.09 + i * 0.02, i * 0.01); pu.rotation.z = 0.15 - i * 0.3; puntas.add(pu);
-  });
+  const colores = ['#FF5E5E', '#FFB547', '#FFE45C', '#3DD6A8', '#4FB6F5', '#A77BF3'];
+  g.add(new THREE.Mesh(new THREE.TorusGeometry(r, 0.05, 10, 28), est('#FFFFFF', { map: stripeTexture(colores[0], colores[3], 12), roughness: 0.9 })));
   g.rotation.x = P.kind === 'unicornio' ? -1.15 : -0.65;
-  puntas.userData.base = -g.rotation.x;   // (las puntas cuelgan derechas aunque el aro vaya inclinado)
   P.anclas.cuello.add(g);
-  return { g, puntas };
+  // la cola, en la escena: cada tramo es una tira de lana de un color
+  const nudo = new THREE.Object3D(); nudo.position.set(r * 0.5, -r * 0.7, 0); g.add(nudo);   // de donde sale (al costado)
+  const largo = 0.11, mats = colores.map(c => est(c, { roughness: 0.9 })), geo = new THREE.BoxGeometry(0.11, 0.03, 1);
+  const tiras = Array.from({ length: TRAMOS }, (_, i) => { const m = new THREE.Mesh(geo, mats[i % mats.length]); m.castShadow = true; scene.add(m); return m; });
+  return { g, nudo, tiras, largo, pts: null, viejos: null, mats, geo, quitar() { tiras.forEach(m => scene.remove(m)); geo.dispose(); mats.forEach(m => m.dispose()); } };
+}
+const _p = new THREE.Vector3(), _d = new THREE.Vector3();
+function moverBufanda(P, B, dt) {
+  const s = P.root.scale.x, L = B.largo * s, suelo = P.root.position.y + 0.02;
+  B.nudo.getWorldPosition(_p);
+  if (!B.pts || B.pts[0].distanceTo(_p) > 3) {   // al empezar (o tras un salto grande): cae recta hacia atrás
+    const atras = new THREE.Vector3(-Math.sin(P.root.rotation.y), 0, -Math.cos(P.root.rotation.y));
+    B.pts = Array.from({ length: TRAMOS + 1 }, (_, i) => _p.clone().addScaledVector(atras, i * L * 0.7).setY(Math.max(suelo, _p.y - i * L)));
+    B.viejos = B.pts.map(v => v.clone());
+  }
+  const g = 9.8 * dt * dt, k = Math.min(1, dt * 60);
+  B.pts[0].copy(_p);
+  for (let i = 1; i <= TRAMOS; i++) {   // verlet: sigue moviéndose como venía (con roce), más la gravedad
+    const p = B.pts[i], v = _d.subVectors(p, B.viejos[i]).multiplyScalar(p.y <= suelo + 0.005 ? 0.6 : 0.95);
+    B.viejos[i].copy(p); p.add(v); p.y -= g;
+  }
+  for (let it = 0; it < 6; it++) {      // el largo de cada tramo y el suelo (se arrastra)
+    for (let i = 1; i <= TRAMOS; i++) {
+      const a = B.pts[i - 1], b = B.pts[i], d = _d.subVectors(b, a), n = d.length() || 1e-6, f = (n - L) / n;
+      if (i === 1) b.addScaledVector(d, -f); else { a.addScaledVector(d, f * 0.5 * k); b.addScaledVector(d, -f * 0.5 * k); }
+      if (b.y < suelo) b.y = suelo;
+    }
+    B.pts[0].copy(_p);
+  }
+  B.tiras.forEach((m, i) => {           // cada tira entre dos puntos, acostada (la cara ancha hacia arriba)
+    const a = B.pts[i], b = B.pts[i + 1];
+    m.position.addVectors(a, b).multiplyScalar(0.5);
+    m.scale.set(s, s, Math.max(0.001, a.distanceTo(b)));
+    m.lookAt(b);   // (su largo es el eje z: lookAt lo apunta al punto siguiente)
+  });
 }
 // lentes de sol: dos cristales oscuros con marco de color delante de los ojos, unidos por un puente, con patitas
 function lentes(P) {
@@ -125,6 +158,7 @@ function mono(P) {
 const HACER = { collar, bufanda, corona, gorro_cumple: gorroCumple, sombrero_mago: sombreroMago, capa, lentes, mono };
 
 function tirar(o) {
+  if (o.quitar) o.quitar();
   o.g.parent && o.g.parent.remove(o.g);
   o.g.traverse(m => {
     if (m.geometry) m.geometry.dispose();
@@ -141,12 +175,12 @@ export function ponerRopa(P, ropa = {}) {
   }
 }
 export const ropaPuesta = P => Object.fromEntries(Object.entries(P.ropa || {}).filter(([, o]) => o).map(([l, o]) => [l, o.id]));
-export const ropaQueSeMueve = P => !!(P.ropa && (P.ropa.lomo || (P.ropa.cuello && P.ropa.cuello.puntas)));
+export const ropaQueSeMueve = P => !!(P.ropa && (P.ropa.lomo || (P.ropa.cuello && P.ropa.cuello.tiras)));
 
 // la capa: cae por los costados y, al andar, el final se levanta y ondea (más rápido cuanto más rápido va)
 export function animarRopa(P, t, dt, speed) {
   const B = P.ropa && P.ropa.cuello;
-  if (B && B.puntas) B.puntas.rotation.x = B.puntas.userData.base + Math.sin(t * (speed > 0.05 ? 9 : 2)) * (speed > 0.05 ? 0.35 : 0.08);   // las puntas de la bufanda
+  if (B && B.tiras) { if (P.root.parent === scene) moverBufanda(P, B, Math.min(dt, 0.033)); B.tiras.forEach(m => { m.visible = P.root.parent === scene && P.root.visible !== false; }); }
   const C = P.ropa && P.ropa.lomo; if (!C) return;
   C.ondea += ((Math.min(speed, 2) / 2) - C.ondea) * Math.min(1, dt * 3);
   const pos = C.tela.geometry.attributes.position, b = C.base, m = C.ondea;

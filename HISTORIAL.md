@@ -5,6 +5,17 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Bufanda arcoíris larguísima y botón de prueba de +100 Huesitos (02-10-2026)
+
+- La bufanda era "arcoíris y larguísima que arrastra": aro con rayas de colores en el cuello y una cola de 16 tramos
+  (uno de cada color, 0,11 m cada uno × la escala) que sale del costado del aro y se simula en el mundo (verlet:
+  gravedad, largo fijo, roce y el suelo): cae, se arrastra detrás de la mascota y se ondula al girar. Los tramos viven
+  en la escena (`quitar` los saca); `tirar` en `pets/ropa.js` llama a `quitar` de cada prenda.
+- TEMPORAL: botón "🧪 +100 🦴 de prueba" arriba en la ventana de la Mascotienda (`data-prueba`, llama a
+  `ganarHuesitos`), para revisar los artículos. Anotado en `PLAN.md` para quitarlo junto con el regalo de 1000.
+- Confirmado: con `npm run dev` prendido, la captura 1-portada sale entera distinta (la tarjeta de video compartida);
+  con el servidor apagado, igual. Apagarlo antes de correr las capturas.
+
 ## Bufanda, lentes, moño y pociones de estrellas, burbujas, mini y gigante (02-10-2026)
 
 - Ropa nueva (`pets/ropa.js`): bufanda a rayas (cuello; las puntas cuelgan derechas aunque el aro vaya inclinado y se

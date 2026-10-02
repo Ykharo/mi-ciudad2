@@ -139,7 +139,8 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
 - `npm test` — lint + arma el juego + todas las pruebas (dev y web, en Chromium y en WebKit con emulación de iPad). Las capturas deben salir
   iguales; sólo se regeneran (`npm run test:capturas`) cuando un cambio visible es a propósito.
   Ojo: Three.js r149 usa `Math.random` para los UUID, así que crear más o menos materiales/geometrías mueve a los
-  vecinos en las capturas aunque nada se dibuje distinto. Para comprobar que el dibujo no cambió:
+  vecinos en las capturas aunque nada se dibuje distinto. Con `npm run dev` prendido las capturas pueden salir
+  enteras distintas (la tarjeta de video compartida): apagarlo antes. Para comprobar que el dibujo no cambió:
   `$env:UUID_APARTE=1` + capturas en el proyecto dev, antes y después del cambio, y comparar.
 - Git no está en el PATH: los commits los hace el usuario desde GitHub Desktop.
 - `herramientas_avatar/` — scripts Python que generaron el modelo (ropa, animaciones, expresiones) y atlas de la cara.

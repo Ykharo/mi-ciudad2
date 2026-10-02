@@ -65,7 +65,7 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
      invisible (sólo collar y ojitos), poción de voz (pato, león, "muuu"), caramelo de aura.
      (Extra: ✅ polvo de estrellas, ✅ jarabe de burbujas.)
    - Accesorios: ✅ capa, ✅ lentes de sol (falta que cambien de forma: corazón, estrella, pixelados), ✅ bufanda
-     (falta la arcoíris larguísima que arrastra), ✅ sombrero de mago (falta el conejito que sale), ✅ corona (falta que
+     arcoíris larguísima que arrastra, ✅ sombrero de mago (falta el conejito que sale), ✅ corona (falta que
      gire); mochila cohete con humito, paraguas, aureola, cuernitos, antenas de abeja, collar musical.
      (Extra: ✅ collar con placa, ✅ gorro de cumpleaños, ✅ moño en la cola.)
    - Compañeros: mariposa, pajarito o pez en pecera flotante; mini-mascota (un ratoncito encima).
@@ -96,7 +96,8 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
 **Pendientes y avisos**
 - **TEMPORAL — quitar**: regalo de 1000 Huesitos (una vez por partida) para probar la Mascotienda. En el juego hay que
   ganárselos. Para quitarlo: `REGALO_PRUEBA = 0` en `game/huesitos.js` (y, si se quiere, borrar `regaloPrueba` del
-  guardado en `game/save.js`).
+  guardado en `game/save.js`). Y el botón "🧪 +100 🦴 de prueba" de la ventana de la Mascotienda
+  (`ui/panels/mascotienda.js`, `data-prueba`).
 - **WebKit no arranca en este PC** (Windows lo bloquea, código `0xC0E90002`): las pruebas de iPad no corren. Revisar
   la seguridad de Windows o `npx playwright install webkit`.
 - Probar en un iPad real (pendiente desde la etapa 0).

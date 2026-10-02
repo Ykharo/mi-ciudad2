@@ -6,6 +6,7 @@ import { on } from '../../core/events.js';
 import { sfx } from '../../audio/audio.js';
 import { player } from '../../game/actors.js';
 import { mascotienda as M } from '../../game/mascotienda.js';
+import { ganarHuesitos } from '../../game/huesitos.js';
 import { ARTICULOS, SECCIONES } from '../../pets/catalog/articulos.js';
 import { $, esc, toast } from '../dom.js';
 
@@ -24,6 +25,8 @@ function render() {
   tabs.innerHTML = SECCIONES.map(s => `<button class="tab${s.id === seccion ? ' on' : ''}" data-sec="${s.id}">${s.ic} ${esc(s.nombre)}</button>`).join('');
   const pets = player.pets, el = M.elegida(), p = pets[el];
   let h = '';
+  // TEMPORAL (para revisar los artículos; quitar junto con el regalo de prueba de game/huesitos.js): +100 Huesitos
+  h += '<button class="toy sun wide" data-prueba="1">🧪 +100 🦴 de prueba</button>';
   // se compra PARA una mascota (cada una tiene sus cosas): se elige a cuál
   if (pets.length) h += `<p class="note">Comprando para <b>${esc(p.name)}</b>${pets.length > 1 ? ' (elige a quién):' : ''}</p>`;
   if (pets.length > 1) h += '<div class="mascotas">' + pets.map((m, i) => `<button class="${i === el ? 'on' : ''}" data-pet="${i}">${esc(m.name)}</button>`).join('') + '</div>';
@@ -51,7 +54,8 @@ tabs.addEventListener('click', e => { const b = e.target.closest('[data-sec]'); 
 body.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   const p = player.pets[M.elegida()];
-  if (b.dataset.pet) { M.elegir(+b.dataset.pet); probando = null; }
+  if (b.dataset.prueba) ganarHuesitos(100, 'De prueba');   // TEMPORAL
+  else if (b.dataset.pet) { M.elegir(+b.dataset.pet); probando = null; }
   else if (b.dataset.voz) decir(ARTICULOS.find(a => a.id === b.dataset.voz).nombre);
   else if (b.dataset.probar) { probando = b.dataset.probar; M.dejarDeProbar(); M.probar(p, probando); }
   else if (b.dataset.poner) { const on = b.textContent === 'Ponérselo'; M.equipar(p, b.dataset.poner, on); probando = null; }

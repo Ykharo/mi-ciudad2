@@ -26,7 +26,7 @@ export const ARTICULOS = [
   { id: 'corona', nombre: 'Corona real', ic: '👑', seccion: 'ropa', tipo: 'ropa', lugar: 'cabeza', precio: 40, desc: 'Con gemas de colores', frase: '¡{n} es la realeza de la ciudad!' },
   { id: 'gorro_cumple', nombre: 'Gorro de cumpleaños', ic: '🥳', seccion: 'ropa', tipo: 'ropa', lugar: 'cabeza', precio: 30, desc: 'Para celebrar todos los días', frase: '¡Feliz no cumpleaños, {n}!' },
   { id: 'sombrero_mago', nombre: 'Sombrero de mago', ic: '🎩', seccion: 'ropa', tipo: 'ropa', lugar: 'cabeza', precio: 45, desc: 'Azul con estrellas', frase: '¡{n} sabe hacer magia!' },
-  { id: 'bufanda', nombre: 'Bufanda a rayas', ic: '🧣', seccion: 'ropa', tipo: 'ropa', lugar: 'cuello', precio: 25, desc: 'Abriga y tiene puntas', frase: '¡Qué calentito le queda el cuello a {n}!' },
+  { id: 'bufanda', nombre: 'Bufanda arcoíris', ic: '🧣', seccion: 'ropa', tipo: 'ropa', lugar: 'cuello', precio: 25, desc: 'Larguísima: se arrastra por el suelo', frase: '¡Qué calentito le queda el cuello a {n}!' },
   { id: 'lentes', nombre: 'Lentes de sol', ic: '🕶️', seccion: 'ropa', tipo: 'ropa', lugar: 'cara', precio: 30, desc: 'Para los días de sol', frase: '¡{n} se ve muy cool!' },
   { id: 'mono', nombre: 'Moño para la cola', ic: '🎀', seccion: 'ropa', tipo: 'ropa', lugar: 'cola', precio: 15, desc: 'Un moño rosado en la cola', frase: '¡{n} mueve su moño al caminar!' },
   { id: 'capa', nombre: 'Capa de superhéroe', ic: '🦸', seccion: 'ropa', tipo: 'ropa', lugar: 'lomo', precio: 60, desc: 'Flamea cuando corre', frase: '¡{n} tiene superpoderes!' },
