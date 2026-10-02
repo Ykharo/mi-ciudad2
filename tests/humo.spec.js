@@ -111,6 +111,23 @@ test('ropa de la mascota (collar, sombrero, capa) y la pelota que va a buscar', 
   expect(g).toEqual({ cuello: 'collar', cabeza: 'sombrero_mago', lomo: 'capa' });
 });
 
+test('pociones (estrellas, burbujas, mini y gigante) y ropa nueva (bufanda, lentes, moño)', async ({ page, jugar }) => {
+  await page.addInitScript(() => { if (!localStorage.getItem('ciudadArcoiris.v2')) localStorage.setItem('ciudadArcoiris.v2', JSON.stringify({ version: 2, cars: [],
+    pets: [{ kind: 'gato', color: '#FFFFFF', name: 'Nube', cosas: ['brillo', 'mini', 'gigante', 'bufanda', 'lentes', 'mono'],
+      extras: { brillo: true, burbujas: true, tamano: 'mini', ropa: { cuello: 'bufanda', cara: 'lentes', cola: 'mono' } } }] })); });   // (burbujas no es suya)
+  await jugar();
+  const leer = () => page.evaluate(() => { const p = window.__juego.player.pets[0]; return [p.extras.brillo, p.extras.burbujas, p.extras.tamano, Math.round(p.obj.root.scale.x * 100), p.extras.ropa]; });
+  expect(await leer()).toEqual([true, false, 'mini', 36, { cuello: 'bufanda', cara: 'lentes', cola: 'mono' }]);   // 0,6 × 0,6
+  // la gigante reemplaza a la mini
+  await page.locator('#btnPets').click();
+  await page.locator('#archSecs [data-sec="cosas"]').click();
+  await page.locator('#archBody [data-poner="gigante"]').click();
+  expect((await leer()).slice(2, 4)).toEqual(['gigante', 96]);   // 0,6 × 1,6
+  await expect(page.locator('#archBody [data-poner="mini"]')).toHaveText('Ponérselo');
+  await page.locator('#archBody [data-poner="gigante"]').click();
+  expect((await leer()).slice(2, 4)).toEqual([null, 60]);
+});
+
 test('Mis mascotas: el archivador con ficha, estado, salud y cosas', async ({ page, jugar }) => {
   await page.addInitScript(() => { if (!localStorage.getItem('ciudadArcoiris.v2')) localStorage.setItem('ciudadArcoiris.v2', JSON.stringify({ version: 2, cars: [],
     mascotienda: { comprados: ['patines'] }, pets: [{ kind: 'perro', color: '#E9B77A', name: 'Toby', adopcion: '2026-09-01T12:00:00Z', estado: { energia: 20, diversion: 90 } }] })); });

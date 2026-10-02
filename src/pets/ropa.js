@@ -94,6 +94,7 @@ function bufanda(P) {
     const pu = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.2 - i * 0.04, 0.03), lana); pu.position.set(dx, -0.09 + i * 0.02, i * 0.01); pu.rotation.z = 0.15 - i * 0.3; puntas.add(pu);
   });
   g.rotation.x = P.kind === 'unicornio' ? -1.15 : -0.65;
+  puntas.userData.base = -g.rotation.x;   // (las puntas cuelgan derechas aunque el aro vaya inclinado)
   P.anclas.cuello.add(g);
   return { g, puntas };
 }
@@ -145,7 +146,7 @@ export const ropaQueSeMueve = P => !!(P.ropa && (P.ropa.lomo || (P.ropa.cuello &
 // la capa: cae por los costados y, al andar, el final se levanta y ondea (más rápido cuanto más rápido va)
 export function animarRopa(P, t, dt, speed) {
   const B = P.ropa && P.ropa.cuello;
-  if (B && B.puntas) B.puntas.rotation.x = Math.sin(t * (speed > 0.05 ? 9 : 2)) * (speed > 0.05 ? 0.35 : 0.08);   // las puntas de la bufanda
+  if (B && B.puntas) B.puntas.rotation.x = B.puntas.userData.base + Math.sin(t * (speed > 0.05 ? 9 : 2)) * (speed > 0.05 ? 0.35 : 0.08);   // las puntas de la bufanda
   const C = P.ropa && P.ropa.lomo; if (!C) return;
   C.ondea += ((Math.min(speed, 2) / 2) - C.ondea) * Math.min(1, dt * 3);
   const pos = C.tela.geometry.attributes.position, b = C.base, m = C.ondea;

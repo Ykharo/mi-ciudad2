@@ -11,7 +11,7 @@ let geoEstrella = null, geoBurbuja = null;
 function estrella() {
   if (geoEstrella) return geoEstrella;
   const s = new THREE.Shape();
-  for (let i = 0; i < 10; i++) { const a = Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 0.035 : 0.08; i ? s.lineTo(Math.cos(a) * r, Math.sin(a) * r) : s.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
+  for (let i = 0; i < 10; i++) { const a = Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 0.055 : 0.13; i ? s.lineTo(Math.cos(a) * r, Math.sin(a) * r) : s.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
   return (geoEstrella = new THREE.ShapeGeometry(s));
 }
 function nueva(tipo, x, y, z) {
@@ -21,10 +21,10 @@ function nueva(tipo, x, y, z) {
     m = new THREE.Mesh(estrella(), new THREE.MeshBasicMaterial({ color: RAINBOW[Math.floor(Math.random() * RAINBOW.length)], transparent: true, side: THREE.DoubleSide, depthWrite: false }));
   } else {
     geoBurbuja = geoBurbuja || new THREE.SphereGeometry(1, 14, 10);
-    m = new THREE.Mesh(geoBurbuja, new THREE.MeshStandardMaterial({ color: 0xDFF6FF, transparent: true, opacity: 0.35, roughness: 0.05, metalness: 0.2, depthWrite: false }));
+    m = new THREE.Mesh(geoBurbuja, new THREE.MeshStandardMaterial({ color: 0xDFF6FF, transparent: true, opacity: 0.55, roughness: 0.05, emissive: 0x9FE3FF, emissiveIntensity: 0.25, metalness: 0.2, depthWrite: false }));
   }
   m.position.set(x, y, z); m.castShadow = false; scene.add(m);
-  const p = { tipo, m, t: 0, vida: tipo === 'brillo' ? 1.1 : 2.6 + Math.random(), r: tipo === 'burbuja' ? 0.06 + Math.random() * 0.07 : 1, fase: Math.random() * 6 };
+  const p = { tipo, m, t: 0, vida: tipo === 'brillo' ? 1.1 : 2.6 + Math.random(), r: tipo === 'burbuja' ? 0.09 + Math.random() * 0.08 : 1, fase: Math.random() * 6 };
   vivas.push(p);
   return p;
 }
@@ -36,7 +36,7 @@ export function soltarEfectos(P, dt, anda) {
   P.efectoT = (P.efectoT || 0) - dt;
   if (P.efectoT > 0) return;
   if (E.brillo && anda) { nueva('brillo', R.x + (Math.random() - 0.5) * 0.3, R.y + lomo * (0.4 + Math.random() * 0.6), R.z + (Math.random() - 0.5) * 0.3); P.efectoT = 0.06; }
-  else if (E.burbujas) { nueva('burbuja', R.x + (Math.random() - 0.5) * 0.4, R.y + lomo * 0.9, R.z + (Math.random() - 0.5) * 0.4); P.efectoT = anda ? 0.35 : 0.7; }
+  else if (E.burbujas) { nueva('burbuja', R.x + (Math.random() - 0.5) * 0.4, R.y + lomo * 0.9, R.z + (Math.random() - 0.5) * 0.4); P.efectoT = anda ? 0.25 : 0.45; }
   else P.efectoT = 0.1;
 }
 // mover todas las partículas, una vez por cuadro aunque se llame por cada mascota (lo llama animatePet: así las que ya
@@ -57,7 +57,7 @@ export function moverEfectos() {
     } else {
       p.m.position.y += dt * 0.45; p.m.position.x += Math.sin(p.t * 3 + p.fase) * dt * 0.15;
       const pop = u > 0.92 ? 1 + (u - 0.92) * 6 : 1;   // al final se agranda y revienta
-      p.m.scale.setScalar(p.r * pop); p.m.material.opacity = u > 0.92 ? 0.35 * (1 - (u - 0.92) / 0.08) : 0.35;
+      p.m.scale.setScalar(p.r * pop); p.m.material.opacity = u > 0.92 ? 0.55 * (1 - (u - 0.92) / 0.08) : 0.55;
     }
   }
 }

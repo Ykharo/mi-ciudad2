@@ -5,6 +5,19 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Bufanda, lentes, moño y pociones de estrellas, burbujas, mini y gigante (02-10-2026)
+
+- Ropa nueva (`pets/ropa.js`): bufanda a rayas (cuello; las puntas cuelgan derechas aunque el aro vaya inclinado y se
+  mecen al andar), lentes de sol (lugar `cara`, en el espacio de la cabeza: `ojos` en el mapa de anclajes) y moño en
+  la punta de la cola (lugar `cola`, `colaLargo` en el mapa; se mueve con la cola).
+- Pociones nuevas (tipo `pocion` con `efecto`): polvo de estrellas (estela de estrellitas al andar) y jarabe de
+  burbujas (burbujas de jabón que suben y revientan): partículas en `pets/efectos.js` (en la escena, máximo 60, las
+  mueve `animatePet`); mini (×0,6) y gigante (×1,6), que se reemplazan entre ellas: `extras.tamano`, `P.escala`
+  (los letreros guardan su tamaño en `userData.s0`; el auto la respeta).
+- La lista completa de artículos que pidió el usuario quedó en `PLAN.md` (Tienda de mascotas), marcando lo hecho.
+- Una captura de referencia falló una vez con la imagen entera distinta y al repetirla salió igual (probablemente el
+  servidor de desarrollo usando la tarjeta de video al mismo tiempo): cerrar `npm run dev` antes de las capturas.
+
 ## Ropa de mascotas (collar, sombreros, capa) y la pelota saltarina (02-10-2026)
 
 - Pasillo nuevo "👕 Ropa" en la Mascotienda (el que era de Accesorios; las alitas pasaron a Transporte) y Juguetes
