@@ -12,6 +12,7 @@ import { manzana } from '../layout.js';
 import { addInterior } from '../physics.js';
 import { addArea } from '../zones.js';
 import { definePlace } from '../place.js';
+import { ARTICULOS } from '../../pets/catalog/articulos.js';
 
 // afuera: el centro del edificio (mira hacia la Calle Mora, −z); adentro: el centro de la sala, lejos del mapa
 const AFUERA = { x: 20, z: 56, w: 18, d: 12, h: 6.5 };
@@ -60,9 +61,100 @@ function fachada({ world, addObs, addZone }) {
 }
 
 /* ---------- adentro ---------- */
-function estante(g, x, z, largo, ry, colores, cosas) {
+// Los productos: cajas de cartón de colores, como en una tienda de verdad. Cada artículo del catálogo (pets/catalog/
+// articulos.js) tiene su caja: el tamaño depende del pasillo (pociones altas y angostas, casitas grandes, trucos como
+// libros) y en el frente lleva su imagen (el ícono), su nombre y una franja arcoíris; en la repisa, la etiqueta con el
+// precio en Huesitos. Todas las etiquetas van en una sola textura (el atlas) y todas las cajas de un mueble en una sola
+// malla: así son pocas llamadas de dibujo aunque haya cientos de cajas.
+const CAJA = { pociones: [0.24, 0.34, 0.2], transporte: [0.52, 0.46, 0.4], ropa: [0.4, 0.3, 0.28], juguetes: [0.32, 0.32, 0.3],
+  companeros: [0.36, 0.4, 0.32], trucos: [0.3, 0.42, 0.07], hogar: [0.62, 0.5, 0.45] };
+const COLORES_CAJA = ['#FF6FAE', '#4FB6F5', '#FFB547', '#9B6BF0', '#3DD6A8', '#FF5E7E', '#5BD66E', '#FF8C42', '#B98BFF', '#22B5C9'];
+const CELDA = 170, ETIQ = 136, COLS = 12;
+let ATLAS = null;
+function atlas() {
+  if (ATLAS) return ATLAS;
+  const filas = Math.ceil(ARTICULOS.length / COLS), c = document.createElement('canvas');
+  c.width = COLS * CELDA; c.height = Math.max(256, filas * CELDA); const x = c.getContext('2d');
+  const emoji = s => `${s}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+  const redondo = (px, py, w, h, r) => { x.beginPath(); x.moveTo(px + r, py); x.arcTo(px + w, py, px + w, py + h, r); x.arcTo(px + w, py + h, px, py + h, r); x.arcTo(px, py + h, px, py, r); x.arcTo(px, py, px + w, py, r); x.closePath(); };
+  const celdas = {};
+  ARTICULOS.forEach((a, i) => {
+    const cx = (i % COLS) * CELDA, cy = Math.floor(i / COLS) * CELDA, [bw, bh] = CAJA[a.seccion] || CAJA.juguetes;
+    const color = COLORES_CAJA[(i * 3) % COLORES_CAJA.length];
+    // el frente de la caja: un rectángulo con la forma de su frente, centrado en la parte de arriba de la celda
+    const k = Math.min(CELDA / bw, ETIQ / bh), w = bw * k, h = bh * k, lx = cx + (CELDA - w) / 2, ly = cy + (ETIQ - h) / 2;
+    x.fillStyle = color; x.fillRect(cx, cy, CELDA, CELDA);
+    const m = Math.min(w, h) * 0.1;
+    x.fillStyle = '#FFFFFF'; redondo(lx + m, ly + m, w - 2 * m, h * 0.78 - m, m); x.fill();
+    const ic = Math.min(w - 2 * m, h * 0.5) * 0.8;
+    x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = emoji(ic); x.fillText(a.ic, lx + w / 2, ly + m + (h * 0.78 - m) * 0.42);
+    x.fillStyle = '#2B2A44'; x.font = `800 ${Math.max(9, Math.min(w / 8, h / 9))}px "Baloo 2", sans-serif`;
+    x.fillText(a.nombre, lx + w / 2, ly + h * 0.7, w - 2 * m - 4);
+    RAINBOW.forEach((col, j) => { x.fillStyle = col; x.fillRect(lx, ly + h * 0.86 + j * h * 0.02, w, h * 0.02 + 0.5); });
+    // la etiqueta del precio (abajo de la celda)
+    x.fillStyle = '#FFE45C'; redondo(cx + 30, cy + ETIQ + 3, CELDA - 60, CELDA - ETIQ - 6, 8); x.fill();
+    x.fillStyle = '#5A3A00'; x.font = '800 22px "Baloo 2", sans-serif'; x.fillText(`🦴 ${a.precio}`, cx + CELDA / 2, cy + ETIQ + (CELDA - ETIQ) / 2 + 1);
+    const U = px => px / c.width, V = py => 1 - py / c.height;
+    celdas[a.id] = { frente: [U(lx), V(ly + h), U(lx + w), V(ly)], liso: [U(cx + 2), V(cy + 2)], precio: [U(cx + 30), V(cy + CELDA - 3), U(cx + CELDA - 30), V(cy + ETIQ + 3)] };
+  });
+  const tex = new THREE.CanvasTexture(c); tex.anisotropy = 4;
+  const material = new THREE.MeshStandardMaterial({ map: tex, emissive: '#FFFFFF', emissiveMap: tex, emissiveIntensity: 0.3, roughness: 0.6 });
+  return (ATLAS = { celdas, material });
+}
+// las 6 caras de una caja (u × v = n: las esquinas quedan en orden antihorario vistas desde afuera)
+const CARAS_CAJA = [[[1, 0, 0], [0, 0, -1], [0, 1, 0]], [[-1, 0, 0], [0, 0, 1], [0, 1, 0]], [[0, 1, 0], [1, 0, 0], [0, 0, -1]],
+  [[0, -1, 0], [1, 0, 0], [0, 0, 1]], [[0, 0, 1], [1, 0, 0], [0, 1, 0]], [[0, 0, -1], [-1, 0, 0], [0, 1, 0]]];
+function cuadro(G, c, n, u, v, hu, hv, uv) {
+  const esq = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
+  for (const i of [0, 1, 2, 0, 2, 3]) {
+    const [a, b] = esq[i];
+    G.pos.push(c[0] + u[0] * a * hu + v[0] * b * hv, c[1] + u[1] * a * hu + v[1] * b * hv, c[2] + u[2] * a * hu + v[2] * b * hv);
+    G.nor.push(...n); G.uv.push(...uv[i]);
+  }
+}
+function caja(G, cel, x, y, z, w, h, d) {
+  const med = [w / 2, h / 2, d / 2], c = [x, y + h / 2, z];
+  for (const [n, u, v] of CARAS_CAJA) {
+    const hn = med[n.findIndex(q => q)], hu = med[u.findIndex(q => q)], hv = med[v.findIndex(q => q)];
+    const cc = [c[0] + n[0] * hn, c[1] + n[1] * hn, c[2] + n[2] * hn];
+    const f = cel.frente, uv = n[2] === 1 ? [[f[0], f[1]], [f[2], f[1]], [f[2], f[3]], [f[0], f[3]]] : Array(4).fill(cel.liso);
+    cuadro(G, cc, n, u, v, hu, hv, uv);
+  }
+}
+// llenar las 3 repisas de un mueble con las cajas de esas secciones: 2 o 3 cajas iguales una al lado de la otra (y,
+// si son bajitas, otra encima), la etiqueta del precio en el borde de la repisa, y el artículo siguiente
+function productos(e, largo, D, secciones, repisas) {
+  const lista = ARTICULOS.filter(a => secciones.includes(a.seccion)); if (!lista.length) return;
+  const { celdas, material } = atlas(), G = { pos: [], nor: [], uv: [] };
+  let n = 0;
+  for (const y of repisas) {
+    let x = -largo / 2 + 0.08;
+    for (;;) {
+      const a = lista[n % lista.length], i = ARTICULOS.indexOf(a), s = 0.92 + ((i * 37) % 7) / 40;
+      const [w0, h0, d0] = CAJA[a.seccion] || CAJA.juguetes, w = w0 * s, h = h0 * s, d = d0 * s;
+      const caras = a.seccion === 'hogar' ? 1 : a.seccion === 'pociones' || a.seccion === 'trucos' ? 3 : 2;
+      if (x + w * caras + 0.04 * (caras - 1) > largo / 2 - 0.08) break;
+      const zf = D / 2 - 0.1 - d / 2;   // (el frente de las cajas, cerca del borde de la repisa)
+      for (let k = 0; k < caras; k++) {
+        const cx = x + w / 2 + k * (w + 0.04);
+        caja(G, celdas[a.id], cx, y, zf, w, h, d);
+        if (h * 2 + 0.06 < 0.66 && (k + n) % 2 === 0) caja(G, celdas[a.id], cx, y + h + 0.005, zf, w, h, d);   // una encima
+      }
+      // la etiqueta del precio, en el borde de la repisa, bajo la primera caja
+      const p = celdas[a.id].precio;
+      cuadro(G, [x + 0.09, y - 0.03, D / 2 - 0.016], [0, 0, 1], [1, 0, 0], [0, 1, 0], 0.08, 0.035, [[p[0], p[1]], [p[2], p[1]], [p[2], p[3]], [p[0], p[3]]]);
+      x += w * caras + 0.04 * (caras - 1) + 0.1; n++;
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(G.pos, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(G.nor, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(G.uv, 2)); geo.computeBoundingSphere();
+  const m = new THREE.Mesh(geo, material); m.receiveShadow = true; e.add(m);
+}
+
+function estante(g, x, z, largo, ry, colores, secciones) {
   // un mueble abierto hacia adelante (+z): fondo de color, costados y techo del color del pasillo, y 3 repisas blancas
-  // con el borde de color; las cosas van paradas sobre cada repisa (antes el mueble era macizo y las tapaba)
+  // con el borde de color; encima, las cajas de los productos de sus secciones
   const e = new THREE.Group(); e.position.set(x, 0, z); e.rotation.y = ry; g.add(e);
   const H = 2.7, D = 0.9, fondo = mat(tint(colores, 0.35), { emissive: tint(colores, 0.35), emissiveIntensity: 0.25 });
   const marco = mat(colores, { emissive: colores, emissiveIntensity: 0.15 }), tabla = mat('#FFFFFF', { emissive: '#FFFFFF', emissiveIntensity: 0.15 });
@@ -70,28 +162,13 @@ function estante(g, x, z, largo, ry, colores, cosas) {
   for (const s of [-1, 1]) e.add(mesh(rlo(0.1, H, D, 0.04), marco, s * (largo / 2 + 0.05), H / 2, 0));
   e.add(mesh(rlo(largo + 0.2, 0.1, D, 0.04), marco, 0, H, 0));
   e.add(mesh(rlo(largo, 0.12, D, 0.04), marco, 0, 0.06, 0));   // el zócalo
-  for (let i = 0; i < 3; i++) {
-    const y = 0.45 + i * 0.75;
+  const repisas = [0.45, 1.2, 1.95];
+  for (const y of repisas) {
     e.add(mesh(rlo(largo, 0.06, D - 0.1, 0.02), tabla, 0, y - 0.03, 0));
     e.add(mesh(rlo(largo + 0.02, 0.1, 0.06, 0.03), marco, 0, y - 0.03, D / 2 - 0.05));   // el borde de color al frente
-    for (let k = 0; k < Math.floor(largo / 0.7); k++) cosas(e, -largo / 2 + 0.45 + k * 0.7, y, 0.05, i * 7 + k);
   }
+  productos(e, largo, D, secciones, repisas);
 }
-const botella = (e, x, y, z, n) => {
-  const m = mat(RAINBOW[n % 6], { emissive: RAINBOW[n % 6], emissiveIntensity: 0.25, roughness: 0.2 });
-  e.add(mesh(cyl(0.12, 0.14, 0.3, 10), m, x, y + 0.15, z)); e.add(mesh(sph(0.12, 10, 8), m, x, y + 0.32, z));
-  e.add(mesh(cyl(0.04, 0.04, 0.12, 6), mat('#E7C08A'), x, y + 0.48, z));
-};
-const patin = (e, x, y, z, n) => {
-  e.add(mesh(rlo(0.4, 0.06, 0.2, 0.03), mat(RAINBOW[n % 6]), x, y + 0.1, z));
-  for (const s of [-1, 1]) { const r = mesh(cyl(0.05, 0.05, 0.22, 10), mat('#FFFFFF', { emissive: RAINBOW[(n + 2) % 6], emissiveIntensity: 0.7 }), x + s * 0.13, y + 0.05, z); r.rotation.x = Math.PI / 2; e.add(r); }
-};
-const globito = (e, x, y, z, n) => {
-  e.add(mesh(sph(0.16, 12, 10), mat(RAINBOW[n % 6]), x, y + 0.45, z)); e.add(mesh(cyl(0.006, 0.006, 0.3, 4), mat('#FFFFFF'), x, y + 0.15, z));
-};
-const burbujita = (e, x, y, z) => e.add(mesh(sph(0.2, 14, 10), new THREE.MeshStandardMaterial({ color: 0xCFF2FF, transparent: true, opacity: 0.4, roughness: 0.05 }), x, y + 0.2, z, false, false));
-const ala = (e, x, y, z, n) => { for (const s of [-1, 1]) { const a = mesh(sph(0.16, 10, 8), mat(['#FFD6F0', '#D6E8FF', '#E8D6FF'][n % 3], { emissive: '#B98BFF', emissiveIntensity: 0.25 }), x + s * 0.1, y + 0.25, z); a.scale.set(0.5, 1, 0.15); a.rotation.z = s * 0.5; e.add(a); } };
-const pelota = (e, x, y, z, n) => e.add(mesh(sph(0.17, 12, 10), mat(RAINBOW[n % 6]), x, y + 0.17, z));
 
 function robi() {
   // el perro robot sobre su disco volador
@@ -172,22 +249,28 @@ function sala({ world, addObs, addZone, onFrame }) {
     marcoM.color.setHSL(0.42, 0.9, 0.55 + 0.12 * Math.sin(t * 3));
   });
 
-  // los pasillos: un mueble por sección (los de las paredes, de un lado; los del medio, de los dos), con su cartel
+  // los pasillos: un mueble por sección (los de las paredes, de un lado; los del medio, de los dos: por detrás del de
+  // transporte están los trucos y por detrás del de ropa, el hogar), cada uno con su cartel colgado y su zona
   const P = [
-    { sec: 'pociones', x: -W / 2 + 0.7, ry: Math.PI / 2, cosas: botella, color: '#B98BFF', zx: -W / 2 + 2.6, cartel: '🧪 Pociones' },
-    { sec: 'transporte', x: -4.5, ry: Math.PI / 2, cosas: (e, a, b, c2, n) => (n % 3 === 0 ? burbujita : n % 3 === 1 ? patin : globito)(e, a, b, c2, n), color: '#4FB6F5', zx: -2.4, cartel: '🛼 Transporte', doble: true },
-    { sec: 'ropa', x: 4.5, ry: -Math.PI / 2, cosas: ala, color: '#FF8FC7', zx: 2.4, cartel: '👕 Ropa', doble: true },
-    { sec: 'juguetes', x: W / 2 - 0.7, ry: -Math.PI / 2, cosas: pelota, color: '#FFD23F', zx: W / 2 - 2.6, cartel: '🧸 Juguetes' },
+    { sec: 'pociones', x: -W / 2 + 0.7, ry: Math.PI / 2, color: '#B98BFF', zx: -W / 2 + 2.6, cartel: '🧪 Pociones' },
+    { sec: 'transporte', x: -4.5, ry: Math.PI / 2, color: '#4FB6F5', zx: -2.4, cartel: '🛼 Transporte', atras: { sec: 'trucos', color: '#FFB547', cartel: '🎉 Trucos' } },
+    { sec: 'ropa', x: 4.5, ry: -Math.PI / 2, color: '#FF8FC7', zx: 2.4, cartel: '👕 Ropa', atras: { sec: 'hogar', color: '#3DD6A8', cartel: '🏡 Hogar' } },
+    { sec: 'juguetes', x: W / 2 - 0.7, ry: -Math.PI / 2, color: '#FFD23F', zx: W / 2 - 2.6, cartel: '🧸 Juguetes', mas: ['companeros'] },
   ];
+  const cartelYZona = (texto, color, cx, cz, zx, zz, sec) => {
+    const cartel = makeSign(texto, color, '#FFFFFF', 3.4); cartel.position.set(cx, 4.0, cz); g.add(cartel);
+    for (const s of [-1, 1]) g.add(mesh(cyl(0.02, 0.02, H - 4.3, 4), mat('#8C8FA8'), cx + s * 1.3, 4.0 + (H - 4.0) / 2 + 0.2, cz, false, false));
+    addZone({ id: 'mascotienda', x: X + zx, z: Z + zz, r: 1.7, label: `${texto.split(' ')[0]} Mirar ${texto.split(' ')[1].toLowerCase()}`, seccion: sec });
+  };
   for (const a of P) {
-    // (los del medio: dos muebles espalda con espalda, cada uno mirando a su pasillo)
     const f = Math.sin(a.ry) * 0.45;
-    if (a.doble) { estante(g, a.x + f, 0, 7, a.ry, a.color, a.cosas); estante(g, a.x - f, 0, 7, a.ry + Math.PI, a.color, a.cosas); }
-    else estante(g, a.x, 0, 7, a.ry, a.color, a.cosas);
-    addObs(X + a.x, Z, a.doble ? 0.95 : 0.5, 3.6);
-    const cartel = makeSign(a.cartel, a.color, '#FFFFFF', 3.4); cartel.position.set(a.x + (a.doble ? 0 : a.ry > 0 ? 1.4 : -1.4), 4.0, 2.5); g.add(cartel);
-    for (const s of [-1, 1]) g.add(mesh(cyl(0.02, 0.02, H - 4.3, 4), mat('#8C8FA8'), cartel.position.x + s * 1.3, 4.0 + (H - 4.0) / 2 + 0.2, 2.5, false, false));
-    addZone({ id: 'mascotienda', x: X + a.zx, z: Z + 0.5, r: 1.7, label: `${a.cartel.split(' ')[0]} Mirar ${a.cartel.split(' ')[1].toLowerCase()}`, seccion: a.sec });
+    if (a.atras) {   // dos muebles espalda con espalda, cada uno mirando a su pasillo
+      estante(g, a.x + f, 0, 7, a.ry, a.color, [a.sec]);
+      estante(g, a.x - f, 0, 7, a.ry + Math.PI, a.atras.color, [a.atras.sec]);
+      cartelYZona(a.atras.cartel, a.atras.color, a.x - Math.sign(f) * 1.6, -1.5, a.x - Math.sign(f) * 2.2, -2.5, a.atras.sec);
+    } else estante(g, a.x, 0, 7, a.ry, a.color, [a.sec, ...(a.mas || [])]);
+    addObs(X + a.x, Z, a.atras ? 0.95 : 0.5, 3.6);
+    cartelYZona(a.cartel, a.color, a.x + (a.atras ? 0 : a.ry > 0 ? 1.4 : -1.4), 2.5, a.zx, 0.5, a.sec);
   }
   // el probador: una tarima redonda con un espejo y una cortina
   const PX = W / 2 - 2.6, PZ = D / 2 - 2.6;
