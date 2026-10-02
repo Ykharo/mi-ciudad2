@@ -7,7 +7,7 @@ import { scene } from '../engine/renderer.js';
 import { RAINBOW } from '../engine/materials.js';
 
 const MAX = 90, vivas = [];
-let geoEstrella = null, geoBurbuja = null;
+let geoEstrella = null, geoBurbuja = null, geoChispa = null;
 function estrella() {
   if (geoEstrella) return geoEstrella;
   const s = new THREE.Shape();
@@ -19,13 +19,18 @@ function nueva(tipo, x, y, z) {
   let m;
   if (tipo === 'brillo') {
     m = new THREE.Mesh(estrella(), new THREE.MeshBasicMaterial({ color: RAINBOW[Math.floor(Math.random() * RAINBOW.length)], transparent: true, side: THREE.DoubleSide, depthWrite: false }));
+  } else if (tipo === 'chispa' || tipo === 'gota') {
+    geoChispa = geoChispa || new THREE.OctahedronGeometry(1);
+    m = new THREE.Mesh(geoChispa, new THREE.MeshBasicMaterial({ color: tipo === 'gota' ? 0xBFEFFF : Math.random() < 0.5 ? 0xFFE45C : 0xFFFFFF, transparent: true, depthWrite: false }));
   } else {
     geoBurbuja = geoBurbuja || new THREE.SphereGeometry(1, 14, 10);
     m = new THREE.Mesh(geoBurbuja, new THREE.MeshStandardMaterial({ color: 0xDFF6FF, transparent: true, opacity: 0.55, roughness: 0.05, emissive: 0x9FE3FF, emissiveIntensity: 0.25, metalness: 0.2, depthWrite: false }));
   }
   // (vida larga y subida rápida: la estela llega alto; con su tamaño desde que nace: la esfera mide 1 m de radio y, si
   // esperaba al cuadro siguiente para achicarse, se veía un instante una burbuja gigante que parpadeaba)
-  const p = { tipo, m, t: 0, vida: tipo === 'brillo' ? 2.2 + Math.random() * 0.6 : 4.5 + Math.random() * 1.5, r: tipo === 'burbuja' ? 0.09 + Math.random() * 0.08 : 1, fase: Math.random() * 6 };
+  const corta = tipo === 'chispa' || tipo === 'gota';
+  const p = { tipo, m, t: 0, vida: tipo === 'brillo' ? 2.2 + Math.random() * 0.6 : corta ? 0.45 + Math.random() * 0.25 : 4.5 + Math.random() * 1.5,
+    r: tipo === 'burbuja' ? 0.09 + Math.random() * 0.08 : corta ? 0.018 + Math.random() * 0.012 : 1, fase: Math.random() * 6 };
   m.scale.setScalar(p.r);
   m.position.set(x, y, z); m.castShadow = false; scene.add(m);
   vivas.push(p);
@@ -42,6 +47,22 @@ export function soltarEfectos(P, dt, anda) {
   else if (E.burbujas) { nueva('burbuja', R.x + (Math.random() - 0.5) * 0.4, R.y + lomo * 0.9, R.z + (Math.random() - 0.5) * 0.4); P.efectoT = anda ? 0.25 : 0.45; }
   else P.efectoT = 0.1;
 }
+// chispitas de los patines: salen de las ruedas, saltan hacia atrás y caen (amarillas y blancas, chiquitas)
+export function soltarChispas(P, dt) {
+  P.chispaT = (P.chispaT || 0) - dt;
+  if (P.chispaT > 0) return;
+  P.chispaT = 0.05;
+  const R = P.root.position, f = P.root.rotation.y, s = P.root.scale.x, lado = Math.random() < 0.5 ? -1 : 1;
+  const p = nueva('chispa', R.x - Math.sin(f) * 0.2 * s + Math.cos(f) * lado * 0.12 * s, R.y + 0.04, R.z - Math.cos(f) * 0.2 * s - Math.sin(f) * lado * 0.12 * s);
+  p.v = { x: -Math.sin(f) * 0.8 + (Math.random() - 0.5) * 0.6, y: 1 + Math.random() * 0.8, z: -Math.cos(f) * 0.8 + (Math.random() - 0.5) * 0.6 };
+}
+// la burbuja que revienta: gotitas que salen para todos lados y caen
+export function estallido(c, r) {
+  for (let i = 0; i < 14; i++) {
+    const a = i / 14 * Math.PI * 2, b = (Math.random() - 0.3) * 1.2, p = nueva('gota', c.x + Math.cos(a) * r, c.y + b * r * 0.5, c.z + Math.sin(a) * r);
+    p.v = { x: Math.cos(a) * 1.2, y: 0.6 + Math.random(), z: Math.sin(a) * 1.2 };
+  }
+}
 // mover todas las partículas, una vez por cuadro aunque se llame por cada mascota (lo llama animatePet: así las que ya
 // salieron terminan aunque se quite la poción)
 let ultimo = 0;
@@ -54,7 +75,10 @@ export function moverEfectos() {
     const p = vivas[i]; p.t += dt;
     const u = p.t / p.vida;
     if (u >= 1) { quitar(p); continue; }
-    if (p.tipo === 'brillo') {
+    if (p.v) {   // chispas y gotitas: vuelan y caen
+      p.v.y -= 6 * dt; p.m.position.x += p.v.x * dt; p.m.position.y += p.v.y * dt; p.m.position.z += p.v.z * dt;
+      p.m.material.opacity = 1 - u;
+    } else if (p.tipo === 'brillo') {
       p.m.position.y += dt * 1.1; p.m.position.x += Math.sin(p.t * 2 + p.fase) * dt * 0.12; p.m.rotation.y += dt * 4; p.m.rotation.z += dt * 2;
       p.m.material.opacity = u < 0.6 ? 1 : 1 - (u - 0.6) / 0.4; p.m.scale.setScalar(1 - u * 0.5);
     } else {

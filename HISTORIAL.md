@@ -5,6 +5,30 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Tanda: pelajes, detalles de lo ya hecho, accesorios de cabeza, hueso, burbujero y set superhéroe (02-10-2026)
+
+- Pastillas de diseño (vaca, cebra, estrellas, corazones, lunares, galaxia; una a la vez: `extras.diseno`) y poción
+  invisible (`extras.invisible`): `pets/pelaje.js` (reemplaza el arcoíris de extras.js y lo incluye). Copias propias
+  de los materiales del pelaje; el dibujo es un canvas que se repite sin costuras y, como las mascotas no tienen
+  coordenadas de textura, se calculan una vez proyectando cada triángulo sobre el plano que más mira. Invisible:
+  pelaje al 10 % sin sombra (quedan ojos, nariz y lo puesto).
+- Detalles de lo ya hecho: patines con chispitas y que se inclinan en las curvas; la burbuja hace "plop" cada 14–24
+  s (se agranda, revienta en gotitas con sonido y se arma de nuevo creciendo); el globo con 5 combinaciones de colores
+  (según el nombre de la mascota); las alitas suben y aletean rápido cuando Nina salta (`P.salta`); los lentes cambian
+  de forma cada 5 s (redondos, corazón, estrella, pixelados) con un saltito y van más adelante (los ojos asomaban); el
+  conejito sale del sombrero de mago cada 8–12 s y mueve las orejas; la corona gira despacio.
+- Ropa nueva de cabeza: aureola (brilla, flota y gira), cuernito de unicornio (espiral de colores), antenas de abeja
+  (se balancean; más grandes y separadas para que se vean entre las orejas del conejo).
+- Juguetes: hueso eterno (`pets/hueso.js`: cuando se sienta o se acuesta lo saca y lo roe; no en la burbuja ni el
+  globo) y burbujero (`game/burbujero.js`, botón `#btnBurbujas`, evento `'burbujero'`: Nina sopla 7 burbujas que
+  bajan flotando; la mascota corre, salta y las revienta; +3 de diversión por burbuja y aviso al final).
+- Set superhéroe (era la capa; id `capa`, como la imagen de referencia del perro superhéroe): capa desde el cuello,
+  más larga y ancha al final; antifaz rojo (aros en los ojos, puente y cinta por detrás; sin cinta en el unicornio),
+  collar rojo con medalla, emblema dorado con un rayo en el pecho, cinturón en la panza y muñequeras en las patas de
+  adelante. Con lentes no se ve el antifaz; con collar o bufanda, no su collar. Los patines ignoran las muñequeras
+  (`userData.ropa`) al medir la pata.
+- `P.extrasUpdate` corre siempre (antes sólo con algo que se moviera).
+
 ## La corona según la imagen de referencia (02-10-2026)
 
 - El usuario mandó una imagen de referencia (corona azul con borde dorado). `corona()` en `pets/ropa.js`: cuerpo

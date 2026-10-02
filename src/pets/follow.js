@@ -4,6 +4,9 @@ import { emit } from '../core/events.js';
 import { labelSprite } from '../engine/textures.js';
 import { collide, sueloSuave } from '../world/physics.js';
 import { animatePet, letreroMascota } from './models.js';
+import { roerHueso } from './hueso.js';
+
+const conHueso = p => !!(p.cosas && p.cosas.includes('hueso') && !p.obj.siempreSentada);   // (no en la burbuja ni el globo)
 
 // Mientras la dueña no se mueve (`ocio`), cada mascota pasa por su ciclo de espera: parada esperando, se sienta, se
 // acuesta, se aburre y salta alrededor de la dueña con su voz, y vuelve a empezar. Los segundos de cada parte
@@ -89,6 +92,7 @@ function followChain(list, leaderPos, dt, t, firstGap = 1.7, sentadas = false, o
     }
     p.obj.root.position.set(p.pos.x, y + sueloSuave(p, p.pos.x, p.pos.z, dt), p.pos.z); p.obj.root.rotation.y = p.facing;
     animatePet(p.obj, t + i, clamp(moved / 5, 0, 3), dt, pose);
+    roerHueso(p.obj, conHueso(p) && !!pose && moved < 0.5, t + i, dt);   // (sentada o acostada: saca su hueso)
     leader = p.pos;
   });
 }
@@ -113,6 +117,7 @@ function waitAt(list, punto, dt, t, descansa = false) {
     if (p.obj.voz) p.obj.voz.visible = false;
     if (descansa && d < 0.4) avanzarOcio(p, dt, 'descansa'); else p.ocio = null;
     animatePet(p.obj, t + i, clamp(moved / 5, 0, 3), dt, p.ocio && p.ocio.fase === 'acostada' ? 'acostada' : d < 0.4);
+    roerHueso(p.obj, conHueso(p) && d < 0.4, t + i, dt);
   });
 }
 

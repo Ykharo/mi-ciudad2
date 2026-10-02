@@ -56,20 +56,19 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
    mascotas ✅ (espera, se sienta, se acuesta, salta con su voz; en la ficha "Ahora: …") y **reposo de Nina** ✅ (tras
    un ciclo de la mascota: busca pasto, se sienta, bosteza y lee un libro acostada / sentada; `game/reposo.js`).
 3. Más artículos. La lista del usuario (✅ hecho):
-   - Transporte: ✅ patines, ✅ globo, ✅ alitas de hada, ✅ burbuja; patineta con propulsores, alitas de murciélago,
-     mini auto a control remoto, nube personal (llueve confeti), alfombra mágica, resorte en las patas (saltos de
-     canguro). Pendientes de los hechos: chispitas y giro en curvas de los patines, colores del globo, aletear al
-     saltar, la burbuja que hace "plop" y se arma de nuevo.
-   - Pociones: ✅ jarabe arcoíris, ✅ gigante / mini; transformadora (perro → dinosaurio, gato → dragón, conejo →
-     pingüino), pastillas de diseño (vaca, cebra, estrellas, corazones, lunares, galaxia), brillo fosforescente,
-     invisible (sólo collar y ojitos), poción de voz (pato, león, "muuu"), caramelo de aura.
+   - Transporte: ✅ patines (chispitas, curvas), ✅ globo (5 colores), ✅ alitas de hada (aletean al saltar), ✅ burbuja
+     ("plop"); patineta con propulsores, alitas de murciélago, mini auto a control remoto, nube personal (llueve
+     confeti), alfombra mágica, resorte en las patas (saltos de canguro).
+   - Pociones: ✅ jarabe arcoíris, ✅ gigante / mini, ✅ pastillas de diseño (vaca, cebra, estrellas, corazones,
+     lunares, galaxia), ✅ invisible; transformadora (perro → dinosaurio, gato → dragón, conejo → pingüino), brillo
+     fosforescente (cuando haya noche), poción de voz (pato, león, "muuu"), caramelo de aura.
      (Extra: ✅ polvo de estrellas, ✅ jarabe de burbujas.)
-   - Accesorios: ✅ capa, ✅ lentes de sol (falta que cambien de forma: corazón, estrella, pixelados), ✅ bufanda
-     arcoíris larguísima que arrastra, ✅ sombrero de mago (falta el conejito que sale), ✅ corona (falta que
-     gire); mochila cohete con humito, paraguas, aureola, cuernitos, antenas de abeja, collar musical.
+   - Accesorios: ✅ set superhéroe (capa, antifaz, emblema, cinturón, muñequeras), ✅ lentes que cambian de forma,
+     ✅ bufanda arcoíris larguísima, ✅ sombrero de mago con conejito, ✅ corona que gira, ✅ aureola, ✅ cuernito,
+     ✅ antenas de abeja; mochila cohete con humito, paraguas, collar musical.
      (Extra: ✅ collar con placa, ✅ gorro de cumpleaños, ✅ moño en la cola.)
    - Compañeros: mariposa, pajarito o pez en pecera flotante; mini-mascota (un ratoncito encima).
-   - Juguetes: ✅ pelota; frisbee, palito mágico que crece, hueso eterno (lo roe sentada), burbujero.
+   - Juguetes: ✅ pelota, ✅ hueso eterno, ✅ burbujero; frisbee, palito mágico que crece.
    - Hogar (Mi Casa): casitas (castillo, nave, iglú, hongo), cama-nube / hamaca / flotante, comedero de estrellitas. 4. Poción transformadora. 5. Encargos de lectura de los vecinos.
 6. Letreros escondidos, diario de la mascota, racha diaria.
 

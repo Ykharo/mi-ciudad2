@@ -41,7 +41,7 @@ function render() {
     h += `<div class="art${probando === a.id ? ' probando' : ''}"><span class="ic">${a.ic}</span>
       <div class="nombre">${esc(a.nombre)}<button data-voz="${a.id}" aria-label="Escuchar">🔊</button></div>
       <div class="desc">${esc(a.desc)}</div><div class="botones">` +
-      (mio ? `<span class="tengo">✔ ¡Es de ${esc(p.name)}!</span>` + (juguete ? '<span class="tengo">Lánzala con 🎾</span>'
+      (mio ? `<span class="tengo">✔ ¡Es de ${esc(p.name)}!</span>` + (juguete ? `<span class="tengo">${a.id === 'hueso' ? 'Lo saca cuando se sienta' : `Úsalo con ${a.ic}`}</span>`
         : `<button class="toy ${puesto ? '' : 'mint'}" data-poner="${a.id}">${puesto ? 'Quitárselo' : 'Ponérselo'}</button>`)
         : `<span class="precio">🦴 ${a.precio}</span>` + (p ? (juguete ? '' : `<button class="toy" data-probar="${a.id}">${probando === a.id ? 'Probando…' : 'Probar'}</button>`) +
           `<button class="toy pink" data-comprar="${a.id}">Comprar</button>` : '')) + '</div></div>';

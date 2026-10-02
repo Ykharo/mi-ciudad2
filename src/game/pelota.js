@@ -14,7 +14,7 @@ import { player } from './actors.js';
 const G = 16, RAPIDO = 7, VOZ = { perro: 'guau', gato: 'miau', conejo: 'conejo', unicornio: 'relincho' };
 let B = null, visible = null;
 const tienePelota = p => !!(p.cosas && p.cosas.includes('pelota'));
-const quienBusca = () => player.pets.find(tienePelota) || null;
+const quienBusca = () => player.pets.find(p => tienePelota(p) && !p.busca) || null;   // (no una que persigue burbujas)
 const puedeLanzar = () => state.mode === 'play' && !player.seat && !player.air && !B && !!quienBusca();
 const _v = new THREE.Vector3(), _h = new THREE.Vector3();
 
@@ -28,7 +28,7 @@ function hacerPelota(r) {
 // `cual`: la mascota que la va a buscar (desde su ficha); si no, la primera que tenga pelota
 export function lanzarPelota(cual) {
   if (!puedeLanzar()) return false;
-  const p = cual && tienePelota(cual) ? cual : quienBusca(), s = p.obj.root.scale.x, r = 0.13 * s + 0.02, f = player.facing;
+  const p = cual && tienePelota(cual) && !cual.busca ? cual : quienBusca(), s = p.obj.root.scale.x, r = 0.13 * s + 0.02, f = player.facing;
   const mesh = hacerPelota(r); mesh.castShadow = true; scene.add(mesh);
   const mano = player.ch.bones && player.ch.bones.HandR;
   const pos = mano ? mano.getWorldPosition(new THREE.Vector3()) : player.pos.clone().setY(player.y + 1.3);

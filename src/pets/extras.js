@@ -13,8 +13,10 @@ import { THREE } from '../engine/three.js';
 import { scene } from '../engine/renderer.js';
 import { RAINBOW } from '../engine/materials.js';
 import { rbox } from '../engine/geometry.js';
-import { animarRopa, ponerRopa, ropaPuesta, ropaQueSeMueve } from './ropa.js';
-import { soltarEfectos } from './efectos.js';
+import { animarRopa, ponerRopa, ropaPuesta } from './ropa.js';
+import { estallido, soltarChispas, soltarEfectos } from './efectos.js';
+import { DISENOS, animarPelaje, ponerPelaje } from './pelaje.js';
+import { emit } from '../core/events.js';
 
 const TAU = Math.PI * 2;
 const sinSombra = g => { g.traverse(o => { o.castShadow = false; o.receiveShadow = false; }); return g; };
@@ -31,7 +33,7 @@ function patines(P) {
   const box = new THREE.Box3(), caja = new THREE.Box3();
   P.legs.forEach((leg, i) => {
     box.makeEmpty();
-    leg.children.forEach(m => { if (m.geometry) { m.updateMatrix(); m.geometry.computeBoundingBox(); box.union(caja.copy(m.geometry.boundingBox).applyMatrix4(m.matrix)); } });
+    leg.children.forEach(m => { if (m.geometry && !m.userData.ropa) { m.updateMatrix(); m.geometry.computeBoundingBox(); box.union(caja.copy(m.geometry.boundingBox).applyMatrix4(m.matrix)); } });
     const w = box.max.x - box.min.x, l = box.max.z - box.min.z, fondo = box.min.y, cx = (box.max.x + box.min.x) / 2, cz = (box.max.z + box.min.z) / 2;
     const hb = Math.min(0.15, (box.max.y - box.min.y) * BOTA);   // la caña de la bota: la parte de abajo de la pata
     const p = new THREE.Group(); p.position.set(cx, fondo, cz); leg.add(p); patas.push(p);
@@ -103,6 +105,13 @@ function mimbreTex() {
   texMimbre = new THREE.CanvasTexture(c); texMimbre.wrapS = THREE.RepeatWrapping; texMimbre.repeat.set(2, 1);
   return texMimbre;
 }
+const PALETAS_GLOBO = [
+  RAINBOW,                                                         // arcoíris
+  ['#FF6FAE', '#FFFFFF', '#FF6FAE', '#FFFFFF', '#FF6FAE', '#FFFFFF'],   // dulce (rosado y blanco)
+  ['#1E90FF', '#4FB6F5', '#9BE3FF', '#3DD6A8', '#1E90FF', '#9BE3FF'],   // mar
+  ['#FF5E5E', '#FFB547', '#FFE45C', '#FF8C42', '#FF5E5E', '#FFE45C'],   // atardecer
+  ['#A77BF3', '#FFD23F', '#A77BF3', '#FFD23F', '#A77BF3', '#FFD23F'],   // mágico (lila y dorado)
+];
 function globo(P) {
   // la canasta bajo la mascota (sentada adentro), decorada; arriba (`alto`, que se inclina con la inercia) el globo
   // redondo con sus cuerdas; y la cuerda hasta la mano de Nina
@@ -119,8 +128,10 @@ function globo(P) {
   }
   // arriba: el globo, con gajos de colores, y sus 4 cuerdas (se inclina desde el borde de la canasta)
   const arriba = new THREE.Group(); arriba.position.y = ALTO + 0.3; g.add(arriba);
+  // los gajos, de una de varias combinaciones de colores (cada mascota la suya, según su nombre)
+  const paleta = PALETAS_GLOBO[[...(P.nombre || '')].reduce((a, ch) => a + ch.charCodeAt(0), 0) % PALETAS_GLOBO.length];
   const geo = new THREE.SphereGeometry(RB, 28, 20), col = [], c = new THREE.Color(), pos = geo.attributes.position;
-  for (let i = 0; i < pos.count; i++) { const a = Math.atan2(pos.getZ(i), pos.getX(i)); c.set(RAINBOW[Math.floor(((a + Math.PI) / TAU) * 12) % 6]); col.push(c.r, c.g, c.b); }
+  for (let i = 0; i < pos.count; i++) { const a = Math.atan2(pos.getZ(i), pos.getX(i)); c.set(paleta[Math.floor(((a + Math.PI) / TAU) * 12) % paleta.length]); col.push(c.r, c.g, c.b); }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
   const bola = new THREE.Group(); bola.position.y = M.alto + 1.05; arriba.add(bola);
   bola.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5 })));
@@ -140,21 +151,6 @@ function globo(P) {
 const TRANSPORTES = { patines, burbuja, alitas, globo };
 export const ES_TRANSPORTE = id => !!TRANSPORTES[id];
 
-// el pelaje arcoíris: copias propias de los materiales del pelaje, que cambian de color (y al quitarlo, vuelven)
-function arcoiris(P, on) {
-  if (on && !P.arco) {
-    const nuevo = {}, swap = new Map();
-    for (const [k, m] of Object.entries(P.mats)) { nuevo[k] = m.clone(); swap.set(m, nuevo[k]); }
-    P.root.traverse(o => { if (o.isMesh && swap.has(o.material)) o.material = swap.get(o.material); });
-    P.arco = { nuevo, swap };
-  } else if (!on && P.arco) {
-    const vuelta = new Map([...P.arco.swap].map(([a, b]) => [b, a]));
-    P.root.traverse(o => { if (o.isMesh && vuelta.has(o.material)) o.material = vuelta.get(o.material); });
-    Object.values(P.arco.nuevo).forEach(m => m.dispose());
-    P.arco = null;
-  }
-}
-
 const TAMANOS = { mini: 0.6, gigante: 1.6 };
 export function ponerExtras(P, extras = {}) {
   if (P.ext && P.ext.id !== extras.transporte) {
@@ -168,7 +164,7 @@ export function ponerExtras(P, extras = {}) {
     P.ext = TRANSPORTES[extras.transporte](P); P.ext.id = extras.transporte;
     sinSombra(P.ext.g);
   }
-  arcoiris(P, !!extras.arcoiris);
+  ponerPelaje(P, extras);            // arcoíris, pastillas de diseño, invisible (pets/pelaje.js)
   ponerRopa(P, extras.ropa || {});   // collar, sombrero, capa… (pets/ropa.js)
   // poción mini o gigante: la mascota entera (con lo que lleva) cambia de tamaño; los letreros no
   const tamano = TAMANOS[extras.tamano] ? extras.tamano : null;
@@ -177,12 +173,30 @@ export function ponerExtras(P, extras = {}) {
     P.root.scale.setScalar(P.escala);
     P.root.children.forEach(c => { if (c.userData.s0) c.scale.copy(c.userData.s0).multiplyScalar(1 / P.escala); });
   }
-  P.extras = { transporte: P.ext ? P.ext.id : null, arcoiris: !!P.arco, ropa: ropaPuesta(P), brillo: !!extras.brillo, burbujas: !!extras.burbujas, tamano };
-  P.extrasUpdate = P.ext || P.arco || ropaQueSeMueve(P) || P.extras.brillo || P.extras.burbujas ? (t, dt, speed) => animarExtras(P, t, dt, speed) : null;
-  if (!P.extrasUpdate) { P.body.position.y = Math.max(0, P.body.position.y); if (P.label) P.label.position.y = P.labelY; }
+  P.extras = { transporte: P.ext ? P.ext.id : null, arcoiris: !!extras.arcoiris, ropa: ropaPuesta(P), brillo: !!extras.brillo, burbujas: !!extras.burbujas, tamano,
+    diseno: DISENOS.includes(extras.diseno) ? extras.diseno : null, invisible: !!extras.invisible };
+  // (con la mascota se anima siempre: el sombrero de mago, la corona, los lentes y el hueso también se mueven)
+  P.extrasUpdate = (t, dt, speed) => animarExtras(P, t, dt, speed);
+  if (!P.ext) { P.body.position.y = Math.max(0, P.body.position.y); if (P.label) P.label.position.y = P.labelY; }
 }
 
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _m = new THREE.Vector3();
+// la burbuja hace "plop" cada tanto: se agranda un poco, revienta en gotitas, desaparece un momento y se vuelve a
+// armar creciendo. Devuelve su tamaño (0 = reventada).
+function plop(P, E, dt) {
+  E.plopT = (E.plopT ?? 12 + Math.random() * 8) - dt;
+  if (E.plopT > 0) return 1;
+  const u = -E.plopT;   // segundos desde que empezó
+  if (u < 0.2) return 1 + u * 1.2;
+  if (!E.reventada) {
+    E.reventada = true; P.root.updateMatrixWorld(true);
+    E.bola.getWorldPosition(_a); estallido(_a, E.r * P.root.scale.x); emit('sonido', 'pop');
+  }
+  if (u < 0.8) return 0.001;
+  if (u < 1.4) return Math.max(0.001, (u - 0.8) / 0.6);
+  E.reventada = false; E.plopT = 14 + Math.random() * 10;
+  return 1;
+}
 // A qué altura va: con burbuja o alitas, el perro, el gato y el conejo flotan a la altura del hombro de la dueña
 // (`P.hombro`, en metros sobre su suelo: lo pone game/mascotienda.js; 1,75 si no se sabe): el centro de la burbuja, o
 // el medio del cuerpo con alitas. Está en el espacio de la mascota (se divide por su escala) y cambia suave (si ella
@@ -234,17 +248,26 @@ function patinar(P, E, dt, speed, anda) {
 }
 function animarExtras(P, t, dt, speed) {
   const E = P.ext, anda = speed > 0.05;
-  if (P.arco) {
-    const h = (t * 0.12) % 1;
-    P.arco.nuevo.c.color.setHSL(h, 0.75, 0.68); P.arco.nuevo.dk.color.setHSL(h, 0.7, 0.5); P.arco.nuevo.lt.color.setHSL((h + 0.08) % 1, 0.8, 0.82);
-  }
+  animarPelaje(P, t);
+  // cuánto está girando (para inclinarse en las curvas con los patines)
+  const giro = P.yawAntes === undefined || dt <= 0 ? 0 : Math.atan2(Math.sin(P.root.rotation.y - P.yawAntes), Math.cos(P.root.rotation.y - P.yawAntes)) / dt;
+  P.yawAntes = P.root.rotation.y;
   let alto = 0, etiqueta = 0;
   if (E) {
-    alto = alturaVuelo(P, E, dt) + (E.vuela ? Math.sin(t * 1.3) * 0.09 : E.flota ? Math.sin(t * 2.2) * 0.06 : 0);
+    // con alitas, cuando la dueña salta (`P.salta`, lo pone game/mascotienda.js) sube un poco y aletea rápido
+    E.saltito = (E.saltito || 0) + ((E.alas && P.salta ? 1 : 0) - (E.saltito || 0)) * Math.min(1, dt * 4);
+    alto = alturaVuelo(P, E, dt) + (E.vuela ? Math.sin(t * 1.3) * 0.09 + E.saltito * 0.35 : E.flota ? Math.sin(t * 2.2) * 0.06 : 0);
     const [lx, lz] = E.inercia ? inercia(P, E, dt) : [0, 0];
-    if (E.patina) patinar(P, E, dt, speed, anda);
+    if (E.patina) {
+      patinar(P, E, dt, speed, anda);
+      // en las curvas se inclina hacia adentro, y al andar suelta chispitas de las ruedas
+      E.curva = (E.curva || 0) + (Math.max(-0.35, Math.min(0.35, giro * 0.12)) * (anda ? 1 : 0) - (E.curva || 0)) * Math.min(1, dt * 6);
+      P.body.rotation.z += E.curva;
+      if (anda) soltarChispas(P, dt);
+    }
     if (E.bola && E.r) {   // burbuja: rodea a la mascota sentada, flota y tiembla un poco; se adelanta y vuelve
-      const p = 1 + Math.sin(t * 3) * 0.02; E.bola.scale.set(p, 1 / p, p);
+      const p = 1 + Math.sin(t * 3) * 0.02;
+      E.bola.scale.set(p, 1 / p, p).multiplyScalar(plop(P, E, dt));
       E.g.position.set(lx, alto + E.r * 0.62, lz);
       P.body.position.x = lx; P.body.position.z = lz;
       etiqueta = E.r * 0.9;
@@ -270,8 +293,8 @@ function animarExtras(P, t, dt, speed) {
       P.body.rotation.z = Math.sin(E.paso) * 0.04 * m + Math.sin(t * 0.6) * 0.04 * (1 - m) - lx * 0.5;
       P.body.position.x = lx; P.body.position.z = lz;
       // aletear suave: cada ala gira sobre el eje del lomo (z): casi juntas arriba ↔ abiertas hacia su lado
-      const f = anda ? 6 : 4;
-      E.alas.forEach(({ pivote, s }) => { pivote.rotation.z = -s * (0.3 + (Math.sin(t * f) * 0.5 + 0.5) * 0.55); });
+      E.fAla = (E.fAla || 0) + dt * (anda ? 6 : 4) * (1 + E.saltito * 2.5);   // (al saltar, aletea más rápido)
+      E.alas.forEach(({ pivote, s }) => { pivote.rotation.z = -s * (0.3 + (Math.sin(E.fAla) * 0.5 + 0.5) * (0.55 + E.saltito * 0.25)); });
     }
     if (E.globo) {
       // el globo se mece y se queda atrás con la inercia (se inclina como un péndulo); la mascota va sentada en la

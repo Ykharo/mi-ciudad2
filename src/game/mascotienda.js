@@ -38,23 +38,26 @@ function fixExtras(e, p) {
   for (const [lugar, id] of Object.entries((e && typeof e.ropa === 'object' && e.ropa) || {})) {
     const a = articulo(id); if (a && a.tipo === 'ropa' && a.lugar === lugar && tiene(p, id)) ropa[lugar] = id;
   }
-  const pocion = ef => !!(e && e[ef] && tiene(p, ef));   // (arcoiris, brillo, burbujas: el id es el mismo que el efecto)
+  const pocion = ef => !!(e && e[ef] && tiene(p, ef));   // (arcoiris, brillo, burbujas, invisible: el id es el efecto)
   const tamano = e && (e.tamano === 'mini' || e.tamano === 'gigante') && tiene(p, e.tamano) ? e.tamano : null;
-  return { transporte: t, arcoiris: pocion('arcoiris'), brillo: pocion('brillo'), burbujas: pocion('burbujas'), tamano, ropa };
+  const da = e && ARTICULOS.find(a => a.efecto === 'diseno' && a.diseno === e.diseno), diseno = da && tiene(p, da.id) ? da.diseno : null;
+  return { transporte: t, arcoiris: pocion('arcoiris'), brillo: pocion('brillo'), burbujas: pocion('burbujas'), invisible: pocion('invisible'), tamano, diseno, ropa };
 }
-// ¿lo tiene puesto? (los juguetes no se ponen)
+// las pociones que van de a una: un tamaño (mini o gigante) y un diseño de pelaje; las demás se juntan
 const TAMANO = new Set(['mini', 'gigante']);
+// ¿lo tiene puesto? (los juguetes no se ponen)
 function puesto(p, id) {
   const a = articulo(id), e = p && p.extras; if (!a || !e) return false;
-  if (a.tipo === 'pocion') return TAMANO.has(a.efecto) ? e.tamano === a.efecto : !!e[a.efecto];
+  if (a.tipo === 'pocion') return TAMANO.has(a.efecto) ? e.tamano === a.efecto : a.efecto === 'diseno' ? e.diseno === a.diseno : !!e[a.efecto];
   return a.tipo === 'transporte' ? e.transporte === id : a.tipo === 'ropa' ? !!(e.ropa && e.ropa[a.lugar] === id) : false;
 }
 // cómo quedan los extras al ponerse (on) o quitarse un artículo: un transporte reemplaza al que tenía; una prenda, a la
-// del mismo lugar del cuerpo; la poción mini a la gigante (y al revés); las otras pociones se juntan
+// del mismo lugar del cuerpo; la poción mini a la gigante (y al revés), y una pastilla de diseño a la otra
 function conArticulo(e0, a, on) {
   const e = { ...(e0 || {}), ropa: { ...((e0 && e0.ropa) || {}) } };
   if (a.tipo === 'transporte') e.transporte = on ? a.id : (e.transporte === a.id ? null : e.transporte);
   else if (a.tipo === 'pocion' && TAMANO.has(a.efecto)) e.tamano = on ? a.efecto : (e.tamano === a.efecto ? null : e.tamano);
+  else if (a.tipo === 'pocion' && a.efecto === 'diseno') e.diseno = on ? a.diseno : (e.diseno === a.diseno ? null : e.diseno);
   else if (a.tipo === 'pocion') e[a.efecto] = !!on;
   else if (a.tipo === 'ropa') { if (on) e.ropa[a.lugar] = a.id; else if (e.ropa[a.lugar] === a.id) delete e.ropa[a.lugar]; }
   return e;
@@ -141,7 +144,7 @@ function updateMascotienda(dt) {
   const mano = player.ch && player.ch.bones && player.ch.bones.HandL, hombro = player.ch && player.ch.bones && player.ch.bones.UpperArmL;
   const hy = hombro && !player.seat ? Math.min(2.2, Math.max(0.8, hombro.getWorldPosition(_v).y - player.ch.root.position.y)) : null;
   for (const p of player.pets) {
-    p.obj.hombro = hy;
+    p.obj.hombro = hy; p.obj.salta = player.air;   // (con alitas, aletea y sube cuando ella salta)
     if (!p.obj.ext || !p.obj.ext.globo) continue;
     if (!mano) { p.obj.mano = null; continue; }
     p.obj.mano = mano.getWorldPosition(p.obj.mano || new THREE.Vector3());

@@ -12,6 +12,7 @@ import { player } from '../../game/actors.js';
 import { FOTOS, abrirArchivador, ahora, animo, borrarFoto, cerrarArchivador, elegirFicha, felicidad, fichaElegida, guardarFoto, llevarACasa, renombrar } from '../../game/fichas.js';
 import { mascotienda as M } from '../../game/mascotienda.js';
 import { lanzarPelota } from '../../game/pelota.js';
+import { hacerBurbujas } from '../../game/burbujero.js';
 import { PET_KINDS } from '../../pets/models.js';
 import { ARTICULOS } from '../../pets/catalog/articulos.js';
 import { $, esc, toast } from '../dom.js';
@@ -81,7 +82,8 @@ function render() {
       for (const a of lista) {
         const puesto = M.puesto(p, a.id);
         h += a.tipo === 'juguete'
-          ? `<div class="cosa"><span class="ic">${a.ic}</span><b>${esc(a.nombre)}</b><button class="toy sun" data-jugar="${a.id}">🎾 ¡A jugar!</button></div>`
+          ? `<div class="cosa"><span class="ic">${a.ic}</span><b>${esc(a.nombre)}</b>` + (a.id === 'hueso' ? '<small>Lo saca cuando se sienta</small></div>'
+            : `<button class="toy sun" data-jugar="${a.id}">${a.ic} ¡A jugar!</button></div>`)
           : `<div class="cosa${puesto ? ' puesto' : ''}"><span class="ic">${a.ic}</span><b>${esc(a.nombre)}</b><button class="toy ${puesto ? '' : 'mint'}" data-poner="${a.id}" data-on="${puesto ? '' : '1'}">${puesto ? 'Quitárselo' : 'Ponérselo'}</button></div>`;
       }
     }
@@ -108,7 +110,7 @@ body.addEventListener('click', e => {
   else if (b.dataset.borrar) borrarFoto(p, +b.dataset.borrar);
   else if (b.dataset.poner) M.equipar(p, b.dataset.poner, !!b.dataset.on);
   else if (b.dataset.jugar) {   // a jugar: se cierra el archivador y Nina lanza la pelota
-    panel.hidden = true; seguro = false; cerrarArchivador(); lanzarPelota(p); return;
+    panel.hidden = true; seguro = false; cerrarArchivador(); if (b.dataset.jugar === 'burbujero') hacerBurbujas(p); else lanzarPelota(p); return;
   }
   else if (b.dataset.casa) {
     if (!seguro) { seguro = true; render(); return; }
