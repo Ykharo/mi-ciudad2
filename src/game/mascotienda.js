@@ -38,19 +38,24 @@ function fixExtras(e, p) {
   for (const [lugar, id] of Object.entries((e && typeof e.ropa === 'object' && e.ropa) || {})) {
     const a = articulo(id); if (a && a.tipo === 'ropa' && a.lugar === lugar && tiene(p, id)) ropa[lugar] = id;
   }
-  return { transporte: t, arcoiris: !!(e && e.arcoiris && tiene(p, 'arcoiris')), ropa };
+  const pocion = ef => !!(e && e[ef] && tiene(p, ef));   // (arcoiris, brillo, burbujas: el id es el mismo que el efecto)
+  const tamano = e && (e.tamano === 'mini' || e.tamano === 'gigante') && tiene(p, e.tamano) ? e.tamano : null;
+  return { transporte: t, arcoiris: pocion('arcoiris'), brillo: pocion('brillo'), burbujas: pocion('burbujas'), tamano, ropa };
 }
 // ¿lo tiene puesto? (los juguetes no se ponen)
+const TAMANO = new Set(['mini', 'gigante']);
 function puesto(p, id) {
   const a = articulo(id), e = p && p.extras; if (!a || !e) return false;
-  return a.tipo === 'transporte' ? e.transporte === id : a.tipo === 'pocion' ? !!e.arcoiris : a.tipo === 'ropa' ? !!(e.ropa && e.ropa[a.lugar] === id) : false;
+  if (a.tipo === 'pocion') return TAMANO.has(a.efecto) ? e.tamano === a.efecto : !!e[a.efecto];
+  return a.tipo === 'transporte' ? e.transporte === id : a.tipo === 'ropa' ? !!(e.ropa && e.ropa[a.lugar] === id) : false;
 }
 // cómo quedan los extras al ponerse (on) o quitarse un artículo: un transporte reemplaza al que tenía; una prenda, a la
-// del mismo lugar del cuerpo
+// del mismo lugar del cuerpo; la poción mini a la gigante (y al revés); las otras pociones se juntan
 function conArticulo(e0, a, on) {
   const e = { ...(e0 || {}), ropa: { ...((e0 && e0.ropa) || {}) } };
   if (a.tipo === 'transporte') e.transporte = on ? a.id : (e.transporte === a.id ? null : e.transporte);
-  else if (a.tipo === 'pocion') e.arcoiris = !!on;
+  else if (a.tipo === 'pocion' && TAMANO.has(a.efecto)) e.tamano = on ? a.efecto : (e.tamano === a.efecto ? null : e.tamano);
+  else if (a.tipo === 'pocion') e[a.efecto] = !!on;
   else if (a.tipo === 'ropa') { if (on) e.ropa[a.lugar] = a.id; else if (e.ropa[a.lugar] === a.id) delete e.ropa[a.lugar]; }
   return e;
 }

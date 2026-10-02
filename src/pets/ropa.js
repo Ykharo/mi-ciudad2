@@ -3,13 +3,17 @@
 //   cuello  collar con placa (la inicial de su nombre)                 ancla `cuello`
 //   cabeza  corona, gorro de cumpleaños o sombrero de mago             ancla `cabeza` (sigue los giros de la cabeza)
 //   lomo    capa de superhéroe, que flamea al andar                    sobre el lomo, desde el cuello hacia la cola
+//   cuello  (o) bufanda a rayas con puntas que se mecen                ancla `cuello`
+//   cara    lentes de sol                                              `ojos` (en el espacio de la cabeza)
+//   cola    moño en la punta de la cola                                `colaLargo` (en el espacio de la cola)
 // `ponerRopa(P, { cuello, cabeza, lomo })` arma o quita lo que corresponde; `animarRopa(P, t, dt, speed)` mueve la capa.
 // Los materiales son propios de cada prenda (se tiran al quitarla); nada de esto proyecta sombra.
 import { THREE } from '../engine/three.js';
 import { RAINBOW } from '../engine/materials.js';
 import { stripeTexture } from '../engine/textures.js';
 
-export const LUGAR_ROPA = { collar: 'cuello', corona: 'cabeza', gorro_cumple: 'cabeza', sombrero_mago: 'cabeza', capa: 'lomo' };
+export const LUGAR_ROPA = { collar: 'cuello', bufanda: 'cuello', corona: 'cabeza', gorro_cumple: 'cabeza', sombrero_mago: 'cabeza', capa: 'lomo', lentes: 'cara', mono: 'cola' };
+const LUGARES = ['cuello', 'cabeza', 'lomo', 'cara', 'cola'];
 const est = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.5, ...o });
 function estrella(r1, r2, n = 5) {
   const s = new THREE.Shape();
@@ -80,7 +84,44 @@ function capa(P) {
   P.body.add(g);
   return { g, tela, base, w, L, cuerpo: M.ancho * 0.42, estrella: s, ondea: 0 };
 }
-const HACER = { collar, corona, gorro_cumple: gorroCumple, sombrero_mago: sombreroMago, capa };
+// la bufanda: un rollo de lana a rayas alrededor del cuello y dos puntas que cuelgan adelante (se mecen al andar)
+function bufanda(P) {
+  const M = P.medidas, r = (M.cuelloR || M.ancho * 0.4) + 0.02, g = new THREE.Group();
+  const lana = est('#FFFFFF', { map: stripeTexture('#4FB6F5', '#FFFFFF', 10), roughness: 0.9 });
+  g.add(new THREE.Mesh(new THREE.TorusGeometry(r, 0.05, 10, 28), lana));
+  const puntas = new THREE.Group(); puntas.position.set(r * 0.35, -r * 0.6, 0.06); g.add(puntas);
+  [0, 0.09].forEach((dx, i) => {
+    const pu = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.2 - i * 0.04, 0.03), lana); pu.position.set(dx, -0.09 + i * 0.02, i * 0.01); pu.rotation.z = 0.15 - i * 0.3; puntas.add(pu);
+  });
+  g.rotation.x = P.kind === 'unicornio' ? -1.15 : -0.65;
+  P.anclas.cuello.add(g);
+  return { g, puntas };
+}
+// lentes de sol: dos cristales oscuros con marco de color delante de los ojos, unidos por un puente, con patitas
+function lentes(P) {
+  const [ox, oy, oz] = P.medidas.ojos || [0.1, 0.05, 0.2], R = (P.medidas.cabezaR || 0.25) * 0.24, g = new THREE.Group();
+  const marco = est('#FF4F8B'), vidrio = est('#1F1B2E', { metalness: 0.6, roughness: 0.15 });
+  for (const s of [-1, 1]) {
+    const v = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.012, 20), vidrio); v.rotation.x = Math.PI / 2; v.position.set(s * ox, oy, oz + 0.03); g.add(v);
+    const m = new THREE.Mesh(new THREE.TorusGeometry(R, 0.012, 6, 20), marco); m.position.set(s * ox, oy, oz + 0.035); g.add(m);
+    const pata = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.012, oz * 0.8), marco); pata.position.set(s * (ox + R), oy, oz * 0.6); g.add(pata);
+  }
+  const puente = new THREE.Mesh(new THREE.BoxGeometry(Math.max(0.01, ox * 2 - R * 2), 0.014, 0.014), marco); puente.position.set(0, oy + R * 0.3, oz + 0.035); g.add(puente);
+  P.head.add(g);   // (en el espacio de la cabeza: sigue sus giros)
+  return { g };
+}
+// moño en la punta de la cola: dos lazos y un nudo (se mueve con la cola)
+function mono(P) {
+  const L = P.medidas.colaLargo || 0.3, g = new THREE.Group(), cinta = est('#FF6FAE');
+  for (const s of [-1, 1]) {
+    const lazo = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.11, 4), cinta); lazo.rotation.z = s * Math.PI / 2; lazo.position.x = s * 0.055; lazo.scale.set(1, 1, 0.45); g.add(lazo);
+  }
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 6), est('#FFD23F')));
+  g.position.set(0, L, 0);
+  (P.tail || P.body).add(g);
+  return { g };
+}
+const HACER = { collar, bufanda, corona, gorro_cumple: gorroCumple, sombrero_mago: sombreroMago, capa, lentes, mono };
 
 function tirar(o) {
   o.g.parent && o.g.parent.remove(o.g);
@@ -91,7 +132,7 @@ function tirar(o) {
 }
 export function ponerRopa(P, ropa = {}) {
   P.ropa = P.ropa || {};
-  for (const lugar of ['cuello', 'cabeza', 'lomo']) {
+  for (const lugar of LUGARES) {
     const id = ropa[lugar] && HACER[ropa[lugar]] && LUGAR_ROPA[ropa[lugar]] === lugar ? ropa[lugar] : null, ya = P.ropa[lugar];
     if (ya && ya.id === id) continue;
     if (ya) { tirar(ya); P.ropa[lugar] = null; }
@@ -99,10 +140,12 @@ export function ponerRopa(P, ropa = {}) {
   }
 }
 export const ropaPuesta = P => Object.fromEntries(Object.entries(P.ropa || {}).filter(([, o]) => o).map(([l, o]) => [l, o.id]));
-export const ropaQueSeMueve = P => !!(P.ropa && P.ropa.lomo);
+export const ropaQueSeMueve = P => !!(P.ropa && (P.ropa.lomo || (P.ropa.cuello && P.ropa.cuello.puntas)));
 
 // la capa: cae por los costados y, al andar, el final se levanta y ondea (más rápido cuanto más rápido va)
 export function animarRopa(P, t, dt, speed) {
+  const B = P.ropa && P.ropa.cuello;
+  if (B && B.puntas) B.puntas.rotation.x = Math.sin(t * (speed > 0.05 ? 9 : 2)) * (speed > 0.05 ? 0.35 : 0.08);   // las puntas de la bufanda
   const C = P.ropa && P.ropa.lomo; if (!C) return;
   C.ondea += ((Math.min(speed, 2) / 2) - C.ondea) * Math.min(1, dt * 3);
   const pos = C.tela.geometry.attributes.position, b = C.base, m = C.ondea;

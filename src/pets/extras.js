@@ -14,6 +14,7 @@ import { scene } from '../engine/renderer.js';
 import { RAINBOW } from '../engine/materials.js';
 import { rbox } from '../engine/geometry.js';
 import { animarRopa, ponerRopa, ropaPuesta, ropaQueSeMueve } from './ropa.js';
+import { soltarEfectos } from './efectos.js';
 
 const TAU = Math.PI * 2;
 const sinSombra = g => { g.traverse(o => { o.castShadow = false; o.receiveShadow = false; }); return g; };
@@ -154,6 +155,7 @@ function arcoiris(P, on) {
   }
 }
 
+const TAMANOS = { mini: 0.6, gigante: 1.6 };
 export function ponerExtras(P, extras = {}) {
   if (P.ext && P.ext.id !== extras.transporte) {
     if (P.ext.g.parent) P.ext.g.parent.remove(P.ext.g);
@@ -167,9 +169,16 @@ export function ponerExtras(P, extras = {}) {
     sinSombra(P.ext.g);
   }
   arcoiris(P, !!extras.arcoiris);
-  ponerRopa(P, extras.ropa || {});   // collar, sombrero, capa (pets/ropa.js)
-  P.extras = { transporte: P.ext ? P.ext.id : null, arcoiris: !!P.arco, ropa: ropaPuesta(P) };
-  P.extrasUpdate = P.ext || P.arco || ropaQueSeMueve(P) ? (t, dt, speed) => animarExtras(P, t, dt, speed) : null;
+  ponerRopa(P, extras.ropa || {});   // collar, sombrero, capa… (pets/ropa.js)
+  // poción mini o gigante: la mascota entera (con lo que lleva) cambia de tamaño; los letreros no
+  const tamano = TAMANOS[extras.tamano] ? extras.tamano : null;
+  P.escala = (P.medidas.escala || 1) * (TAMANOS[tamano] || 1);
+  if (P.root.scale.x !== P.escala && P.root.parent === scene) {
+    P.root.scale.setScalar(P.escala);
+    P.root.children.forEach(c => { if (c.userData.s0) c.scale.copy(c.userData.s0).multiplyScalar(1 / P.escala); });
+  }
+  P.extras = { transporte: P.ext ? P.ext.id : null, arcoiris: !!P.arco, ropa: ropaPuesta(P), brillo: !!extras.brillo, burbujas: !!extras.burbujas, tamano };
+  P.extrasUpdate = P.ext || P.arco || ropaQueSeMueve(P) || P.extras.brillo || P.extras.burbujas ? (t, dt, speed) => animarExtras(P, t, dt, speed) : null;
   if (!P.extrasUpdate) { P.body.position.y = Math.max(0, P.body.position.y); if (P.label) P.label.position.y = P.labelY; }
 }
 
@@ -289,4 +298,5 @@ function animarExtras(P, t, dt, speed) {
   P.body.position.y += alto;
   if (P.label) P.label.position.y = P.labelY + alto + etiqueta;
   animarRopa(P, t, dt, speed);
+  if (P.extras.brillo || P.extras.burbujas) soltarEfectos(P, dt, anda);
 }

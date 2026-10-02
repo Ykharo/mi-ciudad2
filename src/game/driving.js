@@ -54,7 +54,7 @@ function enterCar(c) {
   const M = c.model;
   if (M.passenger && player.pets.length) {
     const p = player.pets[0]; p.riding = c; c.shell.add(p.obj.root);
-    p.obj.root.position.set(M.passenger.x, M.sy, M.passenger.z); p.obj.root.rotation.set(0, 0, 0); p.obj.root.scale.setScalar((p.obj.medidas.escala || 1) / M.k);
+    p.obj.root.position.set(M.passenger.x, M.sy, M.passenger.z); p.obj.root.rotation.set(0, 0, 0); p.obj.root.scale.setScalar((p.obj.escala || p.obj.medidas.escala || 1) / M.k);
   }
   if (c.owned) state.lastCar = c;
   emit('zona', null); state.currentZone = null;
@@ -79,7 +79,7 @@ function exitCar() {
   avatarStop(player.ch, true);
   player.pets.forEach(p => {
     if (!p.riding) return;
-    p.riding = null; scene.add(p.obj.root); p.obj.root.scale.setScalar(p.obj.medidas.escala || 1);
+    p.riding = null; scene.add(p.obj.root); p.obj.root.scale.setScalar(p.obj.escala || p.obj.medidas.escala || 1);
     p.pos.set(player.pos.x - fx * 1.3, 0, player.pos.z - fz * 1.3); p.facing = c.heading;
   });
   c.speed = 0; c.steer = 0; c.wheels.forEach(w => { if (w.front) w.pivot.rotation.y = 0; });
