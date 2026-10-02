@@ -170,7 +170,9 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
 ## Convenciones del juego
 - Sin gestión de color (r149, modo legacy): los colores hex se usan tal cual; al cargar el glb se pasan
   los `baseColorFactor` de lineal a sRGB.
-- Guardado en `localStorage` con clave `ciudadArcoiris.v2`: `{ version: 2, jugador, nina: { look }, personajes, pets, cars, shop }`
+- Huesitos de Aura 🦴 (la moneda): `game/huesitos.js` (`ganarHuesitos`, `gastarHuesitos`), `player.huesitos`,
+  contador `ui/huesitos.js`. Se ganan leyendo (Código Aura) y compitiendo.
+- Guardado en `localStorage` con clave `ciudadArcoiris.v2`: `{ version: 2, jugador, nina: { look }, personajes, pets, cars, shop, huesitos }`
   (`game/save.js`). Una partida `ciudadArcoiris.v1` se migra al cargar y la clave v1 no se borra. Envolver en try/catch.
   Todo lo guardado se valida al cargar (`fixLook`, `fixCarSpec`, tipos de mascota).
 - Personajes guiados por datos: `characters/catalog/` (paletas, prendas con canales y derivados, personajes y

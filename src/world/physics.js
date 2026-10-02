@@ -36,4 +36,10 @@ function pisoEn(x, z) {
 }
 function sueloEn(x, z) { const p = pisoEn(x, z); return p ? p.h : 0; }
 
-export { addObs, addObsRot, addPiso, collide, obstacles, pisoEn, sueloEn };
+// Interiores (salas aparte, fuera del mapa: la Mascotienda por dentro): { area: [x0, x1, z0, z1], techo }. Adentro
+// no rige el límite de la ciudad (game/player.js) y la cámara no sube más que el techo (game/camera.js).
+const interiores = [];
+function addInterior(i) { interiores.push(i); }
+const interiorEn = (x, z) => interiores.find(i => x > i.area[0] && x < i.area[1] && z > i.area[2] && z < i.area[3]) || null;
+
+export { addInterior, addObs, addObsRot, addPiso, collide, interiorEn, obstacles, pisoEn, sueloEn };

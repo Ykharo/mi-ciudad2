@@ -16,6 +16,7 @@ function buildPet(kind, color) {
   P.root.add(P.body);
   const c = mat(color, { roughness: 0.8 }), dk = mat(shade(color, 0.72), { roughness: 0.8 }), lt = mat(tint(color, 0.5), { roughness: 0.8 });
   const eye = mat('#1F1B2E', { roughness: 0.25 }), pink = mat('#FF9DB5', { roughness: 0.7 }), B = P.body;
+  P.mats = { c, dk, lt };   // los del pelaje (compartidos: pets/extras.js los cambia por copias propias)
   const head = new THREE.Group(); P.head = head;
   const leg = (x, y, z, w, h) => { const l = new THREE.Group(); l.position.set(x, y, z); l.add(mesh(rbox(w, h, w + 0.01, w * 0.4), c, 0, -h / 2, 0)); B.add(l); P.legs.push(l); };
   const eyes = (x, y, z, r = 0.045) => [-1, 1].forEach(s => { head.add(mesh(sph(r, 10, 8), eye, s * x, y, z)); head.add(mesh(sph(r * 0.35, 6, 5), mat('#FFFFFF', { emissive: '#FFFFFF', emissiveIntensity: 0.6 }), s * x + r * 0.35, y + r * 0.4, z + r * 0.8, false)); });
@@ -91,6 +92,7 @@ function animatePet(P, t, speed01, dt, sentada = false) {
     l.rotation.x = anda * (1 - s) + (i > 1 ? incl : P.kind === 'conejo' ? 0 : -1.0) * s;   // (0 y 1: las de atrás; el conejo ya va sentado)
   });
   if (P.head) P.head.rotation.x = incl * 0.7 * s;   // la cabeza mira adelante aunque el cuerpo se incline
+  if (P.extrasUpdate) P.extrasUpdate(t, dt, speed01);   // artículos de la Mascotienda (pets/extras.js)
   if (P.tail) P.tail.rotation.z = Math.sin(t * (hop ? 16 : 7)) * (P.kind === 'conejo' ? 0.2 : 0.45);
   if (P.head) P.head.rotation.y = hop ? 0 : Math.sin(t * 0.9 + P.phase) * 0.28;
 }

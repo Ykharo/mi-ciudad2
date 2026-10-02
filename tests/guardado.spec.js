@@ -11,6 +11,18 @@ const V1 = {
   shop: { type: 'jeep', color: '#FF6FAE', accent: '#FFFFFF' },
 };
 
+test('los Huesitos de Aura se guardan, se muestran y se validan', async ({ page, jugar }) => {
+  await sembrar(page, 'ciudadArcoiris.v2', { version: 2, pets: [], cars: [], huesitos: 57 });
+  await jugar();
+  await expect(page.locator('#huesitos b')).toHaveText('57');
+  expect(await page.evaluate(() => window.__juego.player.huesitos)).toBe(57);
+  // un valor raro en la partida queda en 0
+  await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('ciudadArcoiris.v2')); s.huesitos = 'muchos'; localStorage.setItem('ciudadArcoiris.v2', JSON.stringify(s)); });
+  await page.reload();
+  await expect(page.locator('#btnPlay')).toHaveText('¡A jugar!', { timeout: 60_000 });
+  expect(await page.evaluate(() => window.__juego.player.huesitos)).toBe(0);
+});
+
 test('una partida v1 se migra a v2 sin perder nada', async ({ page, jugar }) => {
   await sembrar(page, 'ciudadArcoiris.v1', V1);
   await jugar();

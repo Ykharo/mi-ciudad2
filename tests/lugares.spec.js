@@ -343,6 +343,12 @@ test('competir: en cada movimiento un Código Aura; acertar da aura y cámara le
   expect([...anims].filter(a => ['griddy', 'floss', 'sigma'].includes(a)).length).toBeGreaterThanOrEqual(2);
   for (const t of ['general', 'cerca', 'reto', 'lenta', 'jurado']) expect([...tomas]).toContain(t);
   await expect(page.locator('#codigoAura')).toBeHidden();
+  // Huesitos de Aura: 10 por código leído (+5 si fue rápido), 10 por competir (+30 si ganó); quedan guardados y en
+  // el contador
+  const h = await page.evaluate(() => window.__juego.player.huesitos);
+  expect(h).toBeGreaterThanOrEqual(3 * 10 + 10);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('ciudadArcoiris.v2')).huesitos)).toBe(h);
+  await expect(page.locator('#huesitos b')).toHaveText(String(h));
   await expect(page.locator('#toast')).toBeVisible();
   await expect.poll(async () => (await C(page)).modo).toBe('play');
   expect(await page.evaluate(() => window.__juego.player.seat)).toBeNull();

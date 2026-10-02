@@ -39,6 +39,8 @@ import { SPAWNS } from './world/places/carshop.js';
 import { MAX_CARS, addPet, cam, ownedCars, player } from './game/actors.js';
 import { loadSave, save } from './game/save.js';
 import { cargarPersonajes } from './game/personajes.js';
+import { cargarHuesitos } from './game/huesitos.js';
+import { cargarMascotienda, updateMascotienda } from './game/mascotienda.js';
 import { crearEspectador, updateEspectador } from './game/cartel.js';
 import { crearPublico, lookPublico, updatePublico } from './game/aura.js';
 import { PERSONAJES } from './characters/catalog/personajes.js';
@@ -64,6 +66,8 @@ import { refreshTT } from './ui/panels/shop.js';
 import './ui/panels/wardrobe.js';
 import './ui/panels/aura.js';
 import './ui/codigoAura.js';
+import './ui/huesitos.js';
+import './ui/panels/mascotienda.js';
 import { mostrarPersonajes } from './ui/personajes.js';
 import { installTestHooks } from './debug/hooks.js';
 
@@ -82,6 +86,7 @@ function frame(now) {
   updateEspectador(dt);
   updatePublico(dt);
   updatePreview(dt, state.clock);
+  updateMascotienda(dt);
   updateZones();
   for (const f of animated) f(state.clock, dt);
   updateCamera(dt);
@@ -103,6 +108,7 @@ async function boot() {
   sky = buildSky(); buildClouds(); buildCity();
   const saved = loadSave();
   cargarPersonajes(saved);   // con quién se juega y el look de cada uno
+  cargarHuesitos(saved);     // la moneda
   // la base y las prendas del personaje, de los vecinos y del espectador del cartel (la amiga o el amigo); y la imagen
   // del cartel
   const vecinos = lookVecinos(7), publico = lookPublico();   // (y el jurado y el público del Escenario del Aura)
@@ -112,6 +118,7 @@ async function boot() {
   crearPublico(publico);
   const pets = saved ? (saved.pets || []) : [{ kind: 'perro', color: '#E9B77A', name: 'Toby' }];
   pets.slice(0, MAX_PETS).forEach(p => { if (PET_KINDS.some(k => k.id === p.kind)) addPet(p.kind, p.color || '#E9B77A', String(p.name || 'Toby').slice(0, 12)); });
+  cargarMascotienda(saved);   // lo comprado en la Mascotienda y lo que tiene puesto cada mascota
   // your own cars, parked where you left them
   (saved && Array.isArray(saved.cars) ? saved.cars : []).slice(0, MAX_CARS).forEach(o => {
     if (!o) return;

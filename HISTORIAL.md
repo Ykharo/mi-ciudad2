@@ -5,6 +5,18 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Huesitos de Aura (tienda de mascotas, etapa 1) (01-10-2026)
+
+- Plan de la tienda de mascotas "con créditos que se ganan leyendo" (ver `PLAN.md`). Etapa 1: la moneda.
+- `game/huesitos.js`: `player.huesitos` (en `game/actors.js`), `ganarHuesitos(n, motivo)`, `gastarHuesitos(n)` (para
+  la tienda), `cargarHuesitos(saved)` (valida: entero 0…999 999; un valor raro queda en 0); se guarda apenas cambia
+  (`huesitos` en el guardado v2). Evento `'huesitos'` { total, delta, motivo }.
+- Cuánto (`HUESITOS`): Código Aura leído 10 (+5 si fue rápido), competir 10, ganar +30 (en `game/aura.js`).
+- `ui/huesitos.js`: píldora "🦴 número" arriba a la derecha (no en la portada). Al ganar, un huesito vuela del centro
+  de la pantalla al contador, el número cuenta hacia arriba, la píldora salta y aparece "+15 🦴 ¡Leíste rapidísimo!".
+- Pruebas: los Huesitos se guardan, se muestran y se validan; la competencia da al menos 40 y quedan guardados y en el
+  contador. Capturas regeneradas (el contador es nuevo en el HUD).
+
 ## Senderos: los vecinos entran y cruzan el parque y la plaza (01-10-2026)
 
 - Pregunta: ¿cómo entran los vecinos al parque? (sólo se los veía por el borde). Antes entraban sólo para usar un juego,

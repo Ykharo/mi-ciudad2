@@ -21,6 +21,7 @@ import { cam, player } from './actors.js';
 import { standUp } from './player.js';
 import { enterMenu, leaveMenu } from './modes.js';
 import { nuevoCodigo, revisar } from './codigoAura.js';
+import { HUESITOS, ganarHuesitos } from './huesitos.js';
 import { cartelPuntos, efectoAura, estrellaAura } from '../engine/efectoAura.js';
 import { scene } from '../engine/renderer.js';
 
@@ -315,6 +316,8 @@ function terminarReto(acerto) {
   t.mov[r] = mov;
   sumar(t.k, mov.aura + mov.rapido);
   if (acerto) {
+    // leer bien da Huesitos de Aura (más si fue rápido)
+    ganarHuesitos(HUESITOS.CODIGO + (rapido ? HUESITOS.CODIGO_RAPIDO : 0), rapido ? '¡Leíste rapidísimo!' : '¡Código leído!');
     emit('aura', { que: 'acierto', puntos: `+${mov.aura + mov.rapido} pts` });
     emit('sonido', 'adopt');
     auras.push(efectoAura(t.q.ch.root, { color: rapido ? 'dorado' : 'celeste', alto: 3.2 }));
@@ -373,6 +376,8 @@ function competir2(turnos, pasos, J) {
     avatarDo(P.ch, 'wave', { start: 0.1, stopOnMove: false }); decir(P.ch, '¡Bien jugado!', 3);
     sentados.slice(3).forEach((c, i) => { if (i % 2 === 0) decir(c, pick(GRITOS), 3, true); });
     anuncio.objetivo = G;
+    // Huesitos por competir, y más si ganó
+    if (J) ganarHuesitos(HUESITOS.COMPETIR + (G === J ? HUESITOS.GANAR : 0), G === J ? '¡Ganaste la competencia!' : '¡Por competir!');
     if (G === J) {
       anuncio.dur = CELEBRA + 0.4; anuncio.toma = 'lenta';
       camaraLenta(CELEBRA); celebrarAura(); auras.push(efectoAura(J.ch.root, { color: 'dorado', alto: 3.6 }));

@@ -2,7 +2,7 @@
 import { state } from '../core/state.js';
 import { emit } from '../core/events.js';
 import { clamp, lerpAngle, pick } from '../core/math.js';
-import { collide, sueloEn } from '../world/physics.js';
+import { collide, interiorEn, sueloEn } from '../world/physics.js';
 import { onZoneAction } from '../world/zones.js';
 import { avatarDo, avatarStop, updateAvatar } from '../characters/animator.js';
 import { setHolding } from '../characters/props.js';
@@ -40,7 +40,7 @@ function updatePlayer(dt) {
       const ex = player.pos.x - n.pos.x, ez = player.pos.z - n.pos.z, d = Math.hypot(ex, ez);
       if (d < 0.9 && d > 1e-4) { player.pos.x += ex / d * (0.9 - d); player.pos.z += ez / d * (0.9 - d); }
     }
-    player.pos.x = clamp(player.pos.x, -73, 73); player.pos.z = clamp(player.pos.z, -73, 73);
+    if (!interiorEn(player.pos.x, player.pos.z)) { player.pos.x = clamp(player.pos.x, -73, 73); player.pos.z = clamp(player.pos.z, -73, 73); }
   }
   // (un "asiento" que la lleva caminando, como la competencia de aura, dice a qué velocidad: `seat.vel`)
   const sp = player.seat ? player.seat.vel || 0 : Math.hypot(player.vel.x, player.vel.z);
@@ -52,7 +52,8 @@ function updatePlayer(dt) {
   input.jump = false;
   if (ch.sp && ch.sp.name === 'walk_back' && !player.seat) {   // retrocede a la velocidad de la animación
     const v = 0.32 * ch.k; player.pos.x -= Math.sin(player.facing) * v * dt; player.pos.z -= Math.cos(player.facing) * v * dt;
-    collide(player.pos, 0.5); player.pos.x = clamp(player.pos.x, -73, 73); player.pos.z = clamp(player.pos.z, -73, 73);
+    collide(player.pos, 0.5);
+    if (!interiorEn(player.pos.x, player.pos.z)) { player.pos.x = clamp(player.pos.x, -73, 73); player.pos.z = clamp(player.pos.z, -73, 73); }
   }
   // el suelo puede estar más alto (una tarima: world/physics.js, addPiso)
   const suelo = sueloEn(player.pos.x, player.pos.z);

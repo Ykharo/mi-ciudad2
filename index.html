@@ -16,6 +16,7 @@
   <div id="hud">
     <div id="place"><span class="dot"></span><span id="placeName">Calle Arcoíris</span></div>
     <div id="topright">
+      <div id="huesitos" aria-label="Huesitos de Aura"><span class="ic">🦴</span><b>0</b></div>
       <button id="btnChar" class="toy round" aria-haspopup="true" aria-expanded="false" aria-controls="charMenu" hidden></button>
       <button id="btnMusic" class="toy round" aria-label="Música">🎵</button>
       <div id="charMenu" role="menu" hidden></div>
@@ -76,6 +77,13 @@
       <button id="btnLookRandom" class="toy sun"><span class="em">✨</span>Sorpréndeme</button>
       <button id="btnLookOriginal" class="toy"><span class="em">↩️</span>Original</button>
     </div>
+  </aside>
+
+  <aside id="tiendaPanel" class="panel" hidden>
+    <div class="phead"><h2>Mascotienda</h2><button id="tiendaDone" class="toy">Listo</button></div>
+    <div id="tiendaTabs" class="tabs"></div>
+    <div id="tiendaBody" class="pbody"></div>
+    <div class="pfoot"><div id="tiendaSaldo"></div></div>
   </aside>
 
   <aside id="auraPanel" class="panel" hidden>

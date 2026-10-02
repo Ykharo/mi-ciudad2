@@ -3,7 +3,7 @@ import { THREE } from '../engine/three.js';
 import { state } from '../core/state.js';
 import { lerp, lerpAngle } from '../core/math.js';
 import { SUN_OFF, camera, fill, sun } from '../engine/renderer.js';
-import { obstacles } from '../world/physics.js';
+import { interiorEn, obstacles } from '../world/physics.js';
 import { TT } from '../world/places/carshop.js';
 import { cam, player } from './actors.js';
 import { driving } from './driving.js';
@@ -44,7 +44,10 @@ function updateCamera(dt) {
   } else if (state.mode === 'play' || state.mode === 'intro') {
     if (state.mode === 'intro') cam.yaw += dt * 0.12;
     _look.set(p.x, 1.6 + player.y * 0.5, p.z);
-    const dist = cameraBlock(_look, cam.yaw, cam.pitch, cam.dist);
+    let dist = cameraBlock(_look, cam.yaw, cam.pitch, cam.dist);
+    // en un interior (la Mascotienda por dentro), la cámara no sube más que el techo
+    const I = interiorEn(p.x, p.z);
+    if (I) dist = Math.max(2.5, Math.min(dist, (I.techo - 0.5 - _look.y) / Math.max(0.05, Math.sin(cam.pitch))));
     const cp = Math.cos(cam.pitch) * dist;
     _pos.set(_look.x + Math.sin(cam.yaw) * cp, _look.y + Math.sin(cam.pitch) * dist, _look.z + Math.cos(cam.yaw) * cp);
     k = 1 - Math.exp(-dt * 9);
@@ -76,7 +79,7 @@ function updateCamera(dt) {
   cam.pos.lerp(_pos, k); cam.look.lerp(_look, k);
   camera.position.copy(cam.pos); camera.lookAt(cam.look);
   fill.position.set(cam.pos.x, cam.pos.y + 3, cam.pos.z); fill.target.position.copy(cam.look);
-  fill.intensity = lerp(fill.intensity, ['pets', 'shop', 'wardrobe'].includes(state.mode) ? 0.7 : 0.3, k);
+  fill.intensity = lerp(fill.intensity, ['pets', 'shop', 'wardrobe', 'mascotienda'].includes(state.mode) ? 0.7 : 0.3, k);
   sun.position.set(p.x + SUN_OFF.x, SUN_OFF.y, p.z + SUN_OFF.z);
   sun.target.position.set(p.x, 0, p.z);
 }

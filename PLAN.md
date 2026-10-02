@@ -46,6 +46,14 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
   los vecinos también sacan Aura; al final los jueces alzan carteles con el total. El prototipo sigue en `src/debug/criptex.html`. Falta: probar en el iPad,
   el set de imágenes propio, la dificultad que se ajusta sola y el botón 🔊 de ayuda.
 
+**Tienda de mascotas "con Huesitos que se ganan leyendo" (plan por etapas)**
+1. Huesitos de Aura ✅ (`game/huesitos.js`, contador en el HUD; se ganan en la competencia).
+2. La tienda: un edificio 3D por dentro, con pasillos/estantes por sección (pociones, transporte, ropa…), probadores,
+   carteles; el vendedor, un perro robot sobre un disco volador (a la altura de Nina). Primeros artículos: jarabe
+   arcoíris, pastillas de diseño, patines (por definir con el usuario).
+3. Efectos voladores (globo, alitas, burbuja). 4. Poción transformadora. 5. Encargos de lectura de los vecinos.
+6. Letreros escondidos, diario de la mascota, racha diaria.
+
 **Competencia de aura (plan por etapas)**
 - A. El lugar ✅.
 - B. La jugadora compite ✅ (por ahora automático: elige 3 movimientos y se hacen solos). Falta: que interactúe
