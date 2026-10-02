@@ -17,8 +17,8 @@ import { soltarHumo } from './efectos.js';
 const _humo = new THREE.Vector3();
 
 export const LUGAR_ROPA = { collar: 'cuello', bufanda: 'cuello', corona: 'cabeza', gorro_cumple: 'cabeza', sombrero_mago: 'cabeza', capa: 'lomo', lentes: 'cara', mono: 'cola',
-  aureola: 'cabeza', cuerno: 'cabeza', antenas: 'cabeza', cohete: 'espalda', collar_musical: 'cuello' };
-const LUGARES = ['cuello', 'cabeza', 'lomo', 'cara', 'cola', 'espalda'];
+  aureola: 'cabeza', cuerno: 'cabeza', antenas: 'cabeza', cohete: 'espalda', collar_musical: 'cuello', paraguas: 'arriba' };
+const LUGARES = ['cuello', 'cabeza', 'lomo', 'cara', 'cola', 'espalda', 'arriba'];
 const est = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.5, ...o });
 function estrella(r1, r2, n = 5) {
   const s = new THREE.Shape();
@@ -351,12 +351,32 @@ function collarMusical(P) {
   P.anclas.cuello.add(g);
   return { g, nota, musical: true };
 }
+// el paraguas que flota sobre la mascota: 8 gajos de colores, un mango con curva y una bolita en la punta. Flota
+// arriba de la cabeza (lugar `arriba`: no choca con los sombreros), se mece y al andar se inclina hacia atrás; el
+// nombre de la mascota sube para que no lo tape (animarRopa)
+function paraguas(P) {
+  const M = P.medidas, R = M.largo * 0.75, g = new THREE.Group(), cupula = new THREE.Group(); g.add(cupula);
+  const N = 8, colores = ['#FF5E5E', '#FFE45C', '#4FB6F5', '#FF8FC7'];
+  for (let i = 0; i < N; i++) {
+    const gajo = new THREE.Mesh(new THREE.SphereGeometry(R, 6, 6, i / N * Math.PI * 2, Math.PI * 2 / N, 0, Math.PI * 0.42), est(colores[i % colores.length], { side: THREE.DoubleSide, roughness: 0.55 }));
+    gajo.scale.y = 0.55; cupula.add(gajo);
+  }
+  cupula.position.y = -R * 0.55 * Math.cos(Math.PI * 0.42) * 0.6;
+  const madera = est('#8A5A2E', { roughness: 0.7 });
+  const palo = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, R * 1.0, 6), madera); palo.position.y = -R * 0.3; g.add(palo);
+  const gancho = new THREE.Mesh(new THREE.TorusGeometry(R * 0.08, 0.012, 6, 12, Math.PI), madera); gancho.position.set(R * 0.08, -R * 0.8, 0); gancho.rotation.z = Math.PI; g.add(gancho);
+  const punta = new THREE.Mesh(new THREE.SphereGeometry(R * 0.05, 8, 6), est('#FFFFFF')); punta.position.y = R * 0.58; g.add(punta);
+  const alto = (P.head ? P.head.position.y : M.alto) + (M.cabezaR || 0.25) + R * 0.75, z = P.head ? P.head.position.z * 0.7 : 0;
+  g.position.set(0, alto, z);
+  P.root.add(g);
+  return { g, alto, z, R, flota: true };
+}
 // cuando la mascota salta: con el collar musical suena una nota y la notita se mueve
 export function saltoMascota(P) {
   const C = P.ropa && P.ropa.cuello;
   if (C && C.musical) { emit('sonido', 'nota'); C.baila = 1; }
 }
-const HACER = { cohete, collar_musical: collarMusical, collar, bufanda, corona, gorro_cumple: gorroCumple, sombrero_mago: sombreroMago, capa, lentes, mono, aureola, cuerno, antenas };
+const HACER = { paraguas, cohete, collar_musical: collarMusical, collar, bufanda, corona, gorro_cumple: gorroCumple, sombrero_mago: sombreroMago, capa, lentes, mono, aureola, cuerno, antenas };
 
 function tirar(o) {
   if (o.quitar) o.quitar();
@@ -414,6 +434,16 @@ export function animarRopa(P, t, dt, speed) {
   animarCabeza(P, t, dt, speed);
   // la notita del collar musical se balancea al sonar
   if (B && B.musical) { B.baila = Math.max(0, (B.baila || 0) - dt * 2); B.nota.rotation.z = Math.sin(t * 18) * 0.5 * B.baila; }
+  // el paraguas: flota meciéndose sobre la cabeza (sigue la altura del cuerpo: burbuja, alitas…), se inclina hacia
+  // atrás al andar, y el nombre sube por encima
+  const U = P.ropa && P.ropa.arriba;
+  if (U) {
+    U.inclina = (U.inclina || 0) + ((speed > 0.05 ? -0.35 : 0) - (U.inclina || 0)) * Math.min(1, dt * 3);
+    U.g.position.y = U.alto + P.body.position.y + Math.sin(t * 1.8) * 0.04;
+    U.g.position.x = P.body.position.x; U.g.position.z = U.z + P.body.position.z;   // (sobre la cabeza)
+    U.g.rotation.set(U.inclina + Math.sin(t * 1.3) * 0.05, t * 0.3, Math.sin(t * 1.1) * 0.06);
+    if (P.label) P.label.position.y = Math.max(P.label.position.y, U.g.position.y + U.R * 0.75);
+  }
   // el humito de la mochila cohete
   const K = P.ropa && P.ropa.espalda;
   if (K && K.toberas && P.root.parent === scene) {

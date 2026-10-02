@@ -147,6 +147,21 @@ test('caramelo de aura, voz de vaca, mochila cohete, mariposa y el frisbee que t
   await expect(page.locator('#btnPelotaOtro')).toBeVisible({ timeout: 10_000 });
 });
 
+test('paraguas, alitas de murciélago y compañeros (pajarito y ratoncito)', async ({ page, jugar }) => {
+  await page.addInitScript(() => { if (!localStorage.getItem('ciudadArcoiris.v2')) localStorage.setItem('ciudadArcoiris.v2', JSON.stringify({ version: 2, cars: [],
+    pets: [{ kind: 'gato', color: '#FFFFFF', name: 'Nube', cosas: ['paraguas', 'alitas_murcielago', 'pajarito', 'raton', 'sombrero_mago'],
+      extras: { transporte: 'alitas_murcielago', ropa: { arriba: 'paraguas', cabeza: 'sombrero_mago' }, companero: 'pajarito' } }] })); });
+  await jugar();
+  const leer = () => page.evaluate(() => { const e = window.__juego.player.pets[0].obj.extras; return [e.transporte, e.ropa.arriba, e.ropa.cabeza, e.companero]; });
+  expect(await leer()).toEqual(['alitas_murcielago', 'paraguas', 'sombrero_mago', 'pajarito']);   // (el paraguas va con un sombrero)
+  // el ratoncito reemplaza al pajarito
+  await page.locator('#btnPets').click();
+  await page.locator('#archSecs [data-sec="cosas"]').click();
+  await page.locator('#archBody [data-poner="raton"]').click();
+  expect((await leer())[3]).toBe('raton');
+  await expect(page.locator('#archBody [data-poner="pajarito"]')).toHaveText('Ponérselo');
+});
+
 test('Mis mascotas: el archivador con ficha, estado, salud y cosas', async ({ page, jugar }) => {
   await page.addInitScript(() => { if (!localStorage.getItem('ciudadArcoiris.v2')) localStorage.setItem('ciudadArcoiris.v2', JSON.stringify({ version: 2, cars: [],
     mascotienda: { comprados: ['patines'] }, pets: [{ kind: 'perro', color: '#E9B77A', name: 'Toby', adopcion: '2026-09-01T12:00:00Z', estado: { energia: 20, diversion: 90 } }] })); });

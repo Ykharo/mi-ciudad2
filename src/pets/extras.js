@@ -65,14 +65,25 @@ function burbuja(P) {
   P.siempreSentada = true;
   return { g, alto: 0.3, bola: b, r, flota: true, inercia: { k: 14, c: 3.4, max: 0.5 } };
 }
-function alitas(P) {
-  // alas de mariposa (dos pares: las de arriba más grandes), en el plano de la espalda, abriéndose hacia los lados
+// el ala de murciélago: el borde de arriba recto hacia afuera y el de abajo con festones (las "varillas")
+function alaMurcielago() {
+  const s = new THREE.Shape(); s.moveTo(0, 0); s.lineTo(0.12, 0.2); s.quadraticCurveTo(0.3, 0.32, 0.52, 0.26);
+  const puntas = [[0.52, 0.26], [0.42, 0.06], [0.3, 0.02], [0.18, -0.06], [0.06, -0.08]];
+  for (let i = 1; i < puntas.length; i++) { const [x0, y0] = puntas[i - 1], [x1, y1] = puntas[i]; s.quadraticCurveTo((x0 + x1) / 2 - 0.02, (y0 + y1) / 2 + 0.07, x1, y1); }
+  s.lineTo(0, 0);
+  return s;
+}
+function alitas(P, tipo = 'hada') {
+  // alas de mariposa (dos pares: las de arriba más grandes), en el plano de la espalda, abriéndose hacia los lados;
+  // las de murciélago: un solo par, violeta oscuro con festones
   const M = P.medidas, k = M.largo * 1.5;   // (del largo de la mascota: ~0,5 m de ala en el perro)
+  const bat = tipo === 'murcielago';
   const arriba = new THREE.Shape(); arriba.moveTo(0, 0); arriba.bezierCurveTo(0.12, 0.3, 0.45, 0.42, 0.5, 0.22); arriba.bezierCurveTo(0.52, 0.08, 0.3, 0.02, 0, 0);
   const abajo = new THREE.Shape(); abajo.moveTo(0, 0); abajo.bezierCurveTo(0.22, -0.02, 0.38, -0.12, 0.32, -0.26); abajo.bezierCurveTo(0.24, -0.34, 0.08, -0.2, 0, 0);
-  const m1 = new THREE.MeshStandardMaterial({ color: 0xFF7FD0, emissive: 0xB04BFF, emissiveIntensity: 0.4, transparent: true, opacity: 0.92, side: THREE.DoubleSide, depthWrite: false });
-  const m2 = new THREE.MeshStandardMaterial({ color: 0x6FC8FF, emissive: 0x3F8BFF, emissiveIntensity: 0.4, transparent: true, opacity: 0.92, side: THREE.DoubleSide, depthWrite: false });
-  const g1 = new THREE.ShapeGeometry(arriba), g2 = new THREE.ShapeGeometry(abajo), alas = [];
+  const m1 = new THREE.MeshStandardMaterial(bat ? { color: 0x4B2A6B, emissive: 0x2A0F45, emissiveIntensity: 0.5, side: THREE.DoubleSide, roughness: 0.6 }
+    : { color: 0xFF7FD0, emissive: 0xB04BFF, emissiveIntensity: 0.4, transparent: true, opacity: 0.92, side: THREE.DoubleSide, depthWrite: false });
+  const m2 = bat ? m1 : new THREE.MeshStandardMaterial({ color: 0x6FC8FF, emissive: 0x3F8BFF, emissiveIntensity: 0.4, transparent: true, opacity: 0.92, side: THREE.DoubleSide, depthWrite: false });
+  const g1 = new THREE.ShapeGeometry(bat ? alaMurcielago() : arriba), g2 = bat ? null : new THREE.ShapeGeometry(abajo), alas = [];
   // alas de hada: cada ala, de pie a lo largo del lomo (el dibujo va hacia atrás y arriba: su plano es el del costado
   // de la mascota, así se ve entera de lado), abierta hacia su lado en V (se ve de atrás); aletean abriéndose y
   // cerrándose sobre el eje del lomo
@@ -80,8 +91,8 @@ function alitas(P) {
   for (const s of [-1, 1]) {
     const pivote = new THREE.Group(); g.add(pivote);
     const ala = new THREE.Group(); ala.rotation.y = Math.PI / 2; ala.rotation.order = 'YXZ'; ala.rotation.x = -0.15; pivote.add(ala);
-    const a = new THREE.Mesh(g1, m1), b = new THREE.Mesh(g2, m2);
-    for (const w of [a, b]) { w.scale.set(k, k, 1); w.position.y = 0.08 * k; ala.add(w); }
+    const piezas = [new THREE.Mesh(g1, m1)]; if (g2) piezas.push(new THREE.Mesh(g2, m2));
+    for (const w of piezas) { w.scale.set(k, k, 1); w.position.y = 0.08 * k; ala.add(w); }
     alas.push({ pivote, s });
   }
   P.anclas.espalda.add(g);
@@ -152,7 +163,7 @@ function globo(P) {
   P.siempreSentada = true;
   return { g, alto: ALTO, bola, arriba, canastaY: ALTO - 0.06, cuerda, flota: true, globo: true, inercia: { k: 9, c: 3.2, max: 0.7 }, quitar() { scene.remove(cuerda); cuerda.geometry.dispose(); cuerda.material.dispose(); } };
 }
-const TRANSPORTES = { patines, burbuja, alitas, globo };
+const TRANSPORTES = { patines, burbuja, alitas, alitas_murcielago: P => alitas(P, 'murcielago'), globo };
 export const ES_TRANSPORTE = id => !!TRANSPORTES[id];
 
 const TAMANOS = { mini: 0.6, gigante: 1.6 };

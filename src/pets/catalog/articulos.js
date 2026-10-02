@@ -6,7 +6,7 @@
 //                   (una) o diseno (una pastilla a la vez: `diseno` es el dibujo, ver pets/pelaje.js)
 //     'ropa'        una prenda por lugar del cuerpo (`lugar`: cuello, cabeza, lomo, cara, cola): se pone y se quita
 //     'juguete'     no se pone: se usa (pelota, frisbee, palito y burbujero con su botón; el hueso, solo, al sentarse)
-//     'companero'   uno a la vez: lo acompaña (la mariposa: pets/companeros.js)
+//     'companero'   uno a la vez: lo acompaña (mariposa, pajarito, ratoncito: pets/companeros.js)
 //   precio en Huesitos de Aura, desc, frase (el "diario de la mascota" al comprarlo: {n} es su nombre).
 export const SECCIONES = [
   { id: 'pociones', nombre: 'Pociones', ic: '🧪' },
@@ -51,6 +51,10 @@ export const ARTICULOS = [
   { id: 'collar_musical', nombre: 'Collar musical', ic: '🎵', seccion: 'ropa', tipo: 'ropa', lugar: 'cuello', precio: 35, desc: 'Suena una nota cuando salta', frase: '¡{n} hace música al saltar!' },
   { id: 'frisbee', nombre: 'Frisbee', ic: '🥏', seccion: 'juguetes', tipo: 'juguete', precio: 35, desc: 'Lo atrapa en el aire', frase: '¡{n} atrapa el frisbee de un salto!' },
   { id: 'palito', nombre: 'Palito mágico', ic: '🪄', seccion: 'juguetes', tipo: 'juguete', precio: 30, desc: 'Crece cuando lo lanzas', frase: '¡El palito de {n} creció muchísimo!' },
+  { id: 'pajarito', nombre: 'Pajarito amigo', ic: '🐦', seccion: 'companeros', tipo: 'companero', precio: 50, desc: 'Vuela a su lado y se posa en su cabeza', frase: '¡Pío pío! Un pajarito acompaña a {n}.' },
+  { id: 'raton', nombre: 'Ratoncito jinete', ic: '🐭', seccion: 'companeros', tipo: 'companero', precio: 45, desc: 'Va montado en su lomo', frase: '¡Un ratoncito pasea arriba de {n}!' },
+  { id: 'paraguas', nombre: 'Paraguas flotante', ic: '☂️', seccion: 'ropa', tipo: 'ropa', lugar: 'arriba', precio: 35, desc: 'Flota sobre su cabeza', frase: '¡A {n} no le cae ni una gota!' },
+  { id: 'alitas_murcielago', nombre: 'Alitas de murciélago', ic: '🦇', seccion: 'transporte', tipo: 'transporte', precio: 80, desc: 'Vuela bajito, como un murciélago', frase: '¡{n} vuela como un murciélago!' },
   { id: 'mariposa', nombre: 'Mariposa amiga', ic: '🦋', seccion: 'companeros', tipo: 'companero', precio: 50, desc: 'Revolotea a su alrededor', frase: '¡{n} tiene una amiga mariposa!' },
   { id: 'hueso', nombre: 'Hueso eterno', ic: '🦴', seccion: 'juguetes', tipo: 'juguete', precio: 25, desc: 'Lo muerde cuando se sienta', frase: '¡{n} no suelta su hueso!' },
   { id: 'burbujero', nombre: 'Burbujero', ic: '🫧', seccion: 'juguetes', tipo: 'juguete', precio: 35, desc: 'Persigue las burbujas', frase: '¡{n} quiere atrapar todas las burbujas!' },

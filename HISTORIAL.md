@@ -5,6 +5,19 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Tanda: paraguas, pajarito, ratoncito y alitas de murciélago (02-10-2026)
+
+- Paraguas flotante (`pets/ropa.js`, lugar nuevo `arriba`: no choca con los sombreros): 8 gajos de colores, mango
+  con curva; flota sobre la cabeza meciéndose, sigue la altura del cuerpo (burbuja, alitas) y se inclina hacia atrás
+  al andar; el nombre de la mascota sube por encima.
+- Compañeros (`pets/companeros.js`): pajarito (celeste con pico naranja; vuela en círculos más amplios y cada 9–14 s
+  se posa 4 s en la cabeza, mirando para donde ella) y ratoncito jinete (montado en el ancla `lomo`, dentro de la
+  mascota: mira para los lados, mueve bigotes y colita, cada tanto se para en dos patas). `montado` = no vive en la
+  escena.
+- Alitas de murciélago: `alitas(P, 'murcielago')` (transporte `alitas_murcielago`): un solo par violeta oscuro con el
+  borde de abajo en festones; mismo vuelo y caminata lunar que las de hada.
+- Prueba nueva en `humo.spec.js`.
+
 ## Tanda: caramelo de aura, voces, mochila cohete, collar musical, frisbee, palito y mariposa (02-10-2026)
 
 - Caramelo de aura (`extras.aura`): el aura ascendente de la competencia (`engine/efectoAura.js`, ahora con
