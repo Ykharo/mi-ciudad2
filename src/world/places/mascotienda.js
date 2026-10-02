@@ -5,7 +5,7 @@
 // probador, y al fondo el mostrador con Robi, el vendedor: un perro robot sobre un disco volador (a la altura de Nina).
 // Cada pasillo, el probador y el mostrador abren la ventana de la tienda; la puerta de adentro vuelve a la calle.
 import { THREE } from '../../engine/three.js';
-import { RAINBOW, mat } from '../../engine/materials.js';
+import { RAINBOW, mat, tint } from '../../engine/materials.js';
 import { box, cone, cyl, mesh, rlo, sph } from '../../engine/geometry.js';
 import { makeSign, stripeTexture } from '../../engine/textures.js';
 import { manzana } from '../layout.js';
@@ -17,7 +17,7 @@ import { definePlace } from '../place.js';
 const AFUERA = { x: 20, z: 56, w: 18, d: 12, h: 6.5 };
 const SALA = { x: 0, z: 260, w: 24, d: 18, h: 5.5 };
 const MASCOTIENDA = {
-  afuera: { x: AFUERA.x, z: AFUERA.z - AFUERA.d / 2 - 2.2, mira: Math.PI },      // al salir: en la vereda de enfrente de la puerta
+  afuera: { x: AFUERA.x, z: AFUERA.z - AFUERA.d / 2 - 5.4, mira: Math.PI },      // al salir: en la vereda, frente a la puerta
   adentro: { x: SALA.x, z: SALA.z + SALA.d / 2 - 3.2, mira: Math.PI },           // al entrar: mirando hacia el mostrador
   robi: null,                                                                    // el grupo de Robi (game/mascotienda.js lo hace hablar)
   sala: SALA,
@@ -63,7 +63,7 @@ function fachada({ world, addObs, addZone }) {
 function estante(g, x, z, largo, ry, colores, cosas) {
   // un mueble de 3 repisas (blanco con bordes de color) y cosas encima de cada repisa
   const e = new THREE.Group(); e.position.set(x, 0, z); e.rotation.y = ry; g.add(e);
-  const madera = mat('#FFFFFF'), borde = mat(colores);
+  const madera = mat(tint(colores, 0.6), { emissive: tint(colores, 0.6), emissiveIntensity: 0.2 }), borde = mat(colores);
   e.add(mesh(rlo(largo, 2.4, 0.9, 0.08), madera, 0, 1.2, 0));
   for (let i = 0; i < 3; i++) e.add(mesh(rlo(largo + 0.1, 0.1, 1.0, 0.04), borde, 0, 0.5 + i * 0.75, 0.02));
   for (let i = 0; i < 3; i++) for (let k = 0; k < Math.floor(largo / 0.7); k++) {
@@ -123,19 +123,27 @@ function sala({ world, addObs, addZone, onFrame }) {
   const { x: X, z: Z, w: W, d: D, h: H } = SALA, g = new THREE.Group(); g.position.set(X, 0, Z); world.add(g);
   // piso de cuadros, paredes de dos colores, techo con lámparas (sin sombras: si no, la sala queda a oscuras)
   const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
-  x.fillStyle = '#FFF4FA'; x.fillRect(0, 0, 128, 128); x.fillStyle = '#E5DBFF'; x.fillRect(0, 0, 64, 64); x.fillRect(64, 64, 64, 64);
+  x.fillStyle = '#FFC9E3'; x.fillRect(0, 0, 128, 128); x.fillStyle = '#C9B8FF'; x.fillRect(0, 0, 64, 64); x.fillRect(64, 64, 64, 64);
   const tp = new THREE.CanvasTexture(c); tp.wrapS = tp.wrapT = THREE.RepeatWrapping; tp.repeat.set(W / 2, D / 2);
   const piso = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: tp, roughness: 0.6 }));
   piso.rotation.x = -Math.PI / 2; piso.position.y = 0.01; piso.receiveShadow = true; g.add(piso);
-  const paredM = mat('#C9F2E6'), zocalo = mat('#FF9BCB');
+  // (con un poco de brillo propio: adentro el sol no llega a todas las caras, y sin esto se ven grises)
+  const paredM = mat('#7FDCC4', { emissive: '#7FDCC4', emissiveIntensity: 0.3 }), zocalo = mat('#FF7FBF', { emissive: '#FF7FBF', emissiveIntensity: 0.2 });
   const pared = (px, pz, w, ry) => { const m = mesh(box(w, H, 0.3), paredM, px, H / 2, pz, false, true); m.rotation.y = ry; g.add(m); const s = mesh(box(w, 0.6, 0.34), zocalo, px, 0.3, pz, false, true); s.rotation.y = ry; g.add(s); };
   pared(0, -D / 2, W, 0); pared(-W / 2, 0, D, Math.PI / 2); pared(W / 2, 0, D, Math.PI / 2);
   pared(-W / 4 - 1, D / 2, W / 2 - 2, 0); pared(W / 4 + 1, D / 2, W / 2 - 2, 0);   // el frente, con la puerta al medio
   g.add(mesh(box(4, H - 3.6, 0.3), paredM, 0, 3.6 + (H - 3.6) / 2, D / 2, false, true));
   g.add(mesh(rlo(2.7, 3.5, 0.2, 0.1), mat('#9B6BF0'), 0, 1.75, D / 2 - 0.05, false, true));
-  const techo = new THREE.Mesh(new THREE.PlaneGeometry(W, D), mat('#F3EDFF')); techo.rotation.x = Math.PI / 2; techo.position.y = H; g.add(techo);
+  const techo = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshBasicMaterial({ color: 0xD9CCFF })); techo.rotation.x = Math.PI / 2; techo.position.y = H; g.add(techo);
+  // franjas arcoíris a lo largo de las paredes, bajo el techo
+  RAINBOW.forEach((c, i) => {
+    const m = mat(c, { emissive: c, emissiveIntensity: 0.35 }), y = H - 0.25 - i * 0.14;
+    g.add(mesh(box(W - 0.4, 0.12, 0.05), m, 0, y, -D / 2 + 0.18, false, false));
+    for (const s of [-1, 1]) g.add(mesh(box(0.05, 0.12, D - 0.4), m, s * (W / 2 - 0.18), y, 0, false, false));
+  });
   const lampara = mat('#FFF6D6', { emissive: '#FFE9A8', emissiveIntensity: 1 });
-  for (const lx of [-7, 0, 7]) for (const lz of [-4, 3]) g.add(mesh(sph(0.35, 14, 10), lampara, lx, H - 0.35, lz, false, false));
+  // lámparas planas, pegadas al techo (la cámara pasa cerca del techo: colgando, tapaban la vista)
+  for (const lx of [-7, 0, 7]) for (const lz of [-4, 3]) { const l = mesh(sph(0.4, 14, 10), lampara, lx, H - 0.04, lz, false, false); l.scale.y = 0.2; g.add(l); }
   addObs(X, Z - D / 2, W / 2, 0.3, 8); addObs(X, Z + D / 2, W / 2, 0.3, 8); addObs(X - W / 2, Z, 0.3, D / 2, 8); addObs(X + W / 2, Z, 0.3, D / 2, 8);
   addInterior({ area: [X - W / 2, X + W / 2, Z - D / 2, Z + D / 2], techo: H });
   addArea('Mascotienda Arcoíris', X - W / 2, X + W / 2, Z - D / 2, Z + D / 2);
@@ -172,11 +180,11 @@ function sala({ world, addObs, addZone, onFrame }) {
   g.add(mesh(rlo(0.5, 0.35, 0.4, 0.06), mat('#FFD23F'), -2.2, 1.35, -D / 2 + 2.6));   // la caja registradora
   const cartelR = makeSign('Robi, el vendedor', '#4FB6F5', '#FFFFFF', 3.2); cartelR.position.set(0, 4.3, -D / 2 + 0.2); g.add(cartelR);
   addObs(X, Z - D / 2 + 2.6, 3.1, 0.7);
-  const R = robi(); R.position.set(0, 1.15, -D / 2 + 1.3); g.add(R); MASCOTIENDA.robi = R; R.userData.dynamic = true;
+  const R = robi(); R.position.set(0, 0.9, -D / 2 + 1.3); R.scale.setScalar(1.4); g.add(R); MASCOTIENDA.robi = R; R.userData.dynamic = true;
   addZone({ id: 'mascotienda', x: X, z: Z - D / 2 + 4.3, r: 1.8, label: '🤖 Hablar con Robi' });
   onFrame(t => {
     const u = R.userData;
-    R.position.y = 1.15 + Math.sin(t * 1.6) * 0.08;
+    R.position.y = 0.9 + Math.sin(t * 1.6) * 0.08;   // (la cabeza de Robi, a la altura de la de Nina)
     u.disco.rotation.y = t * 0.8;
     u.perro.rotation.y = Math.sin(t * 0.7) * 0.15;
     u.cabeza.rotation.z = Math.sin(t * 1.3) * 0.08;
