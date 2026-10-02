@@ -5,13 +5,15 @@
 //     'pocion'      se pone y se quita; `efecto`: arcoiris, brillo, burbujas, invisible (se pueden juntar), mini / gigante
 //                   (una) o diseno (una pastilla a la vez: `diseno` es el dibujo, ver pets/pelaje.js)
 //     'ropa'        una prenda por lugar del cuerpo (`lugar`: cuello, cabeza, lomo, cara, cola): se pone y se quita
-//     'juguete'     no se pone: se usa (la pelota y el burbujero con su botón; el hueso, solo, cuando se sienta)
+//     'juguete'     no se pone: se usa (pelota, frisbee, palito y burbujero con su botón; el hueso, solo, al sentarse)
+//     'companero'   uno a la vez: lo acompaña (la mariposa: pets/companeros.js)
 //   precio en Huesitos de Aura, desc, frase (el "diario de la mascota" al comprarlo: {n} es su nombre).
 export const SECCIONES = [
   { id: 'pociones', nombre: 'Pociones', ic: '🧪' },
   { id: 'transporte', nombre: 'Transporte', ic: '🛼' },
   { id: 'ropa', nombre: 'Ropa', ic: '👕' },
   { id: 'juguetes', nombre: 'Juguetes', ic: '🧸' },
+  { id: 'companeros', nombre: 'Compañeros', ic: '🦋' },
 ];
 export const ARTICULOS = [
   { id: 'arcoiris', nombre: 'Jarabe arcoíris', ic: '🌈', seccion: 'pociones', tipo: 'pocion', efecto: 'arcoiris', precio: 20, desc: 'El pelaje cambia de colores', frase: '¡{n} brilla con todos los colores!' },
@@ -26,6 +28,10 @@ export const ARTICULOS = [
   { id: 'diseno_corazones', nombre: 'Pastilla corazones', ic: '💖', seccion: 'pociones', tipo: 'pocion', efecto: 'diseno', diseno: 'corazones', precio: 30, desc: 'Pelaje con corazones', frase: '¡{n} tiene corazones por todos lados!' },
   { id: 'diseno_lunares', nombre: 'Pastilla lunares', ic: '🔴', seccion: 'pociones', tipo: 'pocion', efecto: 'diseno', diseno: 'lunares', precio: 30, desc: 'Lunares de colores', frase: '¡{n} tiene lunares de colores!' },
   { id: 'diseno_galaxia', nombre: 'Pastilla galaxia', ic: '🌌', seccion: 'pociones', tipo: 'pocion', efecto: 'diseno', diseno: 'galaxia', precio: 50, desc: 'Pelaje de espacio y estrellas', frase: '¡{n} trae el universo en el pelaje!' },
+  { id: 'aura', nombre: 'Caramelo de aura', ic: '🍬', seccion: 'pociones', tipo: 'pocion', efecto: 'aura', precio: 60, desc: 'Brilla con un aura, como Nina', frase: '¡{n} tiene muchísima aura!' },
+  { id: 'voz_pato', nombre: 'Poción voz de pato', ic: '🦆', seccion: 'pociones', tipo: 'pocion', efecto: 'voz', voz: 'pato', precio: 25, desc: 'Hace "¡cuac cuac!"', frase: '¡Cuac! ¿{n} es un pato?' },
+  { id: 'voz_leon', nombre: 'Poción voz de león', ic: '🦁', seccion: 'pociones', tipo: 'pocion', efecto: 'voz', voz: 'leon', precio: 25, desc: 'Ruge como un león', frase: '¡Grrroar! {n} ruge fuerte.' },
+  { id: 'voz_vaca', nombre: 'Poción voz de vaca', ic: '🐮', seccion: 'pociones', tipo: 'pocion', efecto: 'voz', voz: 'vaca', precio: 25, desc: 'Hace "¡muuu!"', frase: '¡Muuu! {n} habla como vaca.' },
   { id: 'patines', nombre: 'Patines con luces', ic: '🛼', seccion: 'transporte', tipo: 'transporte', precio: 50, desc: 'Patina detrás de ti', frase: '¡{n} patina rapidísimo!' },
   { id: 'burbuja', nombre: 'Burbuja flotante', ic: '🫧', seccion: 'transporte', tipo: 'transporte', precio: 60, desc: 'Viaja dentro de una burbuja', frase: '¡{n} flota en su burbuja!' },
   { id: 'globo', nombre: 'Mini globo aerostático', ic: '🎈', seccion: 'transporte', tipo: 'transporte', precio: 100, desc: 'Vuela colgada de un globo', frase: '¡{n} vuela en su globo!' },
@@ -41,6 +47,11 @@ export const ARTICULOS = [
   { id: 'aureola', nombre: 'Aureola de angelito', ic: '😇', seccion: 'ropa', tipo: 'ropa', lugar: 'cabeza', precio: 40, desc: 'Brilla sobre su cabeza', frase: '¡{n} tiene su aureola de angelito!' },
   { id: 'cuerno', nombre: 'Cuernito de unicornio', ic: '🦄', seccion: 'ropa', tipo: 'ropa', lugar: 'cabeza', precio: 40, desc: 'Un cuerno mágico de colores', frase: '¡{n} parece un unicornio!' },
   { id: 'antenas', nombre: 'Antenas de abeja', ic: '🐝', seccion: 'ropa', tipo: 'ropa', lugar: 'cabeza', precio: 30, desc: 'Se mueven al caminar', frase: '¡Bzzz! {n} tiene antenas de abeja.' },
+  { id: 'cohete', nombre: 'Mochila cohete', ic: '🚀', seccion: 'ropa', tipo: 'ropa', lugar: 'espalda', precio: 55, desc: 'Echa humito de colores', frase: '¡3, 2, 1… {n} despega!' },
+  { id: 'collar_musical', nombre: 'Collar musical', ic: '🎵', seccion: 'ropa', tipo: 'ropa', lugar: 'cuello', precio: 35, desc: 'Suena una nota cuando salta', frase: '¡{n} hace música al saltar!' },
+  { id: 'frisbee', nombre: 'Frisbee', ic: '🥏', seccion: 'juguetes', tipo: 'juguete', precio: 35, desc: 'Lo atrapa en el aire', frase: '¡{n} atrapa el frisbee de un salto!' },
+  { id: 'palito', nombre: 'Palito mágico', ic: '🪄', seccion: 'juguetes', tipo: 'juguete', precio: 30, desc: 'Crece cuando lo lanzas', frase: '¡El palito de {n} creció muchísimo!' },
+  { id: 'mariposa', nombre: 'Mariposa amiga', ic: '🦋', seccion: 'companeros', tipo: 'companero', precio: 50, desc: 'Revolotea a su alrededor', frase: '¡{n} tiene una amiga mariposa!' },
   { id: 'hueso', nombre: 'Hueso eterno', ic: '🦴', seccion: 'juguetes', tipo: 'juguete', precio: 25, desc: 'Lo muerde cuando se sienta', frase: '¡{n} no suelta su hueso!' },
   { id: 'burbujero', nombre: 'Burbujero', ic: '🫧', seccion: 'juguetes', tipo: 'juguete', precio: 35, desc: 'Persigue las burbujas', frase: '¡{n} quiere atrapar todas las burbujas!' },
   { id: 'pelota', nombre: 'Pelota saltarina', ic: '🎾', seccion: 'juguetes', tipo: 'juguete', precio: 30, desc: 'Lánzala y te la trae', frase: '¡{n} corre a buscar su pelota!' },

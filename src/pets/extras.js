@@ -17,6 +17,10 @@ import { animarRopa, ponerRopa, ropaPuesta } from './ropa.js';
 import { estallido, soltarChispas, soltarEfectos } from './efectos.js';
 import { DISENOS, animarPelaje, ponerPelaje } from './pelaje.js';
 import { emit } from '../core/events.js';
+import { efectoAura } from '../engine/efectoAura.js';
+import { moverCompanero, ponerCompanero } from './companeros.js';
+
+export const VOCES_POCION = ['pato', 'leon', 'vaca'];
 
 const TAU = Math.PI * 2;
 const sinSombra = g => { g.traverse(o => { o.castShadow = false; o.receiveShadow = false; }); return g; };
@@ -165,6 +169,12 @@ export function ponerExtras(P, extras = {}) {
     sinSombra(P.ext.g);
   }
   ponerPelaje(P, extras);            // arcoíris, pastillas de diseño, invisible (pets/pelaje.js)
+  // caramelo de aura: el aura ascendente de la competencia, en bucle y del tamaño de la mascota
+  if (extras.aura && !P.auraFx) {
+    const k = P.medidas.largo * 0.75, base = new THREE.Group(); base.scale.setScalar(k); P.root.add(base);
+    P.auraFx = efectoAura(base, { color: 'celeste', alto: (P.medidas.alto * 2.2) / k, bucle: true }); P.auraFx.base = base;
+  } else if (!extras.aura && P.auraFx) { P.auraFx.quitar(); P.root.remove(P.auraFx.base); P.auraFx = null; }
+  ponerCompanero(P, extras.companero);   // la mariposa que la acompaña (pets/companeros.js)
   ponerRopa(P, extras.ropa || {});   // collar, sombrero, capa… (pets/ropa.js)
   // poción mini o gigante: la mascota entera (con lo que lleva) cambia de tamaño; los letreros no
   const tamano = TAMANOS[extras.tamano] ? extras.tamano : null;
@@ -174,7 +184,10 @@ export function ponerExtras(P, extras = {}) {
     P.root.children.forEach(c => { if (c.userData.s0) c.scale.copy(c.userData.s0).multiplyScalar(1 / P.escala); });
   }
   P.extras = { transporte: P.ext ? P.ext.id : null, arcoiris: !!extras.arcoiris, ropa: ropaPuesta(P), brillo: !!extras.brillo, burbujas: !!extras.burbujas, tamano,
-    diseno: DISENOS.includes(extras.diseno) ? extras.diseno : null, invisible: !!extras.invisible };
+    diseno: DISENOS.includes(extras.diseno) ? extras.diseno : null, invisible: !!extras.invisible, aura: !!P.auraFx,
+    voz: VOCES_POCION.includes(extras.voz) ? extras.voz : null, companero: P.companero ? P.companero.id : null,
+    // (con pociones de voz: pets/follow.js y la pelota usan su voz en vez de la de la especie)
+  };
   // (con la mascota se anima siempre: el sombrero de mago, la corona, los lentes y el hueso también se mueven)
   P.extrasUpdate = (t, dt, speed) => animarExtras(P, t, dt, speed);
   if (!P.ext) { P.body.position.y = Math.max(0, P.body.position.y); if (P.label) P.label.position.y = P.labelY; }
@@ -249,6 +262,8 @@ function patinar(P, E, dt, speed, anda) {
 function animarExtras(P, t, dt, speed) {
   const E = P.ext, anda = speed > 0.05;
   animarPelaje(P, t);
+  if (P.auraFx) P.auraFx.update(dt);
+  moverCompanero(P, t, dt);
   // cuánto está girando (para inclinarse en las curvas con los patines)
   const giro = P.yawAntes === undefined || dt <= 0 ? 0 : Math.atan2(Math.sin(P.root.rotation.y - P.yawAntes), Math.cos(P.root.rotation.y - P.yawAntes)) / dt;
   P.yawAntes = P.root.rotation.y;

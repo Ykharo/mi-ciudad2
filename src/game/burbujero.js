@@ -10,6 +10,7 @@ import { collide, sueloSuave } from '../world/physics.js';
 import { avatarDo } from '../characters/animator.js';
 import { animatePet } from '../pets/models.js';
 import { estallido } from '../pets/efectos.js';
+import { saltoMascota } from '../pets/ropa.js';
 import { player } from './actors.js';
 
 const CUANTAS = 7, CORRE = 6;
@@ -69,7 +70,7 @@ export function updateBurbujero(dt) {
     const dx = meta.m.position.x - p.pos.x, dz = meta.m.position.z - p.pos.z;
     if (dm > 0.15) { const st = Math.min(dm, CORRE * dt); p.pos.x += dx / dm * st; p.pos.z += dz / dm * st; v = st / Math.max(dt, 1e-4); }
     p.facing += Math.atan2(Math.sin(Math.atan2(dx, dz) - p.facing), Math.cos(Math.atan2(dx, dz) - p.facing)) * Math.min(1, dt * 10);
-    if (dm < 0.7 && J.salto <= 0) J.salto = 0.45;   // ¡salta!
+    if (dm < 0.7 && J.salto <= 0) { J.salto = 0.45; saltoMascota(p.obj); }   // ¡salta!
     const alcance = p.obj.root.scale.x * 1.1 + 0.55;  // hasta dónde llega con el salto
     if (dm < 0.45 && J.salto > 0 && meta.m.position.y < alcance) reventar(meta);
   } else if (J.salen >= CUANTAS) { terminar(); return; }

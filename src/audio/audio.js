@@ -65,6 +65,11 @@ function sfx(kind) {
   else if (kind === 'miau') { toneF(620, t, 0.42, 'sawtooth', 0.35, 'bandpass', 1300, 480, 0.06); tone(900, t, 0.3, 'sine', 0.12, sfxGain, 0.08, 620); }
   else if (kind === 'conejo') [0, 0.1, 0.2].forEach(d => tone(1500, t + d, 0.06, 'sine', 0.3, sfxGain, 0.004, 1900));
   else if (kind === 'relincho') { toneF(700, t, 0.5, 'sawtooth', 0.3, 'bandpass', 1500, 1000, 0.02); [0, 0.07, 0.14, 0.21, 0.28].forEach(d => tone(1100 - d * 800, t + d, 0.06, 'triangle', 0.18, sfxGain)); }
+  // las pociones de voz y el collar musical
+  else if (kind === 'pato') [0, 0.2].forEach(d => { toneF(600, t + d, 0.15, 'sawtooth', 0.5, 'bandpass', 1200, 420, 0.005); toneF(605, t + d, 0.15, 'square', 0.2, 'bandpass', 2100, 430, 0.005); });
+  else if (kind === 'leon') { toneF(180, t, 0.75, 'sawtooth', 0.6, 'lowpass', 700, 90, 0.06); toneF(240, t, 0.6, 'square', 0.25, 'lowpass', 500, 110, 0.08); }
+  else if (kind === 'vaca') { toneF(170, t, 0.9, 'sawtooth', 0.45, 'lowpass', 600, 130, 0.12); tone(170, t, 0.9, 'triangle', 0.3, sfxGain, 0.12, 140); }
+  else if (kind === 'nota') { const m = [72, 74, 76, 79, 81, 84][Math.floor(Math.random() * 6)]; tone(mtof(m), t, 0.45, 'triangle', 0.45, sfxGain, 0.005); tone(mtof(m + 12), t, 0.25, 'sine', 0.12, sfxGain, 0.005); }
   else if (kind === 'horn')[0, 0.24].forEach(d => { tone(466, t + d, 0.2, 'square', 0.12, sfxGain, 0.01); tone(587, t + d, 0.2, 'square', 0.1, sfxGain, 0.01); });
 }
 

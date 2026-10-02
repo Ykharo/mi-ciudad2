@@ -81,7 +81,9 @@ export function cartelPuntos(puntos) {
   return g;
 }
 
-export function efectoAura(padre, { color = 'dorado', alto = 3 } = {}) {
+// Con `bucle: true` no se apaga: se queda brillando (el anillo del suelo late cada 2 s) hasta `a.quitar()` (el
+// caramelo de aura de las mascotas: pets/extras.js).
+export function efectoAura(padre, { color = 'dorado', alto = 3, bucle = false } = {}) {
   texturas();
   const C = COLORES[color] || COLORES.dorado, g = new THREE.Group(); padre.add(g);
   const aditivo = (o = {}) => ({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, ...o });
@@ -109,11 +111,13 @@ export function efectoAura(padre, { color = 'dorado', alto = 3 } = {}) {
   g.traverse(o => { o.castShadow = false; o.receiveShadow = false; o.renderOrder = 6; });
 
   let t = 0;
+  const quitar = () => { if (g.parent) g.parent.remove(g); capas.forEach(m => { m.geometry.dispose(); m.material.map.dispose(); m.material.dispose(); }); geo.dispose(); matCh.dispose(); anillo.material.dispose(); anillo.geometry.dispose(); };
   return {
+    quitar,
     update(dt) {
       if (!g.parent) return false;
       t += dt;
-      const entra = Math.min(1, t / 0.4), sale = t > DUR - 0.7 ? Math.min(1, (t - (DUR - 0.7)) / 0.7) : 0, k = entra * (1 - sale);
+      const entra = Math.min(1, t / 0.4), sale = !bucle && t > DUR - 0.7 ? Math.min(1, (t - (DUR - 0.7)) / 0.7) : 0, k = entra * (1 - sale);
       // la columna sube (crece desde el suelo) y gira; su textura sube
       capas.forEach((m, i) => {
         m.material.opacity = m.userData.op * k * (0.85 + 0.15 * Math.sin(t * 9 + i));
@@ -123,7 +127,7 @@ export function efectoAura(padre, { color = 'dorado', alto = 3 } = {}) {
         m.material.map.offset.y -= dt * (i ? 1.1 : 0.7);
       });
       // el anillo se expande con un destello al empezar
-      const u = Math.min(1, t / 0.7);
+      const u = Math.min(1, (bucle ? t % 2 : t) / 0.7);
       anillo.scale.setScalar(0.4 + 2.6 * (1 - Math.pow(1 - u, 3)));
       anillo.material.opacity = (1 - u) * 0.9 + 0.3 * k;
       // las chispas suben girando y se abren un poco
@@ -135,7 +139,7 @@ export function efectoAura(padre, { color = 'dorado', alto = 3 } = {}) {
       });
       geo.attributes.position.needsUpdate = true;
       matCh.opacity = k;
-      if (t >= DUR) { padre.remove(g); capas.forEach(m => { m.geometry.dispose(); m.material.map.dispose(); m.material.dispose(); }); geo.dispose(); matCh.dispose(); anillo.material.dispose(); anillo.geometry.dispose(); return false; }
+      if (!bucle && t >= DUR) { quitar(); return false; }
       return true;
     },
   };

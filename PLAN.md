@@ -65,10 +65,10 @@ arriba en `HISTORIAL.md` y aquí sólo se actualiza el resumen.
      (Extra: ✅ polvo de estrellas, ✅ jarabe de burbujas.)
    - Accesorios: ✅ set superhéroe (capa, antifaz, emblema, cinturón, muñequeras), ✅ lentes que cambian de forma,
      ✅ bufanda arcoíris larguísima, ✅ sombrero de mago con conejito, ✅ corona que gira, ✅ aureola, ✅ cuernito,
-     ✅ antenas de abeja; mochila cohete con humito, paraguas, collar musical.
+     ✅ antenas de abeja, ✅ mochila cohete con humito, ✅ collar musical; paraguas.
      (Extra: ✅ collar con placa, ✅ gorro de cumpleaños, ✅ moño en la cola.)
-   - Compañeros: mariposa, pajarito o pez en pecera flotante; mini-mascota (un ratoncito encima).
-   - Juguetes: ✅ pelota, ✅ hueso eterno, ✅ burbujero; frisbee, palito mágico que crece.
+   - Compañeros: ✅ mariposa; pajarito o pez en pecera flotante; mini-mascota (un ratoncito encima).
+   - Juguetes: ✅ pelota, ✅ hueso eterno, ✅ burbujero, ✅ frisbee, ✅ palito mágico que crece.
    - Hogar (Mi Casa): casitas (castillo, nave, iglú, hongo), cama-nube / hamaca / flotante, comedero de estrellitas. 4. Poción transformadora. 5. Encargos de lectura de los vecinos.
 6. Letreros escondidos, diario de la mascota, racha diaria.
 

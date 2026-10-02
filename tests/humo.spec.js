@@ -128,6 +128,25 @@ test('pociones (estrellas, burbujas, mini y gigante) y ropa nueva (bufanda, lent
   expect((await leer()).slice(2, 4)).toEqual([null, 60]);
 });
 
+test('caramelo de aura, voz de vaca, mochila cohete, mariposa y el frisbee que trae', async ({ page, jugar }) => {
+  await page.addInitScript(() => { if (!localStorage.getItem('ciudadArcoiris.v2')) localStorage.setItem('ciudadArcoiris.v2', JSON.stringify({ version: 2, cars: [],
+    pets: [{ kind: 'perro', color: '#E9B77A', name: 'Toby', cosas: ['aura', 'voz_vaca', 'voz_pato', 'cohete', 'mariposa', 'frisbee', 'pelota'],
+      extras: { aura: true, voz: 'vaca', ropa: { espalda: 'cohete' }, companero: 'mariposa' } }] })); });
+  await jugar();
+  const leer = () => page.evaluate(() => { const e = window.__juego.player.pets[0].obj.extras; return [e.aura, e.voz, e.ropa.espalda, e.companero]; });
+  expect(await leer()).toEqual([true, 'vaca', 'cohete', 'mariposa']);
+  // la voz de pato reemplaza a la de vaca
+  await page.locator('#btnPets').click();
+  await page.locator('#archSecs [data-sec="cosas"]').click();
+  await page.locator('#archBody [data-poner="voz_pato"]').click();
+  expect((await leer())[1]).toBe('pato');
+  // el frisbee: desde la ficha, lo lanza y Toby lo trae
+  await page.locator('#archBody [data-jugar="frisbee"]').click();
+  await expect(page.locator('#toast')).toContainText('frisbee', { timeout: 20_000 });
+  // con dos juguetes para lanzar aparece el botón para cambiar
+  await expect(page.locator('#btnPelotaOtro')).toBeVisible({ timeout: 10_000 });
+});
+
 test('Mis mascotas: el archivador con ficha, estado, salud y cosas', async ({ page, jugar }) => {
   await page.addInitScript(() => { if (!localStorage.getItem('ciudadArcoiris.v2')) localStorage.setItem('ciudadArcoiris.v2', JSON.stringify({ version: 2, cars: [],
     mascotienda: { comprados: ['patines'] }, pets: [{ kind: 'perro', color: '#E9B77A', name: 'Toby', adopcion: '2026-09-01T12:00:00Z', estado: { energia: 20, diversion: 90 } }] })); });

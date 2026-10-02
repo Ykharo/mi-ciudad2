@@ -25,6 +25,7 @@ const CATEGORIAS = [
   { id: 'articulos', nombre: 'Artículos', ic: '🛼', secciones: ['transporte'] },
   { id: 'pociones', nombre: 'Pociones', ic: '🧪', secciones: ['pociones'] },
   { id: 'juguetes', nombre: 'Juguetes', ic: '🧸', secciones: ['juguetes'] },
+  { id: 'companeros', nombre: 'Compañeros', ic: '🦋', secciones: ['companeros'] },
 ];
 let seccion = 'ficha', seguro = false;
 const fechaCL = iso => new Date(iso).toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -110,7 +111,7 @@ body.addEventListener('click', e => {
   else if (b.dataset.borrar) borrarFoto(p, +b.dataset.borrar);
   else if (b.dataset.poner) M.equipar(p, b.dataset.poner, !!b.dataset.on);
   else if (b.dataset.jugar) {   // a jugar: se cierra el archivador y Nina lanza la pelota
-    panel.hidden = true; seguro = false; cerrarArchivador(); if (b.dataset.jugar === 'burbujero') hacerBurbujas(p); else lanzarPelota(p); return;
+    panel.hidden = true; seguro = false; cerrarArchivador(); if (b.dataset.jugar === 'burbujero') hacerBurbujas(p); else lanzarPelota(p, b.dataset.jugar); return;
   }
   else if (b.dataset.casa) {
     if (!seguro) { seguro = true; render(); return; }

@@ -190,8 +190,10 @@ un trabajo: el detalle va arriba en `HISTORIAL.md` y en "Dónde quedamos" sólo 
   antes de escalar.
   El libro de Nina también tiene su mapa (`agarre` en `characters/libro.js`: el centro del borde de cada tapa).
   Ropa de mascotas (`pets/ropa.js`: `extras.ropa = { cuello, cabeza, lomo, cara, cola }`; el set superhéroe es `capa`),
-  pelaje (`pets/pelaje.js`: arcoíris, pastillas de diseño, invisible), partículas (`pets/efectos.js`) y juguetes
-  (pelota: `game/pelota.js` + `#btnPelota`; burbujero: `game/burbujero.js` + `#btnBurbujas`; hueso: `pets/hueso.js`). Un artículo nuevo: datos en `pets/catalog/articulos.js` (tipo
+  pelaje (`pets/pelaje.js`: arcoíris, pastillas de diseño, invisible), partículas (`pets/efectos.js`), compañeros
+  (`pets/companeros.js`: la mariposa), voces (`vozDe` en `pets/follow.js`) y juguetes (pelota, frisbee y palito:
+  `game/pelota.js` + `#btnPelota`/`#btnPelotaOtro`; burbujero: `game/burbujero.js` + `#btnBurbujas`; hueso:
+  `pets/hueso.js`). El collar musical suena con `saltoMascota(P)` (pets/ropa.js) cuando la mascota salta. Un artículo nuevo: datos en `pets/catalog/articulos.js` (tipo
   `transporte` / `pocion` / `ropa` con `lugar` / `juguete`) y su modelo en `extras.js` o `ropa.js`.
 - Guardado en `localStorage` con clave `ciudadArcoiris.v2`: `{ version: 2, jugador, nina: { look }, personajes, pets (con ficha, cosas y extras), cars, shop, huesitos }`
   (`game/save.js`). Una partida `ciudadArcoiris.v1` se migra al cargar y la clave v1 no se borra. Envolver en try/catch.

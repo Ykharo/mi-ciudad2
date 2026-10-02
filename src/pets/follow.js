@@ -5,6 +5,7 @@ import { labelSprite } from '../engine/textures.js';
 import { collide, sueloSuave } from '../world/physics.js';
 import { animatePet, letreroMascota } from './models.js';
 import { roerHueso } from './hueso.js';
+import { saltoMascota } from './ropa.js';
 
 const conHueso = p => !!(p.cosas && p.cosas.includes('hueso') && !p.obj.siempreSentada);   // (no en la burbuja ni el globo)
 
@@ -23,6 +24,12 @@ const CICLOS = {
   unicornio: { espera: 32, sentada: 8, acostada: 10, juega: 5, voz: 'relincho', texto: '¡Hiii!', giro: 2.0 },
 };
 const ORDEN = ['espera', 'sentada', 'acostada', 'juega'];
+// la voz de la mascota: la de su especie, o la de la poción de voz que tenga (pato, león, vaca)
+const VOCES = { pato: { voz: 'pato', texto: '¡Cuac cuac!' }, leon: { voz: 'leon', texto: '¡Grrroar!' }, vaca: { voz: 'vaca', texto: '¡Muuu!' } };
+export function vozDe(p) {
+  const v = p.obj && p.obj.extras && VOCES[p.obj.extras.voz], C = CICLOS[p.kind] || CICLOS.perro;
+  return v || { voz: C.voz, texto: C.texto };
+}
 function avanzarOcio(p, dt, ocio) {
   const C = CICLOS[p.kind] || CICLOS.perro, O = p.ocio || (p.ocio = { fase: 'espera', t: 0 });
   O.t += dt;
@@ -45,7 +52,7 @@ function jugarAlrededor(p, i, C, leader, dt) {
   if (O.ang === undefined) { O.ang = Math.atan2(p.pos.x - leader.x, p.pos.z - leader.z) + i * Math.PI; O.dir = 1; O.recorre = 0; O.pausa = 0; O.h = 0; }
   const R = 1.4 + i * 0.5;
   let y = 0, quieta = false;
-  const ladrar = () => { O.ladra = 1.3; emit('sonido', C.voz); };
+  const V = vozDe(p), ladrar = () => { O.ladra = 1.3; emit('sonido', V.voz); saltoMascota(P); };
   if (O.pausa > 0) {   // detenida mirándola: un salto en el lugar con su voz
     O.pausa -= dt; quieta = true;
     y = Math.sin(Math.PI * Math.min(1, (0.9 - O.pausa) / 0.4)) * 0.22 * (O.pausa > 0.5 ? 1 : 0);
@@ -63,7 +70,9 @@ function jugarAlrededor(p, i, C, leader, dt) {
   p.facing = lerpAngle(p.facing, Math.atan2(leader.x - p.pos.x, leader.z - p.pos.z), 1 - Math.exp(-dt * 12));   // siempre mirándola
   O.ladra -= dt;
   if (O.ladra <= -1.2 && !quieta) ladrar();
-  if (!P.voz) P.voz = letreroMascota(P, labelSprite(C.texto, { scale: 0.0036, bubble: true }));
+  // (el globito con su voz; se rehace si cambió de voz con una poción)
+  if (P.voz && P.voz.userData.texto !== V.texto) { P.root.remove(P.voz); P.voz = null; }
+  if (!P.voz) { P.voz = letreroMascota(P, labelSprite(V.texto, { scale: 0.0036, bubble: true })); P.voz.userData.texto = V.texto; }
   P.voz.visible = O.ladra > 0.6; P.voz.position.y = P.labelY + 0.45;
   // (salta de lado: las patas sin el paso de caminar; el salto lo da `y`)
   return { moved: 0, y };

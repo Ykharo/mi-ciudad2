@@ -38,26 +38,33 @@ function fixExtras(e, p) {
   for (const [lugar, id] of Object.entries((e && typeof e.ropa === 'object' && e.ropa) || {})) {
     const a = articulo(id); if (a && a.tipo === 'ropa' && a.lugar === lugar && tiene(p, id)) ropa[lugar] = id;
   }
-  const pocion = ef => !!(e && e[ef] && tiene(p, ef));   // (arcoiris, brillo, burbujas, invisible: el id es el efecto)
+  const pocion = ef => !!(e && e[ef] && tiene(p, ef));   // (arcoiris, brillo, burbujas, invisible, aura: el id es el efecto)
   const tamano = e && (e.tamano === 'mini' || e.tamano === 'gigante') && tiene(p, e.tamano) ? e.tamano : null;
-  const da = e && ARTICULOS.find(a => a.efecto === 'diseno' && a.diseno === e.diseno), diseno = da && tiene(p, da.id) ? da.diseno : null;
-  return { transporte: t, arcoiris: pocion('arcoiris'), brillo: pocion('brillo'), burbujas: pocion('burbujas'), invisible: pocion('invisible'), tamano, diseno, ropa };
+  // las que van de a una con un valor: el diseño de pelaje y la voz (vale si tiene el artículo de ese valor)
+  const uno = campo => { const a = e && ARTICULOS.find(x => x.efecto === campo && x[campo] === e[campo]); return a && tiene(p, a.id) ? a[campo] : null; };
+  const comp = e && typeof e.companero === 'string' && tiene(p, e.companero) && articulo(e.companero).tipo === 'companero' ? e.companero : null;
+  return { transporte: t, arcoiris: pocion('arcoiris'), brillo: pocion('brillo'), burbujas: pocion('burbujas'), invisible: pocion('invisible'), aura: pocion('aura'),
+    tamano, diseno: uno('diseno'), voz: uno('voz'), companero: comp, ropa };
 }
-// las pociones que van de a una: un tamaño (mini o gigante) y un diseño de pelaje; las demás se juntan
-const TAMANO = new Set(['mini', 'gigante']);
+// las pociones que van de a una: un tamaño (mini o gigante), un diseño de pelaje y una voz; las demás se juntan
+const TAMANO = new Set(['mini', 'gigante']), CON_VALOR = new Set(['diseno', 'voz']);
 // ¿lo tiene puesto? (los juguetes no se ponen)
 function puesto(p, id) {
   const a = articulo(id), e = p && p.extras; if (!a || !e) return false;
-  if (a.tipo === 'pocion') return TAMANO.has(a.efecto) ? e.tamano === a.efecto : a.efecto === 'diseno' ? e.diseno === a.diseno : !!e[a.efecto];
+  if (a.tipo === 'pocion') return TAMANO.has(a.efecto) ? e.tamano === a.efecto : CON_VALOR.has(a.efecto) ? e[a.efecto] === a[a.efecto] : !!e[a.efecto];
+  if (a.tipo === 'companero') return e.companero === id;
   return a.tipo === 'transporte' ? e.transporte === id : a.tipo === 'ropa' ? !!(e.ropa && e.ropa[a.lugar] === id) : false;
 }
 // cómo quedan los extras al ponerse (on) o quitarse un artículo: un transporte reemplaza al que tenía; una prenda, a la
-// del mismo lugar del cuerpo; la poción mini a la gigante (y al revés), y una pastilla de diseño a la otra
+// del mismo lugar del cuerpo; la poción mini a la gigante (y al revés), una pastilla de diseño a la otra, una voz a la
+// otra y un compañero al otro
 function conArticulo(e0, a, on) {
   const e = { ...(e0 || {}), ropa: { ...((e0 && e0.ropa) || {}) } };
-  if (a.tipo === 'transporte') e.transporte = on ? a.id : (e.transporte === a.id ? null : e.transporte);
-  else if (a.tipo === 'pocion' && TAMANO.has(a.efecto)) e.tamano = on ? a.efecto : (e.tamano === a.efecto ? null : e.tamano);
-  else if (a.tipo === 'pocion' && a.efecto === 'diseno') e.diseno = on ? a.diseno : (e.diseno === a.diseno ? null : e.diseno);
+  const cambia = (campo, v) => { e[campo] = on ? v : (e[campo] === v ? null : e[campo]); };
+  if (a.tipo === 'transporte') cambia('transporte', a.id);
+  else if (a.tipo === 'companero') cambia('companero', a.id);
+  else if (a.tipo === 'pocion' && TAMANO.has(a.efecto)) cambia('tamano', a.efecto);
+  else if (a.tipo === 'pocion' && CON_VALOR.has(a.efecto)) cambia(a.efecto, a[a.efecto]);
   else if (a.tipo === 'pocion') e[a.efecto] = !!on;
   else if (a.tipo === 'ropa') { if (on) e.ropa[a.lugar] = a.id; else if (e.ropa[a.lugar] === a.id) delete e.ropa[a.lugar]; }
   return e;

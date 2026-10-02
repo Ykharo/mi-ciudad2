@@ -11,10 +11,14 @@
 import { THREE } from '../engine/three.js';
 import { stripeTexture } from '../engine/textures.js';
 import { scene } from '../engine/renderer.js';
+import { emit } from '../core/events.js';
+import { soltarHumo } from './efectos.js';
+
+const _humo = new THREE.Vector3();
 
 export const LUGAR_ROPA = { collar: 'cuello', bufanda: 'cuello', corona: 'cabeza', gorro_cumple: 'cabeza', sombrero_mago: 'cabeza', capa: 'lomo', lentes: 'cara', mono: 'cola',
-  aureola: 'cabeza', cuerno: 'cabeza', antenas: 'cabeza' };
-const LUGARES = ['cuello', 'cabeza', 'lomo', 'cara', 'cola'];
+  aureola: 'cabeza', cuerno: 'cabeza', antenas: 'cabeza', cohete: 'espalda', collar_musical: 'cuello' };
+const LUGARES = ['cuello', 'cabeza', 'lomo', 'cara', 'cola', 'espalda'];
 const est = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.5, ...o });
 function estrella(r1, r2, n = 5) {
   const s = new THREE.Shape();
@@ -106,8 +110,8 @@ function sombreroMago(P) {
     const i = new THREE.Mesh(new THREE.CapsuleGeometry(R * 0.022, R * 0.16, 4, 6), rosa); i.position.set(0, R * 0.12, R * 0.03); o.add(i);
     conejo.add(o); return o;
   });
-  for (const s of [-1, 1]) conejo.add(new THREE.Mesh(new THREE.SphereGeometry(R * 0.03, 8, 6), est('#1F1B2E'))).position.set(s * R * 0.07, R * 0.03, R * 0.17);
-  conejo.add(new THREE.Mesh(new THREE.SphereGeometry(R * 0.03, 8, 6), rosa)).position.set(0, -R * 0.03, R * 0.19);
+  for (const s of [-1, 1]) { const ojo = new THREE.Mesh(new THREE.SphereGeometry(R * 0.03, 8, 6), est('#1F1B2E')); ojo.position.set(s * R * 0.07, R * 0.03, R * 0.17); conejo.add(ojo); }
+  const nariz = new THREE.Mesh(new THREE.SphereGeometry(R * 0.03, 8, 6), rosa); nariz.position.set(0, -R * 0.03, R * 0.19); conejo.add(nariz);
   conejo.position.set(Math.sin(0.12) * -R * 1.4, R * 1.45, 0); conejo.scale.setScalar(0.001); g.add(conejo);
   g.position.y = R * 0.02; g.rotation.x = -0.1;
   P.anclas.cabeza.add(g);
@@ -118,9 +122,24 @@ function aureola(P) {
   const R = P.medidas.cabezaR, g = new THREE.Group();
   const aro = new THREE.Mesh(new THREE.TorusGeometry(R * 0.55, R * 0.07, 10, 32), new THREE.MeshStandardMaterial({ color: '#FFE45C', emissive: '#FFD23F', emissiveIntensity: 0.9 }));
   aro.rotation.x = Math.PI / 2; g.add(aro);
+  // el brillo (glow): aros más gruesos, transparentes y que suman luz (se ven claros sobre cualquier fondo); laten despacio
+  // (animarCabeza). Sin una luz de verdad: agregar luces obliga a rearmar los materiales de toda la escena
+  const glow = [[0.17, 0.45], [0.3, 0.2], [0.46, 0.08]].map(([tubo, op]) => {
+    const m = new THREE.Mesh(new THREE.TorusGeometry(R * 0.55, R * tubo, 12, 40), new THREE.MeshBasicMaterial({ color: '#FFE89A', transparent: true, opacity: op, blending: THREE.AdditiveBlending, depthWrite: false }));
+    m.rotation.x = Math.PI / 2; m.userData.op = op; g.add(m); return m;
+  });
+  // y un halo suave que siempre mira a la cámara (como el resplandor de una luz), amarillo dorado: se ve también sobre
+  // el pasto claro
+  const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
+  const gr = x.createRadialGradient(64, 64, 6, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(255,240,170,1)'); gr.addColorStop(0.3, 'rgba(255,200,40,0.85)'); gr.addColorStop(0.65, 'rgba(255,170,20,0.35)'); gr.addColorStop(1, 'rgba(255,160,0,0)');
+  x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
+  halo.scale.set(R * 3.2, R * 2, 1); halo.renderOrder = 5; halo.userData.op = 0.85; halo.material.opacity = 0.85; g.add(halo);
+  glow.push(halo);
   g.position.y = R * 0.55;
   P.anclas.cabeza.add(g);
-  return { g, flota: g.position.y };
+  return { g, flota: g.position.y, glow };
 }
 // el cuernito de unicornio: un cono con espiral de colores en la frente
 function cuerno(P) {
@@ -300,7 +319,44 @@ function mono(P) {
   (P.tail || P.body).add(g);
   return { g };
 }
-const HACER = { collar, bufanda, corona, gorro_cumple: gorroCumple, sombrero_mago: sombreroMago, capa, lentes, mono, aureola, cuerno, antenas };
+// la mochila cohete: dos tanques plateados con punta roja y aletas en la espalda; por las toberas sale humito de
+// colores (más al andar: animarRopa → efectos.js)
+function cohete(P) {
+  const M = P.medidas, k = M.largo * 0.85, g = new THREE.Group(), plata = est('#D9DEE8', { metalness: 0.4, roughness: 0.3 }), rojo = est('#FF4F5E');
+  const toberas = [];
+  for (const s of [-1, 1]) {
+    const t = new THREE.Group(); t.position.set(s * k * 0.17, 0, 0); g.add(t);
+    const tanque = new THREE.Mesh(new THREE.CylinderGeometry(k * 0.13, k * 0.13, k * 0.55, 16), plata); t.add(tanque);
+    const punta = new THREE.Mesh(new THREE.ConeGeometry(k * 0.13, k * 0.22, 16), rojo); punta.position.y = k * 0.385; t.add(punta);
+    const tob = new THREE.Mesh(new THREE.CylinderGeometry(k * 0.07, k * 0.1, k * 0.09, 12), est('#5B6275')); tob.position.y = -k * 0.32; t.add(tob);
+    const aleta = new THREE.Mesh(new THREE.BoxGeometry(k * 0.13, k * 0.17, 0.008), rojo); aleta.position.set(s * k * 0.15, -k * 0.2, 0); t.add(aleta);
+    const salida = new THREE.Object3D(); salida.position.y = -k * 0.4; t.add(salida); toberas.push(salida);
+  }
+  const correa = new THREE.Mesh(new THREE.BoxGeometry(k * 0.5, k * 0.09, k * 0.24), est('#4FB6F5')); g.add(correa);
+  // sobre los hombros, parada y un poco inclinada hacia atrás
+  g.position.set(0, k * 0.36, -k * 0.08); g.rotation.x = -0.3;
+  P.anclas.espalda.add(g);
+  return { g, toberas, humoT: 0 };
+}
+// el collar musical: un collar celeste con una notita musical dorada colgando; cada vez que la mascota salta suena una
+// nota (saltoMascota, lo llaman pets/follow.js, game/burbujero.js y la pelota)
+function collarMusical(P) {
+  const M = P.medidas, r = M.cuelloR || M.ancho * 0.4, g = new THREE.Group(), oro = est('#FFC93C', { emissive: '#FFB000', emissiveIntensity: 0.25 });
+  g.add(new THREE.Mesh(new THREE.TorusGeometry(r, 0.026, 8, 28), est('#4FB6F5')));
+  const nota = new THREE.Group(); nota.position.set(0, -r - 0.07, 0.02); g.add(nota);
+  const cabeza = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 10), oro); cabeza.scale.set(1.3, 1, 0.7); nota.add(cabeza);
+  const palo = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.09, 6), oro); palo.position.set(0.033, 0.045, 0); nota.add(palo);
+  const bandera = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.012, 0.01), oro); bandera.position.set(0.05, 0.085, 0); bandera.rotation.z = -0.5; nota.add(bandera);
+  g.rotation.x = P.kind === 'unicornio' ? -1.15 : -0.65;
+  P.anclas.cuello.add(g);
+  return { g, nota, musical: true };
+}
+// cuando la mascota salta: con el collar musical suena una nota y la notita se mueve
+export function saltoMascota(P) {
+  const C = P.ropa && P.ropa.cuello;
+  if (C && C.musical) { emit('sonido', 'nota'); C.baila = 1; }
+}
+const HACER = { cohete, collar_musical: collarMusical, collar, bufanda, corona, gorro_cumple: gorroCumple, sombrero_mago: sombreroMago, capa, lentes, mono, aureola, cuerno, antenas };
 
 function tirar(o) {
   if (o.quitar) o.quitar();
@@ -338,7 +394,11 @@ function animarCabeza(P, t, dt, speed) {
     H.orejas.forEach((o, i) => { o.rotation.x = Math.sin(t * 12 + i) * 0.25 * sale; });
     if (u > 2.4) H.conejoT = 8 + Math.random() * 4;
   }
-  if (H && H.id === 'aureola') { H.g.position.y = H.flota + Math.sin(t * 2) * P.medidas.cabezaR * 0.06; H.g.rotation.y += dt * 0.8; }
+  if (H && H.id === 'aureola') {
+    H.g.position.y = H.flota + Math.sin(t * 2) * P.medidas.cabezaR * 0.06; H.g.rotation.y += dt * 0.8;
+    const late = 0.75 + 0.25 * Math.sin(t * 3);
+    H.glow.forEach(m => { m.material.opacity = m.userData.op * late; });
+  }
   if (H && H.varas) H.varas.forEach(({ v, s }, i) => { v.rotation.z = -s * 0.5 + Math.sin(t * (speed > 0.05 ? 10 : 3) + i * 1.7) * (speed > 0.05 ? 0.25 : 0.08); });
   if (L && L.formas) {
     L.cambio -= dt;
@@ -352,6 +412,14 @@ export function animarRopa(P, t, dt, speed) {
   const B = P.ropa && P.ropa.cuello;
   if (B && B.tiras) { if (P.root.parent === scene) moverBufanda(P, B, Math.min(dt, 0.033)); B.tiras.forEach(m => { m.visible = P.root.parent === scene && P.root.visible !== false; }); }
   animarCabeza(P, t, dt, speed);
+  // la notita del collar musical se balancea al sonar
+  if (B && B.musical) { B.baila = Math.max(0, (B.baila || 0) - dt * 2); B.nota.rotation.z = Math.sin(t * 18) * 0.5 * B.baila; }
+  // el humito de la mochila cohete
+  const K = P.ropa && P.ropa.espalda;
+  if (K && K.toberas && P.root.parent === scene) {
+    K.humoT -= dt;
+    if (K.humoT <= 0) { K.humoT = speed > 0.05 ? 0.06 : 0.22; K.toberas.forEach(o => { o.getWorldPosition(_humo); soltarHumo(_humo, P.root.scale.x); }); }
+  }
   const C = P.ropa && P.ropa.lomo; if (!C) return;
   C.ondea += ((Math.min(speed, 2) / 2) - C.ondea) * Math.min(1, dt * 3);
   const pos = C.tela.geometry.attributes.position, b = C.base, m = C.ondea;

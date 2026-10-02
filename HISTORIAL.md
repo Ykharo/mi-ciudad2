@@ -5,6 +5,37 @@ pruebas. Se movió aquí desde la sección "Dónde quedamos" de `PLAN.md` el 30-
 corta (sólo el estado actual y lo que sigue). Al terminar algo, el detalle se agrega aquí arriba y en `PLAN.md` sólo
 el resumen.
 
+## Tanda: caramelo de aura, voces, mochila cohete, collar musical, frisbee, palito y mariposa (02-10-2026)
+
+- Caramelo de aura (`extras.aura`): el aura ascendente de la competencia (`engine/efectoAura.js`, ahora con
+  `bucle: true` y `quitar()`), celeste, en un grupo escalado al largo de la mascota.
+- Pociones de voz (una a la vez: `extras.voz` = pato, leon, vaca): `vozDe(p)` en `pets/follow.js` da su voz y su
+  globito ("¡Cuac cuac!", "¡Grrroar!", "¡Muuu!"); la usan el ciclo de espera y los juguetes. Sonidos nuevos en
+  `audio/audio.js` (pato, leon, vaca, nota).
+- Ropa: mochila cohete (lugar nuevo `espalda`, ancla `espalda`): dos tanques con punta roja y aletas; por las
+  toberas sale humito de colores (`soltarHumo` en `pets/efectos.js`, más al andar). Collar musical (cuello, con una
+  notita dorada): `saltoMascota(P)` toca una nota y la notita baila; lo llaman el ciclo de espera (al saltar con su
+  voz), el burbujero y el frisbee.
+- Juguetes que se lanzan (`game/pelota.js` generalizado: `LANZABLES`): pelota, frisbee (planea girando; la mascota
+  salta y lo atrapa en el aire) y palito mágico (crece al doble mientras vuela y lo trae así). Con más de uno, el
+  botoncito `#btnPelotaOtro` (🔄) cambia cuál lanza el botón; en el archivador cada uno tiene su "¡A jugar!".
+- Compañeros (sección nueva en la tienda y en el archivador; tipo `companero`, uno a la vez: `extras.companero`):
+  la mariposa (`pets/companeros.js`): vive en la escena, revolotea en un ocho alrededor de la cabeza y la sigue con
+  retraso; alas rosadas y lilas con lunares, sin sombreado (con luz se veían pálidas).
+- Prueba nueva en `humo.spec.js`.
+
+## Brillo (glow) en la aureola (02-10-2026)
+
+- La aureola: además del aro, tres aros más gruesos transparentes que suman luz (`AdditiveBlending`) y un halo suave
+  que siempre mira a la cámara (sprite con un degradé dorado intenso: el amarillo claro casi no se veía sobre el pasto
+  claro). Laten despacio. Sin luz de verdad (agregar luces obliga a recompilar los materiales de toda la escena).
+
+## Hueso más grande, como la referencia (02-10-2026)
+
+- El hueso eterno: palo grueso (cápsula de 1,7 veces el radio de la cabeza) y dos bolas grandes en cada punta, color
+  crema. Las bolas no se veían: `g.add(bola).position.set(…)` movía el grupo (`add` devuelve el padre), no la bola; el
+  mismo error en los ojos y la nariz del conejito del sombrero. Corregido y revisado que no quede otro igual.
+
 ## Tanda: pelajes, detalles de lo ya hecho, accesorios de cabeza, hueso, burbujero y set superhéroe (02-10-2026)
 
 - Pastillas de diseño (vaca, cebra, estrellas, corazones, lunares, galaxia; una a la vez: `extras.diseno`) y poción

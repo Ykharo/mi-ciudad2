@@ -19,6 +19,9 @@ function nueva(tipo, x, y, z) {
   let m;
   if (tipo === 'brillo') {
     m = new THREE.Mesh(estrella(), new THREE.MeshBasicMaterial({ color: RAINBOW[Math.floor(Math.random() * RAINBOW.length)], transparent: true, side: THREE.DoubleSide, depthWrite: false }));
+  } else if (tipo === 'humo') {
+    geoBurbuja = geoBurbuja || new THREE.SphereGeometry(1, 14, 10);
+    m = new THREE.Mesh(geoBurbuja, new THREE.MeshBasicMaterial({ color: RAINBOW[Math.floor(Math.random() * RAINBOW.length)], transparent: true, opacity: 0.7, depthWrite: false }));
   } else if (tipo === 'chispa' || tipo === 'gota') {
     geoChispa = geoChispa || new THREE.OctahedronGeometry(1);
     m = new THREE.Mesh(geoChispa, new THREE.MeshBasicMaterial({ color: tipo === 'gota' ? 0xBFEFFF : Math.random() < 0.5 ? 0xFFE45C : 0xFFFFFF, transparent: true, depthWrite: false }));
@@ -29,8 +32,8 @@ function nueva(tipo, x, y, z) {
   // (vida larga y subida rápida: la estela llega alto; con su tamaño desde que nace: la esfera mide 1 m de radio y, si
   // esperaba al cuadro siguiente para achicarse, se veía un instante una burbuja gigante que parpadeaba)
   const corta = tipo === 'chispa' || tipo === 'gota';
-  const p = { tipo, m, t: 0, vida: tipo === 'brillo' ? 2.2 + Math.random() * 0.6 : corta ? 0.45 + Math.random() * 0.25 : 4.5 + Math.random() * 1.5,
-    r: tipo === 'burbuja' ? 0.09 + Math.random() * 0.08 : corta ? 0.018 + Math.random() * 0.012 : 1, fase: Math.random() * 6 };
+  const p = { tipo, m, t: 0, vida: tipo === 'brillo' ? 2.2 + Math.random() * 0.6 : corta ? 0.45 + Math.random() * 0.25 : tipo === 'humo' ? 0.9 + Math.random() * 0.4 : 4.5 + Math.random() * 1.5,
+    r: tipo === 'burbuja' ? 0.09 + Math.random() * 0.08 : corta ? 0.018 + Math.random() * 0.012 : tipo === 'humo' ? 0.04 : 1, fase: Math.random() * 6 };
   m.scale.setScalar(p.r);
   m.position.set(x, y, z); m.castShadow = false; scene.add(m);
   vivas.push(p);
@@ -56,6 +59,12 @@ export function soltarChispas(P, dt) {
   const p = nueva('chispa', R.x - Math.sin(f) * 0.2 * s + Math.cos(f) * lado * 0.12 * s, R.y + 0.04, R.z - Math.cos(f) * 0.2 * s - Math.sin(f) * lado * 0.12 * s);
   p.v = { x: -Math.sin(f) * 0.8 + (Math.random() - 0.5) * 0.6, y: 1 + Math.random() * 0.8, z: -Math.cos(f) * 0.8 + (Math.random() - 0.5) * 0.6 };
 }
+// humito de colores de la mochila cohete: bolitas suaves que salen hacia abajo, crecen y se desvanecen
+export function soltarHumo(c, s = 1) {
+  const p = nueva('humo', c.x + (Math.random() - 0.5) * 0.03, c.y, c.z + (Math.random() - 0.5) * 0.03);
+  p.r = (0.035 + Math.random() * 0.025) * Math.max(0.6, s); p.m.scale.setScalar(p.r);
+  p.v = { x: (Math.random() - 0.5) * 0.3, y: -0.5 - Math.random() * 0.3, z: (Math.random() - 0.5) * 0.3 }; p.sube = true;
+}
 // la burbuja que revienta: gotitas que salen para todos lados y caen
 export function estallido(c, r) {
   for (let i = 0; i < 14; i++) {
@@ -75,7 +84,11 @@ export function moverEfectos() {
     const p = vivas[i]; p.t += dt;
     const u = p.t / p.vida;
     if (u >= 1) { quitar(p); continue; }
-    if (p.v) {   // chispas y gotitas: vuelan y caen
+    if (p.sube) {   // humo: sale hacia abajo frenando, sube un poco, crece y se desvanece
+      p.v.y += 1.6 * dt; p.v.x *= 1 - dt * 2; p.v.z *= 1 - dt * 2;
+      p.m.position.x += p.v.x * dt; p.m.position.y += p.v.y * dt; p.m.position.z += p.v.z * dt;
+      p.m.scale.setScalar(p.r * (1 + u * 2.2)); p.m.material.opacity = 0.7 * (1 - u);
+    } else if (p.v) {   // chispas y gotitas: vuelan y caen
       p.v.y -= 6 * dt; p.m.position.x += p.v.x * dt; p.m.position.y += p.v.y * dt; p.m.position.z += p.v.z * dt;
       p.m.material.opacity = 1 - u;
     } else if (p.tipo === 'brillo') {
